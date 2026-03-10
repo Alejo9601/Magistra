@@ -1,7 +1,10 @@
-﻿import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { classSessions, type ClassSession } from "@/lib/edu-repository";
-
-const PLANNING_STORAGE_KEY = "aula.planning.classes";
+import {
+   createPlanningClassId,
+   loadPlanningClasses,
+   savePlanningClasses,
+} from "@/services/planning-service";
 
 type ClassInput = Omit<ClassSession, "id">;
 type RecurringInput = {
@@ -30,107 +33,6 @@ type PlanningContextValue = {
 
 const PlanningContext = createContext<PlanningContextValue | null>(null);
 
-function isClassStatus(value: unknown): value is ClassSession["status"] {
-   return (
-      value === "planificada" ||
-      value === "sin-planificar" ||
-      value === "finalizada"
-   );
-}
-
-function isClassType(value: unknown): value is ClassSession["type"] {
-   return (
-      value === "teorica" ||
-      value === "practica" ||
-      value === "evaluacion" ||
-      value === "repaso" ||
-      value === "recuperatorio"
-   );
-}
-
-function sanitizeClassSession(raw: unknown): ClassSession | null {
-   if (!raw || typeof raw !== "object") {
-      return null;
-   }
-
-   const input = raw as Partial<ClassSession>;
-
-   if (
-      typeof input.id !== "string" ||
-      typeof input.subjectId !== "string" ||
-      typeof input.institutionId !== "string" ||
-      typeof input.date !== "string" ||
-      typeof input.time !== "string" ||
-      typeof input.topic !== "string" ||
-      !Array.isArray(input.subtopics) ||
-      !isClassType(input.type) ||
-      !isClassStatus(input.status)
-   ) {
-      return null;
-   }
-
-   return {
-      id: input.id,
-      subjectId: input.subjectId,
-      institutionId: input.institutionId,
-      date: input.date,
-      time: input.time,
-      scheduleTemplateId:
-         typeof input.scheduleTemplateId === "string"
-            ? input.scheduleTemplateId
-            : undefined,
-      topic: input.topic,
-      subtopics: input.subtopics.filter(
-         (subtopic): subtopic is string => typeof subtopic === "string",
-      ),
-      type: input.type,
-      status: input.status,
-      activities:
-         typeof input.activities === "string" && input.activities.trim().length > 0
-            ? input.activities
-            : undefined,
-      notes:
-         typeof input.notes === "string" && input.notes.trim().length > 0
-            ? input.notes
-            : undefined,
-      resources: Array.isArray(input.resources)
-         ? input.resources.filter(
-              (resource): resource is string => typeof resource === "string",
-           )
-         : undefined,
-   };
-}
-
-function resolveInitialClasses() {
-   if (typeof window === "undefined") {
-      return classSessions;
-   }
-
-   const persisted = window.localStorage.getItem(PLANNING_STORAGE_KEY);
-   if (!persisted) {
-      return classSessions;
-   }
-
-   try {
-      const parsed = JSON.parse(persisted);
-      if (!Array.isArray(parsed)) {
-         return classSessions;
-      }
-
-      const sanitized = parsed
-         .map((entry) => sanitizeClassSession(entry))
-         .filter((entry): entry is ClassSession => entry !== null);
-
-      return sanitized.length > 0 ? sanitized : classSessions;
-   } catch {
-      return classSessions;
-   }
-}
-
-function createClassId() {
-   return `cls-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-}
-
 function addDays(dateStr: string, days: number) {
    const date = new Date(`${dateStr}T12:00:00`);
    date.setDate(date.getDate() + days);
@@ -141,14 +43,12 @@ function addDays(dateStr: string, days: number) {
 }
 
 export function PlanningProvider({ children }: { children: React.ReactNode }) {
-   const [classes, setClasses] = useState<ClassSession[]>(resolveInitialClasses);
+   const [classes, setClasses] = useState<ClassSession[]>(() =>
+      loadPlanningClasses(classSessions),
+   );
 
    useEffect(() => {
-      if (typeof window === "undefined") {
-         return;
-      }
-
-      window.localStorage.setItem(PLANNING_STORAGE_KEY, JSON.stringify(classes));
+      savePlanningClasses(classes);
    }, [classes]);
 
    const value = useMemo<PlanningContextValue>(
@@ -157,7 +57,7 @@ export function PlanningProvider({ children }: { children: React.ReactNode }) {
          createClass: (input) => {
             const nextClass: ClassSession = {
                ...input,
-               id: createClassId(),
+               id: createPlanningClassId(),
             };
 
             setClasses((prev) => [...prev, nextClass]);
@@ -208,7 +108,7 @@ export function PlanningProvider({ children }: { children: React.ReactNode }) {
                         const slotKey = `${input.institutionId}|${input.subjectId}|${date}|${slot.time}`;
                         if (!existingSlot.has(slotKey)) {
                            next.push({
-                              id: createClassId(),
+                              id: createPlanningClassId(),
                               scheduleTemplateId,
                               institutionId: input.institutionId,
                               subjectId: input.subjectId,
@@ -256,7 +156,7 @@ export function PlanningProvider({ children }: { children: React.ReactNode }) {
 
                duplicated = {
                   ...source,
-                  id: createClassId(),
+                  id: createPlanningClassId(),
                   date: overrides?.date ?? addDays(source.date, 7),
                   time: overrides?.time ?? source.time,
                   status: overrides?.status ?? "sin-planificar",
