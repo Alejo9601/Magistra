@@ -38,6 +38,8 @@ export function ClassEditorModal({
    initialDate?: string;
    onSubmit: (payload: ClassFormInput, mode: "draft" | "publish") => void;
 }) {
+   const today = new Date();
+   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
    const [institutionId, setInstitutionId] = useState(activeInstitution);
    const [subjectId, setSubjectId] = useState("");
    const [date, setDate] = useState("");
@@ -71,6 +73,10 @@ export function ClassEditorModal({
    const submit = (mode: "draft" | "publish") => {
       if (!institutionId || !subjectId || !date || !time || !topic.trim()) {
          toast.error("Completa institucion, materia, fecha, hora y tema principal.");
+         return;
+      }
+      if (!initialClass && date < todayStr) {
+         toast.error("No se pueden crear clases en fechas pasadas.");
          return;
       }
 
@@ -163,6 +169,7 @@ export function ClassEditorModal({
                      type="date"
                      className="h-9 text-xs"
                      value={date}
+                     min={initialClass ? undefined : todayStr}
                      onChange={(event) => setDate(event.target.value)}
                   />
                </div>

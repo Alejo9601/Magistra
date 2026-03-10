@@ -48,6 +48,8 @@ export function PlanificacionContent() {
    const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
    const [editingClassId, setEditingClassId] = useState<string | null>(null);
    const [prefillDate, setPrefillDate] = useState<string | undefined>(undefined);
+   const today = new Date();
+   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
    const scopedClasses = useMemo(
       () => classes.filter((classSession) => classSession.institutionId === activeInstitution),
@@ -201,20 +203,31 @@ export function PlanificacionContent() {
                         {weeks.flat().map((day, idx) => {
                            const dateStr = day ? `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}` : "";
                            const dayClasses = day ? filteredClasses.filter((classSession) => classSession.date === dateStr) : [];
+                           const isPastDate = Boolean(day && dateStr < todayStr);
                            return (
-                              <div key={idx} className={`min-h-[92px] border-b border-r border-border last:border-r-0 p-1.5 ${day ? "hover:bg-muted/30" : "bg-muted/10"}`}>
+                              <div key={idx} className={`min-h-[92px] border-b border-r border-border last:border-r-0 p-1.5 ${day ? isPastDate ? "bg-muted/55 ring-1 ring-inset ring-border/70" : "hover:bg-muted/30" : "bg-muted/10"}`}>
                                  {day && (
                                     <>
                                        <div className="flex items-center justify-between gap-1">
-                                          <span className="text-xs font-medium text-foreground">{day}</span>
-                                          <button onClick={() => openCreateModal(dateStr)} className="size-5 inline-flex items-center justify-center rounded bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"><Plus className="size-3" /></button>
+                                          <span className={`text-xs font-medium ${isPastDate ? "text-foreground/75" : "text-foreground"}`}>{day}</span>
+                                          <button
+                                             onClick={() => {
+                                                if (isPastDate) return;
+                                                openCreateModal(dateStr);
+                                             }}
+                                             disabled={isPastDate}
+                                             className={`size-5 inline-flex items-center justify-center rounded ${isPastDate ? "bg-muted/70 text-muted-foreground/70 cursor-not-allowed" : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"}`}
+                                             title={isPastDate ? "No se pueden crear clases en fechas pasadas" : "Nueva clase"}
+                                          >
+                                             <Plus className="size-3" />
+                                          </button>
                                        </div>
                                        <div className="mt-1 flex flex-col gap-0.5">
                                           {dayClasses.slice(0, 3).map((cls) => {
                                              const inst = getInstitutionById(cls.institutionId);
                                              const subject = getSubjectById(cls.subjectId);
                                              return (
-                                                <button key={cls.id} onClick={() => openEditModal(cls.id)} className="w-full text-left rounded px-1 py-0.5 text-[10px] font-medium truncate" style={{ backgroundColor: (inst?.color ?? "#4F46E5") + "15", color: inst?.color ?? "#4F46E5" }}>
+                                                <button key={cls.id} onClick={() => openEditModal(cls.id)} className={`w-full text-left rounded px-1 py-0.5 text-[10px] font-medium truncate ${isPastDate ? "opacity-85" : ""}`} style={{ backgroundColor: (inst?.color ?? "#4F46E5") + "15", color: inst?.color ?? "#4F46E5" }}>
                                                    {subject?.name}
                                                 </button>
                                              );

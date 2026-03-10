@@ -216,6 +216,7 @@ export function ClassScheduleModal({
                      type="date"
                      className="h-9 text-xs"
                      value={startDate}
+                     min={todayDate()}
                      onChange={(event) => setStartDate(event.target.value)}
                   />
                </div>
@@ -226,6 +227,7 @@ export function ClassScheduleModal({
                      type="date"
                      className="h-9 text-xs"
                      value={endDate}
+                     min={startDate || todayDate()}
                      onChange={(event) => setEndDate(event.target.value)}
                   />
                </div>

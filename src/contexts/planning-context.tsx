@@ -182,8 +182,15 @@ export function PlanningProvider({ children }: { children: React.ReactNode }) {
                   ),
                );
 
+               const today = new Date();
+               const todayAtNoon = new Date(
+                  `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}T12:00:00`,
+               );
                const cursor = new Date(`${input.startDate}T12:00:00`);
                const end = new Date(`${input.endDate}T12:00:00`);
+               if (cursor < todayAtNoon) {
+                  cursor.setTime(todayAtNoon.getTime());
+               }
 
                while (cursor <= end) {
                   const dayOfWeek = cursor.getDay();
