@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getInstitutionById, getSubjectById } from "@/lib/edu-repository";
 import { usePlanningContext } from "@/contexts/planning-context";
 import { toast } from "sonner";
@@ -12,12 +12,14 @@ import { AttendanceCard } from "@/components/clase-detail/attendance-card";
 import { Link, useParams } from "react-router-dom";
 import { useStudentsContext } from "@/contexts/students-context";
 import { Button } from "@/components/ui/button";
+import { useClassroomContext } from "@/contexts/classroom-context";
 
 export function ClaseDetailContent() {
    const params = useParams();
    const classId = params.id as string;
    const { students } = useStudentsContext();
    const { classes, markClassAsTaught, updateClassNotes } = usePlanningContext();
+   const { getRecord, setAttendance: saveAttendance } = useClassroomContext();
 
    const cls = useMemo(
       () => classes.find((classSession) => classSession.id === classId),
@@ -30,14 +32,25 @@ export function ClaseDetailContent() {
       ? students.filter((student) => student.subjectIds.includes(subject.id))
       : [];
 
-   const [attendance, setAttendance] = useState<Record<string, AttendanceStatus>>(
-      Object.fromEntries(
-         classStudents.map((student) => [student.id, "P" as AttendanceStatus]),
-      ),
-   );
+   const attendanceFromRecord = useMemo<Record<string, AttendanceStatus>>(() => {
+      const record = getRecord(classId);
+      const nextAttendance = Object.fromEntries(
+         classStudents.map((student) => [
+            student.id,
+            record.attendance[student.id] ?? ("P" as AttendanceStatus),
+         ]),
+      );
+      return nextAttendance;
+   }, [classId, classStudents, getRecord]);
+   const [attendance, setAttendance] =
+      useState<Record<string, AttendanceStatus>>(attendanceFromRecord);
    const [notesDraftByClassId, setNotesDraftByClassId] = useState<
       Record<string, string>
    >({});
+
+   useEffect(() => {
+      setAttendance(attendanceFromRecord);
+   }, [attendanceFromRecord]);
 
    if (!cls || !subject || !inst) {
       return (
@@ -90,7 +103,10 @@ export function ClaseDetailContent() {
                   classStudents={classStudents}
                   attendance={attendance}
                   setAttendance={setAttendance}
-                  onSave={() => toast.success("Asistencia guardada correctamente")}
+                  onSave={() => {
+                     saveAttendance(cls.id, attendance);
+                     toast.success("Asistencia guardada correctamente");
+                  }}
                />
             </div>
          </div>

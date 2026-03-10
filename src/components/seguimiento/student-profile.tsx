@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
    Calendar,
    Star,
@@ -44,6 +44,8 @@ import {
 } from "@/lib/edu-repository";
 import { toast } from "sonner";
 import { useStudentsContext } from "@/contexts/students-context";
+import { usePlanningContext } from "@/contexts/planning-context";
+import { useClassroomContext } from "@/contexts/classroom-context";
 
 export function StudentProfile({
    studentId,
@@ -55,6 +57,8 @@ export function StudentProfile({
    activeInstitution: string;
 }) {
    const { students } = useStudentsContext();
+   const { classes } = usePlanningContext();
+   const { getRecord } = useClassroomContext();
    const [gradeModalOpen, setGradeModalOpen] = useState(false);
    const student = students.find((s) => s.id === studentId);
 
@@ -72,18 +76,86 @@ export function StudentProfile({
    const studentEvals = evaluations.filter((e) =>
       e.grades.some((g) => g.studentId === studentId),
    );
+   const attendanceEntries = useMemo(() => {
+      const subjectIdSet = new Set(student.subjectIds);
+      const relevantClasses = classes.filter(
+         (classSession) =>
+            subjectIdSet.has(classSession.subjectId) &&
+            classSession.institutionId === activeInstitution,
+      );
+      return relevantClasses
+         .map((classSession) => ({
+            classId: classSession.id,
+            date: classSession.date,
+            status: getRecord(classSession.id).attendance[studentId],
+         }))
+         .filter(
+            (entry): entry is { classId: string; date: string; status: "P" | "A" | "T" | "J" } =>
+               Boolean(entry.status),
+         );
+   }, [activeInstitution, classes, getRecord, student.subjectIds, studentId]);
 
-   const calendarDays = Array.from({ length: 28 }, (_, i) => {
-      const status =
-         i % 9 === 0
-            ? "absent"
-            : i % 7 === 0
-              ? "late"
-              : i % 6 === 0
-                ? "none"
-                : "present";
-      return { day: i + 1, status };
-   });
+   const attendancePct = useMemo(() => {
+      if (attendanceEntries.length === 0) {
+         return student.attendance;
+      }
+      const attendedWeight = attendanceEntries.reduce((sum, entry) => {
+         if (entry.status === "P" || entry.status === "J") return sum + 1;
+         if (entry.status === "T") return sum + 0.5;
+         return sum;
+      }, 0);
+      return Math.round((attendedWeight / attendanceEntries.length) * 100);
+   }, [attendanceEntries, student.attendance]);
+
+   const attendanceByDate = useMemo(() => {
+      const grouped = new Map<string, Array<"P" | "A" | "T" | "J">>();
+      attendanceEntries.forEach((entry) => {
+         const list = grouped.get(entry.date) ?? [];
+         list.push(entry.status);
+         grouped.set(entry.date, list);
+      });
+
+      return new Map(
+         Array.from(grouped.entries()).map(([date, statuses]) => {
+            let aggregated: "present" | "absent" | "late" | "justified";
+            if (statuses.includes("A")) {
+               aggregated = "absent";
+            } else if (statuses.includes("T")) {
+               aggregated = "late";
+            } else if (statuses.includes("J")) {
+               aggregated = "justified";
+            } else {
+               aggregated = "present";
+            }
+            return [date, aggregated] as const;
+         }),
+      );
+   }, [attendanceEntries]);
+
+   const calendarDays = useMemo(() => {
+      const today = new Date();
+      return Array.from({ length: 28 }, (_, index) => {
+         const date = new Date(today);
+         date.setDate(today.getDate() - (27 - index));
+         const yyyy = date.getFullYear();
+         const mm = String(date.getMonth() + 1).padStart(2, "0");
+         const dd = String(date.getDate()).padStart(2, "0");
+         const dateStr = `${yyyy}-${mm}-${dd}`;
+         return {
+            date: dateStr,
+            day: date.getDate(),
+            status: attendanceByDate.get(dateStr) ?? "none",
+         };
+      });
+   }, [attendanceByDate]);
+   const calendarOffset = useMemo(() => {
+      if (calendarDays.length === 0) {
+         return 0;
+      }
+      const firstDate = new Date(`${calendarDays[0].date}T12:00:00`);
+      const jsDay = firstDate.getDay();
+      return (jsDay + 6) % 7;
+   }, [calendarDays]);
 
    const observations = [
       {
@@ -141,9 +213,9 @@ export function StudentProfile({
                         Asistencia
                      </p>
                      <p
-                        className={`text-2xl font-bold ${student.attendance >= 80 ? "text-success" : student.attendance >= 65 ? "text-warning-foreground" : "text-destructive"}`}
+                        className={`text-2xl font-bold ${attendancePct >= 80 ? "text-success" : attendancePct >= 65 ? "text-warning-foreground" : "text-destructive"}`}
                      >
-                        {student.attendance}%
+                        {attendancePct}%
                      </p>
                   </div>
                </CardContent>
@@ -190,7 +262,7 @@ export function StudentProfile({
                <Card>
                   <CardHeader className="pb-3">
                      <CardTitle className="text-sm font-semibold">
-                        Historial de Asistencias - Febrero 2026
+                        Historial de asistencias (ultimos 28 dias)
                      </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
@@ -203,12 +275,12 @@ export function StudentProfile({
                               {d}
                            </div>
                         ))}
-                        {[0, 1, 2].map((i) => (
+                        {Array.from({ length: calendarOffset }).map((_, i) => (
                            <div key={`empty-${i}`} />
                         ))}
                         {calendarDays.map((d) => (
                            <div
-                              key={d.day}
+                              key={d.date}
                               className={`flex items-center justify-center size-8 rounded-md text-[10px] font-medium ${
                                  d.status === "present"
                                     ? "bg-success/15 text-success"
@@ -216,6 +288,8 @@ export function StudentProfile({
                                       ? "bg-destructive/15 text-destructive"
                                       : d.status === "late"
                                         ? "bg-warning/15 text-warning-foreground"
+                                        : d.status === "justified"
+                                          ? "bg-info/15 text-info"
                                         : "bg-muted text-muted-foreground"
                               }`}
                            >
@@ -240,6 +314,12 @@ export function StudentProfile({
                            <div className="size-2.5 rounded bg-warning/40" />
                            <span className="text-[10px] text-muted-foreground">
                               Tarde
+                           </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                           <div className="size-2.5 rounded bg-info/40" />
+                           <span className="text-[10px] text-muted-foreground">
+                              Justificada
                            </span>
                         </div>
                         <div className="flex items-center gap-1.5">
