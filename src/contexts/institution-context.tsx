@@ -1,7 +1,8 @@
-﻿import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { institutions } from "@/lib/edu-repository";
-
-export const ACTIVE_INSTITUTION_STORAGE_KEY = "aula.activeInstitution";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+   loadActiveInstitution,
+   saveActiveInstitution,
+} from "@/services/institution-service";
 
 type InstitutionContextValue = {
    activeInstitution: string;
@@ -10,41 +11,11 @@ type InstitutionContextValue = {
 
 const InstitutionContext = createContext<InstitutionContextValue | null>(null);
 
-function resolveInitialInstitution() {
-   const fallbackInstitution = institutions[0]?.id ?? "inst-1";
-
-   if (typeof window === "undefined") {
-      return fallbackInstitution;
-   }
-
-   const savedInstitution = window.localStorage.getItem(
-      ACTIVE_INSTITUTION_STORAGE_KEY,
-   );
-
-   if (
-      savedInstitution &&
-      institutions.some((institution) => institution.id === savedInstitution)
-   ) {
-      return savedInstitution;
-   }
-
-   return fallbackInstitution;
-}
-
 export function InstitutionProvider({ children }: { children: React.ReactNode }) {
-   const [activeInstitution, setActiveInstitution] = useState(
-      resolveInitialInstitution,
-   );
+   const [activeInstitution, setActiveInstitution] = useState(loadActiveInstitution);
 
    useEffect(() => {
-      if (typeof window === "undefined") {
-         return;
-      }
-
-      window.localStorage.setItem(
-         ACTIVE_INSTITUTION_STORAGE_KEY,
-         activeInstitution,
-      );
+      saveActiveInstitution(activeInstitution);
    }, [activeInstitution]);
 
    const value = useMemo(
