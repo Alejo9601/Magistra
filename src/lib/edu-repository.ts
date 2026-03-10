@@ -1,0 +1,169 @@
+﻿import rawData from "@/data/edu-data.json";
+
+export type Institution = {
+   id: string;
+   name: string;
+   address: string;
+   level: string;
+   color: string;
+};
+
+export type Subject = {
+   id: string;
+   name: string;
+   institutionId: string;
+   course: string;
+   studentCount: number;
+   planProgress: number;
+};
+
+export type Student = {
+   id: string;
+   name: string;
+   lastName: string;
+   dni: string;
+   email?: string;
+   subjectIds: string[];
+   attendance: number;
+   average: number;
+   status: "regular" | "en-riesgo" | "destacado";
+   observations?: string;
+};
+
+export type ClassSession = {
+   id: string;
+   subjectId: string;
+   institutionId: string;
+   date: string;
+   time: string;
+   scheduleTemplateId?: string;
+   topic: string;
+   subtopics: string[];
+   type: "teorica" | "practica" | "evaluacion" | "repaso" | "recuperatorio";
+   status: "planificada" | "sin-planificar" | "finalizada";
+   activities?: string;
+   notes?: string;
+   resources?: string[];
+};
+
+export type Evaluation = {
+   id: string;
+   name: string;
+   subjectId: string;
+   date: string;
+   type: "parcial" | "tp" | "final" | "quiz";
+   grades: { studentId: string; grade: number | string; observation?: string }[];
+};
+
+export type ContentItem = {
+   id: string;
+   name: string;
+   description: string;
+   subjectId: string;
+   institutionId: string;
+   unit: string[];
+   type: "apunte" | "consigna" | "evaluacion" | "presentacion" | "link" | "otro";
+   fileType: "pdf" | "image" | "video" | "link" | "doc";
+   uploadDate: string;
+   tags: string[];
+};
+
+export type AttendanceRecord = {
+   studentId: string;
+   classId: string;
+   status: "P" | "A" | "T" | "J";
+};
+
+export type TeacherProfile = {
+   name: string;
+   lastName: string;
+   email: string;
+   avatar: string;
+};
+
+export const institutions = rawData.institutions as Institution[];
+export const subjects = rawData.subjects as Subject[];
+export const students = rawData.students as Student[];
+export const classSessions = rawData.classSessions as ClassSession[];
+export const evaluations = rawData.evaluations as Evaluation[];
+export const contentItems = rawData.contentItems as ContentItem[];
+export const attendanceRecords = rawData.attendanceRecords as AttendanceRecord[];
+export const teacherProfile = rawData.teacherProfile as TeacherProfile;
+
+export function getSubjectById(id: string) {
+   return subjects.find((s) => s.id === id);
+}
+
+export function getInstitutionById(id: string) {
+   return institutions.find((i) => i.id === id);
+}
+
+export function getStudentsBySubject(subjectId: string) {
+   return students.filter((s) => s.subjectIds.includes(subjectId));
+}
+
+export function getSubjectsByInstitution(institutionId: string) {
+   return subjects.filter((s) => s.institutionId === institutionId);
+}
+
+export function getStudentsByInstitution(institutionId: string) {
+   const subjectIdSet = new Set(
+      getSubjectsByInstitution(institutionId).map((s) => s.id),
+   );
+   return students.filter((s) =>
+      s.subjectIds.some((subjectId) => subjectIdSet.has(subjectId)),
+   );
+}
+
+export function getClassesByDate(date: string) {
+   return classSessions.filter((c) => c.date === date);
+}
+
+export function getClassesBySubject(subjectId: string) {
+   return classSessions.filter((c) => c.subjectId === subjectId);
+}
+
+export function getClassesByInstitution(institutionId: string) {
+   return classSessions.filter((c) => c.institutionId === institutionId);
+}
+
+export function getContentBySubject(subjectId: string) {
+   return contentItems.filter((c) => c.subjectId === subjectId);
+}
+
+export function getContentByInstitution(institutionId: string) {
+   return contentItems.filter((c) => c.institutionId === institutionId);
+}
+
+export function getEvaluationsBySubject(subjectId: string) {
+   return evaluations.filter((e) => e.subjectId === subjectId);
+}
+
+export function getInstitutionRepository(institutionId: string) {
+   const scopedSubjects = getSubjectsByInstitution(institutionId);
+   const subjectIds = new Set(scopedSubjects.map((subject) => subject.id));
+
+   return {
+      institutionId,
+      getSubjects: () => scopedSubjects,
+      getStudents: () =>
+         students.filter((student) =>
+            student.subjectIds.some((subjectId) => subjectIds.has(subjectId)),
+         ),
+      getClasses: () =>
+         classSessions.filter((classSession) => classSession.institutionId === institutionId),
+      getContent: () =>
+         contentItems.filter((content) => content.institutionId === institutionId),
+      getSubjectsMap: () =>
+         new Map(scopedSubjects.map((subject) => [subject.id, subject])),
+      getUpcomingClasses: (fromDate: string) =>
+         classSessions
+            .filter(
+               (classSession) =>
+                  classSession.institutionId === institutionId && classSession.date >= fromDate,
+            )
+            .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)),
+   };
+}
+
+export type InstitutionRepository = ReturnType<typeof getInstitutionRepository>;
