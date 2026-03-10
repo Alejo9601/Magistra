@@ -1,0 +1,104 @@
+import { evaluations } from "@/lib/edu-repository";
+import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
+
+const ASSESSMENTS_STORAGE_KEY = "aula.assessments";
+
+export type AssessmentType = "exam" | "practice_work";
+export type AssessmentStatus = "draft" | "scheduled" | "published" | "graded";
+
+export type Assessment = {
+   id: string;
+   subjectId: string;
+   title: string;
+   description?: string;
+   date: string;
+   type: AssessmentType;
+   status: AssessmentStatus;
+   weight: number;
+   maxScore: number;
+   gradesLoaded: number;
+};
+
+function isAssessmentType(value: unknown): value is AssessmentType {
+   return value === "exam" || value === "practice_work";
+}
+
+function isAssessmentStatus(value: unknown): value is AssessmentStatus {
+   return (
+      value === "draft" ||
+      value === "scheduled" ||
+      value === "published" ||
+      value === "graded"
+   );
+}
+
+function sanitizeAssessment(raw: unknown): Assessment | null {
+   if (!raw || typeof raw !== "object") {
+      return null;
+   }
+
+   const input = raw as Partial<Assessment>;
+   if (
+      typeof input.id !== "string" ||
+      typeof input.subjectId !== "string" ||
+      typeof input.title !== "string" ||
+      typeof input.date !== "string" ||
+      !isAssessmentType(input.type) ||
+      !isAssessmentStatus(input.status) ||
+      typeof input.weight !== "number" ||
+      typeof input.maxScore !== "number" ||
+      typeof input.gradesLoaded !== "number"
+   ) {
+      return null;
+   }
+
+   return {
+      id: input.id,
+      subjectId: input.subjectId,
+      title: input.title,
+      description:
+         typeof input.description === "string" ? input.description : undefined,
+      date: input.date,
+      type: input.type,
+      status: input.status,
+      weight: input.weight,
+      maxScore: input.maxScore,
+      gradesLoaded: input.gradesLoaded,
+   };
+}
+
+function seedAssessments(): Assessment[] {
+   return evaluations.map((evaluation) => ({
+      id: evaluation.id,
+      subjectId: evaluation.subjectId,
+      title: evaluation.name,
+      date: evaluation.date,
+      description: undefined,
+      type: evaluation.type === "tp" ? "practice_work" : "exam",
+      status: "scheduled",
+      weight: 1,
+      maxScore: 10,
+      gradesLoaded: evaluation.grades.length,
+   }));
+}
+
+export function loadAssessments() {
+   const seed = seedAssessments();
+   return readJsonFromStorage(ASSESSMENTS_STORAGE_KEY, seed, (raw) => {
+      if (!Array.isArray(raw)) {
+         return null;
+      }
+      const sanitized = raw
+         .map((entry) => sanitizeAssessment(entry))
+         .filter((entry): entry is Assessment => entry !== null);
+      return sanitized.length > 0 ? sanitized : seed;
+   });
+}
+
+export function saveAssessments(assessments: Assessment[]) {
+   writeJsonToStorage(ASSESSMENTS_STORAGE_KEY, assessments);
+}
+
+export function createAssessmentId() {
+   return `asm-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+}
