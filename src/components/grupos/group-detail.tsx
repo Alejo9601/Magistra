@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Plus, Search, BookOpen } from "lucide-react";
+import { ArrowLeft, Plus, Search, BookOpen, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,14 +26,70 @@ import {
    TableRow,
 } from "@/components/ui/table";
 import {
+   Select,
+   SelectContent,
+   SelectItem,
+   SelectTrigger,
+   SelectValue,
+} from "@/components/ui/select";
+import {
    subjects,
    getInstitutionById,
    getClassesBySubject,
-   getEvaluationsBySubject,
 } from "@/lib/edu-repository";
 import { StudentStatusBadge } from "@/components/grupos/status-badge";
 import { toast } from "sonner";
 import { useStudentsContext } from "@/contexts/students-context";
+import {
+   useAssessmentsContext,
+   type AssessmentStatus,
+   type AssessmentType,
+} from "@/contexts/assessments-context";
+import {
+   useActivitiesContext,
+   type ActivityStatus,
+   type ActivityType,
+} from "@/contexts/activities-context";
+
+const assessmentTypeLabel: Record<AssessmentType, string> = {
+   exam: "Examen",
+   practice_work: "Trabajo practico",
+};
+
+const assessmentStatusLabel: Record<AssessmentStatus, string> = {
+   draft: "Borrador",
+   scheduled: "Programada",
+   published: "Publicada",
+   graded: "Corregida",
+};
+
+const assessmentStatusBadgeClass: Record<AssessmentStatus, string> = {
+   draft: "bg-muted text-muted-foreground",
+   scheduled: "bg-primary/10 text-primary",
+   published: "bg-info/10 text-info",
+   graded: "bg-success/10 text-success",
+};
+
+const activityTypeLabel: Record<ActivityType, string> = {
+   classwork: "En clase",
+   homework: "Tarea",
+   lab: "Laboratorio",
+   project: "Proyecto",
+};
+
+const activityStatusLabel: Record<ActivityStatus, string> = {
+   draft: "Borrador",
+   planned: "Planificada",
+   assigned: "Asignada",
+   completed: "Completada",
+};
+
+const activityStatusBadgeClass: Record<ActivityStatus, string> = {
+   draft: "bg-muted text-muted-foreground",
+   planned: "bg-primary/10 text-primary",
+   assigned: "bg-info/10 text-info",
+   completed: "bg-success/10 text-success",
+};
 
 export function GroupDetail({
    subjectId,
@@ -43,17 +99,60 @@ export function GroupDetail({
    onBack: () => void;
 }) {
    const { getStudentsBySubject, addStudent } = useStudentsContext();
+   const { getAssessmentsBySubject, addAssessment, removeAssessment } =
+      useAssessmentsContext();
+   const { getActivitiesBySubject, addActivity, removeActivity } =
+      useActivitiesContext();
    const [addStudentOpen, setAddStudentOpen] = useState(false);
+   const [addAssessmentOpen, setAddAssessmentOpen] = useState(false);
+   const [addActivityOpen, setAddActivityOpen] = useState(false);
+   const [studentSearch, setStudentSearch] = useState("");
    const [newName, setNewName] = useState("");
    const [newLastName, setNewLastName] = useState("");
    const [newDni, setNewDni] = useState("");
    const [newEmail, setNewEmail] = useState("");
    const [newObservations, setNewObservations] = useState("");
+   const [newAssessmentTitle, setNewAssessmentTitle] = useState("");
+   const [newAssessmentType, setNewAssessmentType] =
+      useState<AssessmentType>("exam");
+   const [newAssessmentDate, setNewAssessmentDate] = useState("");
+   const [newAssessmentStatus, setNewAssessmentStatus] =
+      useState<AssessmentStatus>("draft");
+   const [newAssessmentWeight, setNewAssessmentWeight] = useState("1");
+   const [newAssessmentMaxScore, setNewAssessmentMaxScore] = useState("10");
+   const [newAssessmentDescription, setNewAssessmentDescription] = useState("");
+   const [newActivityTitle, setNewActivityTitle] = useState("");
+   const [newActivityType, setNewActivityType] = useState<ActivityType>("classwork");
+   const [newActivityStatus, setNewActivityStatus] =
+      useState<ActivityStatus>("planned");
+   const [newActivityDescription, setNewActivityDescription] = useState("");
    const subject = subjects.find((s) => s.id === subjectId);
    const inst = subject ? getInstitutionById(subject.institutionId) : null;
    const groupStudents = getStudentsBySubject(subjectId);
    const groupClasses = getClassesBySubject(subjectId);
-   const groupEvals = getEvaluationsBySubject(subjectId);
+   const groupAssessments = useMemo(
+      () =>
+         [...getAssessmentsBySubject(subjectId)].sort((a, b) =>
+            a.date.localeCompare(b.date),
+         ),
+      [getAssessmentsBySubject, subjectId],
+   );
+   const filteredStudents = useMemo(() => {
+      const query = studentSearch.trim().toLowerCase();
+      if (!query) {
+         return groupStudents;
+      }
+      return groupStudents.filter((student) =>
+         `${student.lastName}, ${student.name}`.toLowerCase().includes(query),
+      );
+   }, [groupStudents, studentSearch]);
+   const groupActivities = useMemo(
+      () =>
+         [...getActivitiesBySubject(subjectId)].sort((a, b) =>
+            a.title.localeCompare(b.title),
+         ),
+      [getActivitiesBySubject, subjectId],
+   );
 
    if (!subject || !inst) return null;
 
@@ -63,6 +162,21 @@ export function GroupDetail({
       setNewDni("");
       setNewEmail("");
       setNewObservations("");
+   };
+   const resetAssessmentForm = () => {
+      setNewAssessmentTitle("");
+      setNewAssessmentType("exam");
+      setNewAssessmentDate("");
+      setNewAssessmentStatus("draft");
+      setNewAssessmentWeight("1");
+      setNewAssessmentMaxScore("10");
+      setNewAssessmentDescription("");
+   };
+   const resetActivityForm = () => {
+      setNewActivityTitle("");
+      setNewActivityType("classwork");
+      setNewActivityStatus("planned");
+      setNewActivityDescription("");
    };
 
    const submitStudent = () => {
@@ -82,6 +196,55 @@ export function GroupDetail({
       setAddStudentOpen(false);
       resetStudentForm();
       toast.success("Alumno agregado correctamente");
+   };
+
+   const submitAssessment = () => {
+      if (!newAssessmentTitle.trim() || !newAssessmentDate) {
+         toast.error("Completa titulo y fecha.");
+         return;
+      }
+
+      const weight = Number(newAssessmentWeight);
+      const maxScore = Number(newAssessmentMaxScore);
+      if (!Number.isFinite(weight) || weight <= 0) {
+         toast.error("La ponderacion debe ser mayor a 0.");
+         return;
+      }
+      if (!Number.isFinite(maxScore) || maxScore <= 0) {
+         toast.error("La nota maxima debe ser mayor a 0.");
+         return;
+      }
+
+      addAssessment({
+         subjectId,
+         title: newAssessmentTitle,
+         date: newAssessmentDate,
+         type: newAssessmentType,
+         status: newAssessmentStatus,
+         weight,
+         maxScore,
+         description: newAssessmentDescription,
+      });
+      setAddAssessmentOpen(false);
+      resetAssessmentForm();
+      toast.success("Evaluacion creada correctamente");
+   };
+
+   const submitActivity = () => {
+      if (!newActivityTitle.trim()) {
+         toast.error("Completa el titulo de la actividad.");
+         return;
+      }
+      addActivity({
+         subjectId,
+         title: newActivityTitle,
+         type: newActivityType,
+         status: newActivityStatus,
+         description: newActivityDescription,
+      });
+      setAddActivityOpen(false);
+      resetActivityForm();
+      toast.success("Actividad creada correctamente");
    };
 
    return (
@@ -116,6 +279,9 @@ export function GroupDetail({
                <TabsTrigger value="evaluaciones" className="text-xs">
                   Evaluaciones
                </TabsTrigger>
+               <TabsTrigger value="actividades" className="text-xs">
+                  Actividades
+               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="alumnos">
@@ -125,6 +291,8 @@ export function GroupDetail({
                      <Input
                         className="h-8 pl-8 text-xs"
                         placeholder="Buscar alumno..."
+                        value={studentSearch}
+                        onChange={(event) => setStudentSearch(event.target.value)}
                      />
                   </div>
                   <Button
@@ -152,7 +320,7 @@ export function GroupDetail({
                            </TableRow>
                         </TableHeader>
                         <TableBody>
-                           {groupStudents.map((student) => (
+                           {filteredStudents.map((student) => (
                               <TableRow
                                  key={student.id}
                                  className="hover:bg-muted/30 cursor-pointer"
@@ -196,6 +364,18 @@ export function GroupDetail({
                                  </TableCell>
                               </TableRow>
                            ))}
+                           {filteredStudents.length === 0 && (
+                              <TableRow>
+                                 <TableCell
+                                    colSpan={4}
+                                    className="text-center py-8"
+                                 >
+                                    <p className="text-xs text-muted-foreground">
+                                       No se encontraron alumnos para esa busqueda
+                                    </p>
+                                 </TableCell>
+                              </TableRow>
+                           )}
                         </TableBody>
                      </Table>
                   </CardContent>
@@ -267,6 +447,16 @@ export function GroupDetail({
             </TabsContent>
 
             <TabsContent value="evaluaciones">
+               <div className="mt-2 mb-3 flex items-center justify-end">
+                  <Button
+                     size="sm"
+                     className="text-xs"
+                     onClick={() => setAddAssessmentOpen(true)}
+                  >
+                     <Plus className="size-3.5 mr-1.5" />
+                     Crear evaluacion o TP
+                  </Button>
+               </div>
                <Card className="mt-2">
                   <CardContent className="p-0">
                      <Table>
@@ -277,21 +467,27 @@ export function GroupDetail({
                               </TableHead>
                               <TableHead className="text-xs">Fecha</TableHead>
                               <TableHead className="text-xs">Tipo</TableHead>
+                              <TableHead className="text-xs">Estado</TableHead>
                               <TableHead className="text-xs">
                                  Notas cargadas
+                              </TableHead>
+                              <TableHead className="text-xs text-right">
+                                 Acciones
                               </TableHead>
                            </TableRow>
                         </TableHeader>
                         <TableBody>
-                           {groupEvals.map((ev) => {
-                              const dateObj = new Date(ev.date + "T12:00:00");
+                           {groupAssessments.map((assessment) => {
+                              const dateObj = new Date(
+                                 assessment.date + "T12:00:00",
+                              );
                               return (
                                  <TableRow
-                                    key={ev.id}
+                                    key={assessment.id}
                                     className="hover:bg-muted/30"
                                  >
                                     <TableCell className="text-xs font-medium">
-                                       {ev.name}
+                                       {assessment.title}
                                     </TableCell>
                                     <TableCell className="text-xs">
                                        {dateObj.toLocaleDateString("es-AR", {
@@ -304,22 +500,43 @@ export function GroupDetail({
                                           variant="secondary"
                                           className="text-[10px] capitalize"
                                        >
-                                          {ev.type}
+                                          {assessmentTypeLabel[assessment.type]}
+                                       </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                       <Badge
+                                          className={`border-0 text-[10px] ${assessmentStatusBadgeClass[assessment.status]}`}
+                                       >
+                                          {assessmentStatusLabel[assessment.status]}
                                        </Badge>
                                     </TableCell>
                                     <TableCell>
                                        <span className="text-xs text-muted-foreground">
-                                          {ev.grades.length} /{" "}
+                                          {assessment.gradesLoaded} /{" "}
                                           {groupStudents.length}
                                        </span>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                       <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="icon"
+                                          className="size-7"
+                                          onClick={() => {
+                                             removeAssessment(assessment.id);
+                                             toast.success("Evaluacion eliminada");
+                                          }}
+                                       >
+                                          <Trash2 className="size-3.5 text-muted-foreground" />
+                                       </Button>
                                     </TableCell>
                                  </TableRow>
                               );
                            })}
-                           {groupEvals.length === 0 && (
+                           {groupAssessments.length === 0 && (
                               <TableRow>
                                  <TableCell
-                                    colSpan={4}
+                                    colSpan={6}
                                     className="text-center py-8"
                                  >
                                     <BookOpen className="size-8 text-muted-foreground/30 mx-auto mb-2" />
@@ -330,9 +547,112 @@ export function GroupDetail({
                                        variant="outline"
                                        size="sm"
                                        className="mt-3 text-xs"
+                                       onClick={() => setAddAssessmentOpen(true)}
                                     >
                                        <Plus className="size-3.5 mr-1.5" />
                                        Crear evaluacion
+                                    </Button>
+                                 </TableCell>
+                              </TableRow>
+                           )}
+                        </TableBody>
+                     </Table>
+                  </CardContent>
+               </Card>
+            </TabsContent>
+
+            <TabsContent value="actividades">
+               <div className="mt-2 mb-3 flex items-center justify-end">
+                  <Button
+                     size="sm"
+                     className="text-xs"
+                     onClick={() => setAddActivityOpen(true)}
+                  >
+                     <Plus className="size-3.5 mr-1.5" />
+                     Crear actividad
+                  </Button>
+               </div>
+               <Card className="mt-2">
+                  <CardContent className="p-0">
+                     <Table>
+                        <TableHeader>
+                           <TableRow>
+                              <TableHead className="text-xs">Actividad</TableHead>
+                              <TableHead className="text-xs">Tipo</TableHead>
+                              <TableHead className="text-xs">Estado</TableHead>
+                              <TableHead className="text-xs">
+                                 Clases vinculadas
+                              </TableHead>
+                              <TableHead className="text-xs text-right">
+                                 Acciones
+                              </TableHead>
+                           </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                           {groupActivities.map((activity) => (
+                              <TableRow key={activity.id} className="hover:bg-muted/30">
+                                 <TableCell className="text-xs font-medium">
+                                    <div>
+                                       <p>{activity.title}</p>
+                                       {activity.description && (
+                                          <p className="text-[11px] text-muted-foreground mt-1">
+                                             {activity.description}
+                                          </p>
+                                       )}
+                                    </div>
+                                 </TableCell>
+                                 <TableCell>
+                                    <Badge
+                                       variant="secondary"
+                                       className="text-[10px] capitalize"
+                                    >
+                                       {activityTypeLabel[activity.type]}
+                                    </Badge>
+                                 </TableCell>
+                                 <TableCell>
+                                    <Badge
+                                       className={`border-0 text-[10px] ${activityStatusBadgeClass[activity.status]}`}
+                                    >
+                                       {activityStatusLabel[activity.status]}
+                                    </Badge>
+                                 </TableCell>
+                                 <TableCell className="text-xs text-muted-foreground">
+                                    {activity.linkedClassIds.length}
+                                 </TableCell>
+                                 <TableCell className="text-right">
+                                    <Button
+                                       type="button"
+                                       variant="ghost"
+                                       size="icon"
+                                       className="size-7"
+                                       onClick={() => {
+                                          removeActivity(activity.id);
+                                          toast.success("Actividad eliminada");
+                                       }}
+                                    >
+                                       <Trash2 className="size-3.5 text-muted-foreground" />
+                                    </Button>
+                                 </TableCell>
+                              </TableRow>
+                           ))}
+                           {groupActivities.length === 0 && (
+                              <TableRow>
+                                 <TableCell
+                                    colSpan={5}
+                                    className="text-center py-8"
+                                 >
+                                    <BookOpen className="size-8 text-muted-foreground/30 mx-auto mb-2" />
+                                    <p className="text-xs text-muted-foreground">
+                                       No hay actividades registradas
+                                    </p>
+                                    <Button
+                                       variant="outline"
+                                       size="sm"
+                                       className="mt-3 text-xs"
+                                       onClick={() => setAddActivityOpen(true)}
+                                    >
+                                       <Plus className="size-3.5 mr-1.5" />
+                                       Crear actividad
                                     </Button>
                                  </TableCell>
                               </TableRow>
@@ -426,6 +746,244 @@ export function GroupDetail({
                      onClick={submitStudent}
                   >
                      Agregar
+                  </Button>
+               </DialogFooter>
+            </DialogContent>
+         </Dialog>
+
+         <Dialog
+            open={addAssessmentOpen}
+            onOpenChange={(open) => {
+               setAddAssessmentOpen(open);
+               if (!open) {
+                  resetAssessmentForm();
+               }
+            }}
+         >
+            <DialogContent className="sm:max-w-[520px]">
+               <DialogHeader>
+                  <DialogTitle>Nueva evaluacion</DialogTitle>
+                  <DialogDescription>
+                     Crea una instancia evaluativa para {subject.name} -{" "}
+                     {subject.course}.
+                  </DialogDescription>
+               </DialogHeader>
+               <div className="grid grid-cols-1 gap-4 py-2">
+                  <div className="flex flex-col gap-1.5">
+                     <Label className="text-xs">Titulo</Label>
+                     <Input
+                        className="h-9 text-xs"
+                        placeholder="Ej: Parcial 1 - Algebra"
+                        value={newAssessmentTitle}
+                        onChange={(event) =>
+                           setNewAssessmentTitle(event.target.value)
+                        }
+                     />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs">Tipo</Label>
+                        <Select
+                           value={newAssessmentType}
+                           onValueChange={(value) =>
+                              setNewAssessmentType(value as AssessmentType)
+                           }
+                        >
+                           <SelectTrigger className="h-9 text-xs">
+                              <SelectValue />
+                           </SelectTrigger>
+                           <SelectContent>
+                              <SelectItem value="exam">Examen</SelectItem>
+                              <SelectItem value="practice_work">
+                                 Trabajo practico
+                              </SelectItem>
+                           </SelectContent>
+                        </Select>
+                     </div>
+                     <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs">Fecha</Label>
+                        <Input
+                           className="h-9 text-xs"
+                           type="date"
+                           value={newAssessmentDate}
+                           onChange={(event) =>
+                              setNewAssessmentDate(event.target.value)
+                           }
+                        />
+                     </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                     <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs">Estado</Label>
+                        <Select
+                           value={newAssessmentStatus}
+                           onValueChange={(value) =>
+                              setNewAssessmentStatus(value as AssessmentStatus)
+                           }
+                        >
+                           <SelectTrigger className="h-9 text-xs">
+                              <SelectValue />
+                           </SelectTrigger>
+                           <SelectContent>
+                              <SelectItem value="draft">Borrador</SelectItem>
+                              <SelectItem value="scheduled">Programada</SelectItem>
+                              <SelectItem value="published">Publicada</SelectItem>
+                              <SelectItem value="graded">Corregida</SelectItem>
+                           </SelectContent>
+                        </Select>
+                     </div>
+                     <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs">Ponderacion</Label>
+                        <Input
+                           className="h-9 text-xs"
+                           type="number"
+                           min="0.1"
+                           step="0.1"
+                           value={newAssessmentWeight}
+                           onChange={(event) =>
+                              setNewAssessmentWeight(event.target.value)
+                           }
+                        />
+                     </div>
+                     <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs">Nota maxima</Label>
+                        <Input
+                           className="h-9 text-xs"
+                           type="number"
+                           min="1"
+                           step="1"
+                           value={newAssessmentMaxScore}
+                           onChange={(event) =>
+                              setNewAssessmentMaxScore(event.target.value)
+                           }
+                        />
+                     </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                     <Label className="text-xs">Descripcion (opcional)</Label>
+                     <Textarea
+                        className="text-xs min-h-[80px] resize-none"
+                        placeholder="Criterios, consigna, alcance..."
+                        value={newAssessmentDescription}
+                        onChange={(event) =>
+                           setNewAssessmentDescription(event.target.value)
+                        }
+                     />
+                  </div>
+               </div>
+               <DialogFooter>
+                  <Button
+                     variant="outline"
+                     size="sm"
+                     onClick={() => setAddAssessmentOpen(false)}
+                     className="text-xs"
+                  >
+                     Cancelar
+                  </Button>
+                  <Button
+                     size="sm"
+                     className="text-xs"
+                     onClick={submitAssessment}
+                  >
+                     Guardar
+                  </Button>
+               </DialogFooter>
+            </DialogContent>
+         </Dialog>
+
+         <Dialog
+            open={addActivityOpen}
+            onOpenChange={(open) => {
+               setAddActivityOpen(open);
+               if (!open) {
+                  resetActivityForm();
+               }
+            }}
+         >
+            <DialogContent className="sm:max-w-[520px]">
+               <DialogHeader>
+                  <DialogTitle>Nueva actividad</DialogTitle>
+                  <DialogDescription>
+                     Crea una actividad para {subject.name} - {subject.course}.
+                  </DialogDescription>
+               </DialogHeader>
+               <div className="grid grid-cols-1 gap-4 py-2">
+                  <div className="flex flex-col gap-1.5">
+                     <Label className="text-xs">Titulo</Label>
+                     <Input
+                        className="h-9 text-xs"
+                        placeholder="Ej: Guia de ejercicios de funciones"
+                        value={newActivityTitle}
+                        onChange={(event) => setNewActivityTitle(event.target.value)}
+                     />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs">Tipo</Label>
+                        <Select
+                           value={newActivityType}
+                           onValueChange={(value) =>
+                              setNewActivityType(value as ActivityType)
+                           }
+                        >
+                           <SelectTrigger className="h-9 text-xs">
+                              <SelectValue />
+                           </SelectTrigger>
+                           <SelectContent>
+                              <SelectItem value="classwork">En clase</SelectItem>
+                              <SelectItem value="homework">Tarea</SelectItem>
+                              <SelectItem value="lab">Laboratorio</SelectItem>
+                              <SelectItem value="project">Proyecto</SelectItem>
+                           </SelectContent>
+                        </Select>
+                     </div>
+                     <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs">Estado</Label>
+                        <Select
+                           value={newActivityStatus}
+                           onValueChange={(value) =>
+                              setNewActivityStatus(value as ActivityStatus)
+                           }
+                        >
+                           <SelectTrigger className="h-9 text-xs">
+                              <SelectValue />
+                           </SelectTrigger>
+                           <SelectContent>
+                              <SelectItem value="draft">Borrador</SelectItem>
+                              <SelectItem value="planned">Planificada</SelectItem>
+                              <SelectItem value="assigned">Asignada</SelectItem>
+                              <SelectItem value="completed">Completada</SelectItem>
+                           </SelectContent>
+                        </Select>
+                     </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                     <Label className="text-xs">Descripcion (opcional)</Label>
+                     <Textarea
+                        className="text-xs min-h-[80px] resize-none"
+                        placeholder="Objetivos, consigna y criterios..."
+                        value={newActivityDescription}
+                        onChange={(event) =>
+                           setNewActivityDescription(event.target.value)
+                        }
+                     />
+                  </div>
+               </div>
+               <DialogFooter>
+                  <Button
+                     variant="outline"
+                     size="sm"
+                     onClick={() => setAddActivityOpen(false)}
+                     className="text-xs"
+                  >
+                     Cancelar
+                  </Button>
+                  <Button
+                     size="sm"
+                     className="text-xs"
+                     onClick={submitActivity}
+                  >
+                     Guardar
                   </Button>
                </DialogFooter>
             </DialogContent>

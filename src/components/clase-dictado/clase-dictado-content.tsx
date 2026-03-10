@@ -12,6 +12,7 @@ import { getInstitutionById, getSubjectById } from "@/lib/edu-repository";
 import { usePlanningContext } from "@/contexts/planning-context";
 import { useStudentsContext } from "@/contexts/students-context";
 import { useClassroomContext } from "@/contexts/classroom-context";
+import { useActivitiesContext } from "@/contexts/activities-context";
 import { AttendanceCard } from "@/components/clase-detail/attendance-card";
 import { type AttendanceStatus } from "@/components/clase-detail/constants";
 
@@ -33,6 +34,7 @@ export function ClaseDictadoContent() {
    const { students } = useStudentsContext();
    const { getRecord, toggleSubtopic, toggleActivity, setAttendance, setNotes } =
       useClassroomContext();
+   const { getActivitiesBySubject } = useActivitiesContext();
 
    const cls = useMemo(
       () => classes.find((classSession) => classSession.id === classId),
@@ -53,7 +55,13 @@ export function ClaseDictadoContent() {
    }
 
    const record = getRecord(cls.id);
-   const activityChecklist = parseActivityChecklist(cls.activities);
+   const subjectActivities = getActivitiesBySubject(subject.id);
+   const linkedActivityTitles = subjectActivities
+      .filter((activity) => activity.linkedClassIds.includes(cls.id))
+      .map((activity) => activity.title);
+   const activityChecklist = Array.from(
+      new Set([...parseActivityChecklist(cls.activities), ...linkedActivityTitles]),
+   );
    const attendanceWithDefaults: Record<string, AttendanceStatus> = Object.fromEntries(
       classStudents.map((student) => [
          student.id,

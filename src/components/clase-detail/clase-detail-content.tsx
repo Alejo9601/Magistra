@@ -13,6 +13,9 @@ import { Link, useParams } from "react-router-dom";
 import { useStudentsContext } from "@/contexts/students-context";
 import { Button } from "@/components/ui/button";
 import { useClassroomContext } from "@/contexts/classroom-context";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useActivitiesContext } from "@/contexts/activities-context";
 
 export function ClaseDetailContent() {
    const params = useParams();
@@ -20,6 +23,7 @@ export function ClaseDetailContent() {
    const { students } = useStudentsContext();
    const { classes, markClassAsTaught, updateClassNotes } = usePlanningContext();
    const { getRecord, setAttendance: saveAttendance } = useClassroomContext();
+   const { getActivitiesBySubject, toggleActivityLink } = useActivitiesContext();
 
    const cls = useMemo(
       () => classes.find((classSession) => classSession.id === classId),
@@ -31,6 +35,15 @@ export function ClaseDetailContent() {
    const classStudents = subject
       ? students.filter((student) => student.subjectIds.includes(subject.id))
       : [];
+   const subjectActivities = useMemo(
+      () =>
+         subject
+            ? [...getActivitiesBySubject(subject.id)].sort((a, b) =>
+                 a.title.localeCompare(b.title),
+              )
+            : [],
+      [getActivitiesBySubject, subject],
+   );
 
    const attendanceFromRecord = useMemo<Record<string, AttendanceStatus>>(() => {
       const record = getRecord(classId);
@@ -99,15 +112,52 @@ export function ClaseDetailContent() {
             </div>
 
             <div className="lg:col-span-2">
-               <AttendanceCard
-                  classStudents={classStudents}
-                  attendance={attendance}
-                  setAttendance={setAttendance}
-                  onSave={() => {
-                     saveAttendance(cls.id, attendance);
-                     toast.success("Asistencia guardada correctamente");
-                  }}
-               />
+               <div className="flex flex-col gap-4">
+                  <AttendanceCard
+                     classStudents={classStudents}
+                     attendance={attendance}
+                     setAttendance={setAttendance}
+                     onSave={() => {
+                        saveAttendance(cls.id, attendance);
+                        toast.success("Asistencia guardada correctamente");
+                     }}
+                  />
+                  <Card>
+                     <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-semibold">
+                           Actividades vinculadas a esta clase
+                        </CardTitle>
+                     </CardHeader>
+                     <CardContent className="pt-0">
+                        {subjectActivities.length === 0 ? (
+                           <p className="text-xs text-muted-foreground">
+                              No hay actividades creadas para esta materia.
+                           </p>
+                        ) : (
+                           <div className="space-y-2">
+                              {subjectActivities.map((activity) => (
+                                 <label
+                                    key={activity.id}
+                                    className="flex items-start gap-2.5 cursor-pointer"
+                                 >
+                                    <Checkbox
+                                       checked={activity.linkedClassIds.includes(
+                                          cls.id,
+                                       )}
+                                       onCheckedChange={() =>
+                                          toggleActivityLink(activity.id, cls.id)
+                                       }
+                                    />
+                                    <span className="text-xs text-foreground">
+                                       {activity.title}
+                                    </span>
+                                 </label>
+                              ))}
+                           </div>
+                        )}
+                     </CardContent>
+                  </Card>
+               </div>
             </div>
          </div>
       </div>

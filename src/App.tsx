@@ -13,6 +13,8 @@ import { PlanningProvider } from "@/contexts/planning-context";
 import { DashboardProvider } from "@/contexts/dashboard-context";
 import { StudentsProvider } from "@/contexts/students-context";
 import { ClassroomProvider } from "@/contexts/classroom-context";
+import { AssessmentsProvider } from "@/contexts/assessments-context";
+import { ActivitiesProvider } from "@/contexts/activities-context";
 import "@/pages/globals.css";
 import ClaseDictadoPage from "@/pages/clase/[id]/dictado/page";
 
@@ -23,32 +25,45 @@ function App() {
             <StudentsProvider>
                <PlanningProvider>
                   <ClassroomProvider>
-                     <DashboardProvider>
-                        <Routes>
-                           <Route path="/" element={<HomePage />} />
-                           <Route
-                              path="/planificacion"
-                              element={<PlanificacionPage />}
-                           />
-                           <Route path="/grupos" element={<GruposPage />} />
-                           <Route path="/seguimiento" element={<SeguimientoPage />} />
-                           <Route
-                              path="/seguimiento/:id"
-                              element={<StudentProfilePage />}
-                           />
-                           <Route path="/contenidos" element={<ContenidosPage />} />
-                           <Route
-                              path="/configuracion"
-                              element={<ConfiguracionPage />}
-                           />
-                           <Route path="/clase/:id" element={<ClaseDetailPage />} />
-                           <Route
-                              path="/clase/:id/dictado"
-                              element={<ClaseDictadoPage />}
-                           />
-                           <Route path="*" element={<Navigate to="/" replace />} />
-                        </Routes>
-                     </DashboardProvider>
+                     <ActivitiesProvider>
+                        <AssessmentsProvider>
+                           <DashboardProvider>
+                              <Routes>
+                                 <Route path="/" element={<HomePage />} />
+                                 <Route
+                                    path="/planificacion"
+                                    element={<PlanificacionPage />}
+                                 />
+                                 <Route path="/grupos" element={<GruposPage />} />
+                                 <Route
+                                    path="/seguimiento"
+                                    element={<SeguimientoPage />}
+                                 />
+                                 <Route
+                                    path="/seguimiento/:id"
+                                    element={<StudentProfilePage />}
+                                 />
+                                 <Route
+                                    path="/contenidos"
+                                    element={<ContenidosPage />}
+                                 />
+                                 <Route
+                                    path="/configuracion"
+                                    element={<ConfiguracionPage />}
+                                 />
+                                 <Route
+                                    path="/clase/:id"
+                                    element={<ClaseDetailPage />}
+                                 />
+                                 <Route
+                                    path="/clase/:id/dictado"
+                                    element={<ClaseDictadoPage />}
+                                 />
+                                 <Route path="*" element={<Navigate to="/" replace />} />
+                              </Routes>
+                           </DashboardProvider>
+                        </AssessmentsProvider>
+                     </ActivitiesProvider>
                   </ClassroomProvider>
                </PlanningProvider>
             </StudentsProvider>
