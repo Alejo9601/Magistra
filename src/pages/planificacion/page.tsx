@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app-shell";
-import { PlanificacionContent } from "@/components/planificacion";
+import { PlanificacionContent } from "@/features/planning";
 
 export default function PlanificacionPage() {
    return (

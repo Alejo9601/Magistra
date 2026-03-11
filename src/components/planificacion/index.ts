@@ -1,1 +1,1 @@
-export { PlanificacionContent } from "@/components/planificacion/planificacion-content";
+﻿export { PlanificacionContent } from "@/features/planning";
