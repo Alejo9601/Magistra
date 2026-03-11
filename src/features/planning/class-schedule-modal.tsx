@@ -70,11 +70,15 @@ export function ClassScheduleModal({
    open,
    onOpenChange,
    activeInstitution,
+   initialInstitutionId,
+   initialAssignmentId,
    onSchedule,
 }: {
    open: boolean;
    onOpenChange: (open: boolean) => void;
    activeInstitution: string;
+   initialInstitutionId?: string;
+   initialAssignmentId?: string;
    onSchedule: (payload: {
       institutionId: string;
       assignmentId: string;
@@ -101,8 +105,9 @@ export function ClassScheduleModal({
    );
 
    const reset = () => {
-      setInstitutionId(activeInstitution);
-      setAssignmentId("");
+      const nextInstitution = initialInstitutionId ?? activeInstitution;
+      setInstitutionId(nextInstitution);
+      setAssignmentId(initialAssignmentId ?? "");
       setStartDate(todayDate());
       setEndDate(addDays(todayDate(), 60));
       setSlots([createSlot(1, "08:00"), createSlot(3, "08:00")]);
