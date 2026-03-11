@@ -3,10 +3,8 @@ import {
    createActivityId,
    loadActivities,
    saveActivities,
-   type ActivityStatus,
-   type ActivityType,
-   type SubjectActivity,
 } from "@/services/activities-service";
+import type { ActivityStatus, ActivityType, SubjectActivity } from "@/types";
 
 export type { ActivityStatus, ActivityType, SubjectActivity };
 

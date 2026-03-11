@@ -1,20 +1,13 @@
 import { classSessions } from "@/lib/edu-repository";
 import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
+import type {
+   ActivityStatus,
+   ActivityType,
+   SubjectActivity,
+} from "@/types";
 
 const ACTIVITIES_STORAGE_KEY = "aula.activities";
-
-export type ActivityType = "classwork" | "homework" | "lab" | "project";
-export type ActivityStatus = "draft" | "planned" | "assigned" | "completed";
-
-export type SubjectActivity = {
-   id: string;
-   subjectId: string;
-   title: string;
-   description?: string;
-   type: ActivityType;
-   status: ActivityStatus;
-   linkedClassIds: string[];
-};
+export type { ActivityStatus, ActivityType, SubjectActivity };
 
 function isActivityType(value: unknown): value is ActivityType {
    return (
