@@ -15,6 +15,21 @@ export type Subject = {
    planProgress: number;
 };
 
+export type TeachingAssignment = {
+   id: string;
+   institutionId: string;
+   subjectId: string;
+   section: string;
+   active: boolean;
+};
+
+export type Enrollment = {
+   id: string;
+   studentId: string;
+   assignmentId: string;
+   active: boolean;
+};
+
 export type StudentStatus = "regular" | "en-riesgo" | "destacado";
 
 export type Student = {
@@ -43,6 +58,7 @@ export type ClassSession = {
    id: string;
    subjectId: string;
    institutionId: string;
+   assignmentId?: string;
    date: string;
    time: string;
    scheduleTemplateId?: string;
@@ -116,6 +132,7 @@ export type AssessmentStatus = "draft" | "scheduled" | "published" | "graded";
 export type Assessment = {
    id: string;
    subjectId: string;
+   assignmentId?: string;
    title: string;
    description?: string;
    date: string;
@@ -132,6 +149,7 @@ export type ActivityStatus = "draft" | "planned" | "assigned" | "completed";
 export type SubjectActivity = {
    id: string;
    subjectId: string;
+   assignmentId?: string;
    title: string;
    description?: string;
    type: ActivityType;

@@ -3,10 +3,12 @@ import type {
    AttendanceRecord,
    ClassSession,
    ContentItem,
+   Enrollment,
    Evaluation,
    Institution,
    Student,
    Subject,
+   TeachingAssignment,
    TeacherProfile,
 } from "@/types";
 
@@ -14,10 +16,12 @@ export type {
    AttendanceRecord,
    ClassSession,
    ContentItem,
+   Enrollment,
    Evaluation,
    Institution,
    Student,
    Subject,
+   TeachingAssignment,
    TeacherProfile,
 };
 
@@ -30,6 +34,43 @@ export const contentItems = rawData.contentItems as ContentItem[];
 export const attendanceRecords = rawData.attendanceRecords as AttendanceRecord[];
 export const teacherProfile = rawData.teacherProfile as TeacherProfile;
 
+export const teachingAssignments: TeachingAssignment[] = subjects.map((subject) => ({
+   id: `asg-${subject.id}`,
+   institutionId: subject.institutionId,
+   subjectId: subject.id,
+   section: subject.course,
+   active: true,
+}));
+
+export const enrollments: Enrollment[] = students.flatMap((student) =>
+   student.subjectIds.map((subjectId) => ({
+      id: `enr-${student.id}-${subjectId}`,
+      studentId: student.id,
+      assignmentId: `asg-${subjectId}`,
+      active: true,
+   })),
+);
+
+export function getAssignmentIdBySubjectId(subjectId: string) {
+   return `asg-${subjectId}`;
+}
+
+export function getSubjectIdByAssignmentId(assignmentId: string) {
+   const assignment = teachingAssignments.find((item) => item.id === assignmentId);
+   return assignment?.subjectId;
+}
+
+export function getAssignmentById(id: string) {
+   return teachingAssignments.find((assignment) => assignment.id === id);
+}
+
+export function getAssignmentsByInstitution(institutionId: string) {
+   return teachingAssignments.filter(
+      (assignment) =>
+         assignment.institutionId === institutionId && assignment.active,
+   );
+}
+
 export function getSubjectById(id: string) {
    return subjects.find((s) => s.id === id);
 }
@@ -40,6 +81,18 @@ export function getInstitutionById(id: string) {
 
 export function getStudentsBySubject(subjectId: string) {
    return students.filter((s) => s.subjectIds.includes(subjectId));
+}
+
+export function getStudentsByAssignment(assignmentId: string) {
+   const studentIdSet = new Set(
+      enrollments
+         .filter(
+            (enrollment) =>
+               enrollment.assignmentId === assignmentId && enrollment.active,
+         )
+         .map((enrollment) => enrollment.studentId),
+   );
+   return students.filter((student) => studentIdSet.has(student.id));
 }
 
 export function getSubjectsByInstitution(institutionId: string) {
@@ -61,6 +114,15 @@ export function getClassesByDate(date: string) {
 
 export function getClassesBySubject(subjectId: string) {
    return classSessions.filter((c) => c.subjectId === subjectId);
+}
+
+export function getClassesByAssignment(assignmentId: string) {
+   return classSessions.filter((classSession) => {
+      if (classSession.assignmentId) {
+         return classSession.assignmentId === assignmentId;
+      }
+      return getAssignmentIdBySubjectId(classSession.subjectId) === assignmentId;
+   });
 }
 
 export function getClassesByInstitution(institutionId: string) {
