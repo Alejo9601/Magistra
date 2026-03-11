@@ -28,8 +28,9 @@ export type {
 
 const SUBJECTS_STORAGE_KEY = "aula.catalog.subjects";
 const CONTENT_STORAGE_KEY = "aula.catalog.content-items";
+const INSTITUTIONS_STORAGE_KEY = "aula.catalog.institutions";
 
-export const institutions = rawData.institutions as Institution[];
+const seedInstitutions = rawData.institutions as Institution[];
 const seedSubjects = rawData.subjects as Subject[];
 export const students = rawData.students as Student[];
 export const classSessions = rawData.classSessions as ClassSession[];
@@ -37,6 +38,29 @@ export const evaluations = rawData.evaluations as Evaluation[];
 const seedContentItems = rawData.contentItems as ContentItem[];
 export const attendanceRecords = rawData.attendanceRecords as AttendanceRecord[];
 export const teacherProfile = rawData.teacherProfile as TeacherProfile;
+
+function sanitizeInstitution(raw: unknown): Institution | null {
+   if (!raw || typeof raw !== "object") {
+      return null;
+   }
+   const input = raw as Partial<Institution>;
+   if (
+      typeof input.id !== "string" ||
+      typeof input.name !== "string" ||
+      typeof input.address !== "string" ||
+      typeof input.level !== "string" ||
+      typeof input.color !== "string"
+   ) {
+      return null;
+   }
+   return {
+      id: input.id,
+      name: input.name,
+      address: input.address,
+      level: input.level,
+      color: input.color,
+   };
+}
 
 function sanitizeSubject(raw: unknown): Subject | null {
    if (!raw || typeof raw !== "object") {
@@ -110,6 +134,20 @@ export let subjects: Subject[] = readJsonFromStorage(
    },
 );
 
+export let institutions: Institution[] = readJsonFromStorage(
+   INSTITUTIONS_STORAGE_KEY,
+   seedInstitutions,
+   (raw) => {
+      if (!Array.isArray(raw)) {
+         return null;
+      }
+      const sanitized = raw
+         .map((entry) => sanitizeInstitution(entry))
+         .filter((entry): entry is Institution => entry !== null);
+      return sanitized.length > 0 ? sanitized : seedInstitutions;
+   },
+);
+
 export let contentItems: ContentItem[] = readJsonFromStorage(
    CONTENT_STORAGE_KEY,
    seedContentItems,
@@ -148,6 +186,10 @@ function rebuildDerivedCollections() {
 
 function persistSubjects() {
    writeJsonToStorage(SUBJECTS_STORAGE_KEY, subjects);
+}
+
+function persistInstitutions() {
+   writeJsonToStorage(INSTITUTIONS_STORAGE_KEY, institutions);
 }
 
 function persistContentItems() {
@@ -195,6 +237,24 @@ export function createSubject(input: {
    return next;
 }
 
+export function createInstitution(input: {
+   name: string;
+   address: string;
+   level: string;
+   color: string;
+}) {
+   const next: Institution = {
+      id: `inst-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+      name: input.name.trim(),
+      address: input.address.trim(),
+      level: input.level.trim(),
+      color: input.color,
+   };
+   institutions = [...institutions, next];
+   persistInstitutions();
+   return next;
+}
+
 export function deleteSubject(subjectId: string) {
    const exists = subjects.some((subject) => subject.id === subjectId);
    if (!exists) {
@@ -205,6 +265,27 @@ export function deleteSubject(subjectId: string) {
    contentItems = contentItems.filter((item) => item.subjectId !== subjectId);
 
    rebuildDerivedCollections();
+   persistSubjects();
+   persistContentItems();
+   return true;
+}
+
+export function deleteInstitution(institutionId: string) {
+   const exists = institutions.some((institution) => institution.id === institutionId);
+   if (!exists || institutions.length <= 1) {
+      return false;
+   }
+
+   institutions = institutions.filter(
+      (institution) => institution.id !== institutionId,
+   );
+   subjects = subjects.filter((subject) => subject.institutionId !== institutionId);
+   contentItems = contentItems.filter(
+      (content) => content.institutionId !== institutionId,
+   );
+
+   rebuildDerivedCollections();
+   persistInstitutions();
    persistSubjects();
    persistContentItems();
    return true;
