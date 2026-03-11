@@ -1,5 +1,5 @@
-import { AppShell } from "@/components/app-shell";
-import { SeguimientoContent } from "@/components/seguimiento";
+﻿import { AppShell } from "@/components/app-shell";
+import { SeguimientoContent } from "@/features/tracking";
 
 export default function StudentProfilePage() {
    return (
@@ -8,3 +8,4 @@ export default function StudentProfilePage() {
       </AppShell>
    );
 }
+
