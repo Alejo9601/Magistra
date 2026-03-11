@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getSubjectById, getInstitutionById } from "@/lib/edu-repository";
-import { useInstitutionContext } from "@/contexts/institution-context";
+import { useInstitutionContext } from "@/features/institution";
 import { usePlanningContext } from "@/features/planning";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -311,6 +311,7 @@ export function PlanificacionContent() {
       </div>
    );
 }
+
 
 
 

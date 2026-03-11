@@ -1,6 +1,6 @@
 ﻿import { useMemo } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { useInstitutionContext } from "@/contexts/institution-context";
+import { useInstitutionContext } from "@/features/institution";
 import { StudentList } from "@/features/tracking/student-list";
 import { StudentProfile } from "@/features/tracking/student-profile";
 import { useStudentsContext } from "@/features/students";
@@ -50,4 +50,5 @@ export function SeguimientoContent() {
       />
    );
 }
+
 

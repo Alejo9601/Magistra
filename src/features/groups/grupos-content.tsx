@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { subjects } from "@/lib/edu-repository";
-import { useInstitutionContext } from "@/contexts/institution-context";
+import { useInstitutionContext } from "@/features/institution";
 import { GroupsList } from "@/features/groups/containers/groups-list";
 import { GroupDetail } from "@/features/groups/group-detail";
 
@@ -38,3 +38,4 @@ export function GruposContent() {
       />
    );
 }
+

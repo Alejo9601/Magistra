@@ -12,7 +12,7 @@ import {
    SelectValue,
 } from "@/components/ui/select";
 import { contentItems, institutions } from "@/lib/edu-repository";
-import { useInstitutionContext } from "@/contexts/institution-context";
+import { useInstitutionContext } from "@/features/institution";
 import { contentTypeLabels } from "@/features/content/constants";
 import { ContentCard } from "@/features/content/content-card";
 import { UploadContentDialog } from "@/features/content/upload-content-dialog";
@@ -118,4 +118,5 @@ export function ContenidosContent() {
       </div>
    );
 }
+
 

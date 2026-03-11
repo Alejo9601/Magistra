@@ -1,4 +1,4 @@
-﻿import { useInstitutionContext } from "@/contexts/institution-context";
+﻿import { useInstitutionContext } from "@/features/institution";
 import {
    DashboardHero,
    QuickStats,
@@ -40,4 +40,5 @@ export function DashboardContent() {
       </div>
    );
 }
+
 

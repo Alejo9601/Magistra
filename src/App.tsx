@@ -8,7 +8,7 @@ import StudentProfilePage from "@/pages/seguimiento/[id]/page";
 import ContenidosPage from "@/pages/contenidos/page";
 import ConfiguracionPage from "@/pages/configuracion/page";
 import ClaseDetailPage from "@/pages/clase/[id]/page";
-import { InstitutionProvider } from "@/contexts/institution-context";
+import { InstitutionProvider } from "@/features/institution";
 import { PlanningProvider } from "@/features/planning";
 import { DashboardProvider } from "@/features/dashboard";
 import { StudentsProvider } from "@/features/students";
@@ -74,6 +74,7 @@ function App() {
 }
 
 export default App;
+
 
 
 

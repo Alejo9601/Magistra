@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Building2 } from "lucide-react";
 import { institutions } from "@/lib/edu-repository";
-import { useInstitutionContext } from "@/contexts/institution-context";
+import { useInstitutionContext } from "@/features/institution";
 
 export function AppShell({
    children,
@@ -74,4 +74,5 @@ export function AppShell({
       </SidebarProvider>
    );
 }
+
 
