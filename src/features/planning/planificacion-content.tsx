@@ -232,7 +232,7 @@ export function PlanificacionContent() {
                                              const inst = getInstitutionById(cls.institutionId);
                                              const subject = getSubjectById(cls.subjectId);
                                              return (
-                                                <button key={cls.id} onClick={() => openEditModal(cls.id)} className={`w-full text-left rounded px-1 py-0.5 text-[10px] font-medium truncate ${isPastDate ? "opacity-85" : ""}`} style={{ backgroundColor: (inst?.color ?? "#4F46E5") + "15", color: inst?.color ?? "#4F46E5" }}>
+                                                <button key={cls.id} onClick={() => openEditModal(cls.id)} className={`w-full cursor-pointer text-left rounded px-1 py-0.5 text-[10px] font-medium truncate ${isPastDate ? "opacity-85" : ""}`} style={{ backgroundColor: (inst?.color ?? "#4F46E5") + "15", color: inst?.color ?? "#4F46E5" }}>
                                                    {subject?.name}
                                                 </button>
                                              );
