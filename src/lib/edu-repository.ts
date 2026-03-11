@@ -1,4 +1,5 @@
-import rawData from "@/data/edu-data.json";
+﻿import rawData from "@/data/edu-data.json";
+import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
 import type {
    AttendanceRecord,
    ClassSession,
@@ -25,31 +26,135 @@ export type {
    TeacherProfile,
 };
 
+const SUBJECTS_STORAGE_KEY = "aula.catalog.subjects";
+const CONTENT_STORAGE_KEY = "aula.catalog.content-items";
+
 export const institutions = rawData.institutions as Institution[];
-export const subjects = rawData.subjects as Subject[];
+const seedSubjects = rawData.subjects as Subject[];
 export const students = rawData.students as Student[];
 export const classSessions = rawData.classSessions as ClassSession[];
 export const evaluations = rawData.evaluations as Evaluation[];
-export const contentItems = rawData.contentItems as ContentItem[];
+const seedContentItems = rawData.contentItems as ContentItem[];
 export const attendanceRecords = rawData.attendanceRecords as AttendanceRecord[];
 export const teacherProfile = rawData.teacherProfile as TeacherProfile;
 
-export const teachingAssignments: TeachingAssignment[] = subjects.map((subject) => ({
-   id: `asg-${subject.id}`,
-   institutionId: subject.institutionId,
-   subjectId: subject.id,
-   section: subject.course,
-   active: true,
-}));
+function sanitizeSubject(raw: unknown): Subject | null {
+   if (!raw || typeof raw !== "object") {
+      return null;
+   }
+   const input = raw as Partial<Subject>;
+   if (
+      typeof input.id !== "string" ||
+      typeof input.name !== "string" ||
+      typeof input.institutionId !== "string" ||
+      typeof input.course !== "string" ||
+      typeof input.studentCount !== "number" ||
+      typeof input.planProgress !== "number"
+   ) {
+      return null;
+   }
+   return {
+      id: input.id,
+      name: input.name,
+      institutionId: input.institutionId,
+      course: input.course,
+      studentCount: input.studentCount,
+      planProgress: input.planProgress,
+   };
+}
 
-export const enrollments: Enrollment[] = students.flatMap((student) =>
-   student.subjectIds.map((subjectId) => ({
-      id: `enr-${student.id}-${subjectId}`,
-      studentId: student.id,
-      assignmentId: `asg-${subjectId}`,
-      active: true,
-   })),
+function sanitizeContentItem(raw: unknown): ContentItem | null {
+   if (!raw || typeof raw !== "object") {
+      return null;
+   }
+   const input = raw as Partial<ContentItem>;
+   if (
+      typeof input.id !== "string" ||
+      typeof input.name !== "string" ||
+      typeof input.description !== "string" ||
+      typeof input.subjectId !== "string" ||
+      typeof input.institutionId !== "string" ||
+      !Array.isArray(input.unit) ||
+      typeof input.type !== "string" ||
+      typeof input.fileType !== "string" ||
+      typeof input.uploadDate !== "string" ||
+      !Array.isArray(input.tags)
+   ) {
+      return null;
+   }
+   return {
+      id: input.id,
+      name: input.name,
+      description: input.description,
+      subjectId: input.subjectId,
+      institutionId: input.institutionId,
+      unit: input.unit.filter((entry): entry is string => typeof entry === "string"),
+      type: input.type as ContentItem["type"],
+      fileType: input.fileType as ContentItem["fileType"],
+      uploadDate: input.uploadDate,
+      tags: input.tags.filter((entry): entry is string => typeof entry === "string"),
+   };
+}
+
+export let subjects: Subject[] = readJsonFromStorage(
+   SUBJECTS_STORAGE_KEY,
+   seedSubjects,
+   (raw) => {
+      if (!Array.isArray(raw)) {
+         return null;
+      }
+      const sanitized = raw
+         .map((entry) => sanitizeSubject(entry))
+         .filter((entry): entry is Subject => entry !== null);
+      return sanitized.length > 0 ? sanitized : seedSubjects;
+   },
 );
+
+export let contentItems: ContentItem[] = readJsonFromStorage(
+   CONTENT_STORAGE_KEY,
+   seedContentItems,
+   (raw) => {
+      if (!Array.isArray(raw)) {
+         return null;
+      }
+      const sanitized = raw
+         .map((entry) => sanitizeContentItem(entry))
+         .filter((entry): entry is ContentItem => entry !== null);
+      return sanitized.length > 0 ? sanitized : seedContentItems;
+   },
+);
+
+export let teachingAssignments: TeachingAssignment[] = [];
+export let enrollments: Enrollment[] = [];
+
+function rebuildDerivedCollections() {
+   teachingAssignments = subjects.map((subject) => ({
+      id: `asg-${subject.id}`,
+      institutionId: subject.institutionId,
+      subjectId: subject.id,
+      section: subject.course,
+      active: true,
+   }));
+
+   enrollments = students.flatMap((student) =>
+      student.subjectIds.map((subjectId) => ({
+         id: `enr-${student.id}-${subjectId}`,
+         studentId: student.id,
+         assignmentId: `asg-${subjectId}`,
+         active: true,
+      })),
+   );
+}
+
+function persistSubjects() {
+   writeJsonToStorage(SUBJECTS_STORAGE_KEY, subjects);
+}
+
+function persistContentItems() {
+   writeJsonToStorage(CONTENT_STORAGE_KEY, contentItems);
+}
+
+rebuildDerivedCollections();
 
 export function getAssignmentIdBySubjectId(subjectId: string) {
    return `asg-${subjectId}`;
@@ -69,6 +174,40 @@ export function getAssignmentsByInstitution(institutionId: string) {
       (assignment) =>
          assignment.institutionId === institutionId && assignment.active,
    );
+}
+
+export function createSubject(input: {
+   institutionId: string;
+   name: string;
+   course: string;
+}) {
+   const next: Subject = {
+      id: `sub-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+      institutionId: input.institutionId,
+      name: input.name.trim(),
+      course: input.course.trim(),
+      studentCount: 0,
+      planProgress: 0,
+   };
+   subjects = [...subjects, next];
+   rebuildDerivedCollections();
+   persistSubjects();
+   return next;
+}
+
+export function deleteSubject(subjectId: string) {
+   const exists = subjects.some((subject) => subject.id === subjectId);
+   if (!exists) {
+      return false;
+   }
+
+   subjects = subjects.filter((subject) => subject.id !== subjectId);
+   contentItems = contentItems.filter((item) => item.subjectId !== subjectId);
+
+   rebuildDerivedCollections();
+   persistSubjects();
+   persistContentItems();
+   return true;
 }
 
 export function getSubjectById(id: string) {
