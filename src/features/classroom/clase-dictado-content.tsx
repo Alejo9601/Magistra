@@ -8,7 +8,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { getInstitutionById, getSubjectById } from "@/lib/edu-repository";
+import {
+   getAssignmentIdBySubjectId,
+   getInstitutionById,
+   getSubjectById,
+} from "@/lib/edu-repository";
 import { usePlanningContext } from "@/features/planning";
 import { useStudentsContext } from "@/features/students";
 import { useClassroomContext } from "@/features/classroom";
@@ -31,20 +35,21 @@ export function ClaseDictadoContent() {
    const params = useParams();
    const classId = params.id as string;
    const { classes, markClassAsTaught } = usePlanningContext();
-   const { students } = useStudentsContext();
+   const { getStudentsByAssignment } = useStudentsContext();
    const { getRecord, toggleSubtopic, toggleActivity, setAttendance, setNotes } =
       useClassroomContext();
-   const { getActivitiesBySubject } = useActivitiesContext();
+   const { getActivitiesByAssignment } = useActivitiesContext();
 
    const cls = useMemo(
       () => classes.find((classSession) => classSession.id === classId),
       [classes, classId],
    );
+   const assignmentId = cls
+      ? cls.assignmentId ?? getAssignmentIdBySubjectId(cls.subjectId)
+      : "";
    const subject = cls ? getSubjectById(cls.subjectId) : null;
    const institution = cls ? getInstitutionById(cls.institutionId) : null;
-   const classStudents = subject
-      ? students.filter((student) => student.subjectIds.includes(subject.id))
-      : [];
+   const classStudents = assignmentId ? getStudentsByAssignment(assignmentId) : [];
 
    if (!cls || !subject || !institution) {
       return (
@@ -55,7 +60,7 @@ export function ClaseDictadoContent() {
    }
 
    const record = getRecord(cls.id);
-   const subjectActivities = getActivitiesBySubject(subject.id);
+   const subjectActivities = getActivitiesByAssignment(assignmentId);
    const linkedActivityTitles = subjectActivities
       .filter((activity) => activity.linkedClassIds.includes(cls.id))
       .map((activity) => activity.title);
@@ -217,8 +222,3 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
-
-
-
-
-

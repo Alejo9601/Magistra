@@ -1,5 +1,9 @@
 ﻿import { useEffect, useMemo, useState } from "react";
-import { getInstitutionById, getSubjectById } from "@/lib/edu-repository";
+import {
+   getAssignmentIdBySubjectId,
+   getInstitutionById,
+   getSubjectById,
+} from "@/lib/edu-repository";
 import { usePlanningContext } from "@/features/planning";
 import { toast } from "sonner";
 import { type AttendanceStatus } from "@/features/classroom/constants";
@@ -20,29 +24,30 @@ import { useActivitiesContext } from "@/features/activities";
 export function ClaseDetailContent() {
    const params = useParams();
    const classId = params.id as string;
-   const { students } = useStudentsContext();
+   const { getStudentsByAssignment } = useStudentsContext();
    const { classes, markClassAsTaught, updateClassNotes } = usePlanningContext();
    const { getRecord, setAttendance: saveAttendance } = useClassroomContext();
-   const { getActivitiesBySubject, toggleActivityLink } = useActivitiesContext();
+   const { getActivitiesByAssignment, toggleActivityLink } = useActivitiesContext();
 
    const cls = useMemo(
       () => classes.find((classSession) => classSession.id === classId),
       [classes, classId],
    );
 
+   const assignmentId = cls
+      ? cls.assignmentId ?? getAssignmentIdBySubjectId(cls.subjectId)
+      : "";
    const subject = cls ? getSubjectById(cls.subjectId) : null;
    const inst = cls ? getInstitutionById(cls.institutionId) : null;
-   const classStudents = subject
-      ? students.filter((student) => student.subjectIds.includes(subject.id))
-      : [];
+   const classStudents = assignmentId ? getStudentsByAssignment(assignmentId) : [];
    const subjectActivities = useMemo(
       () =>
-         subject
-            ? [...getActivitiesBySubject(subject.id)].sort((a, b) =>
+         assignmentId
+            ? [...getActivitiesByAssignment(assignmentId)].sort((a, b) =>
                  a.title.localeCompare(b.title),
               )
             : [],
-      [getActivitiesBySubject, subject],
+      [assignmentId, getActivitiesByAssignment],
    );
 
    const attendanceFromRecord = useMemo<Record<string, AttendanceStatus>>(() => {
@@ -163,8 +168,3 @@ export function ClaseDetailContent() {
       </div>
    );
 }
-
-
-
-
-
