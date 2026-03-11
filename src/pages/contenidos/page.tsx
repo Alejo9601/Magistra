@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app-shell";
-import { ContenidosContent } from "@/components/contenidos";
+import { ContenidosContent } from "@/features/content";
 
 export default function ContenidosPage() {
    return (

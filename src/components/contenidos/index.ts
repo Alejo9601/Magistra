@@ -1,1 +1,1 @@
-export { ContenidosContent } from "@/components/contenidos/contenidos-content";
+﻿export { ContenidosContent } from "@/features/content";
