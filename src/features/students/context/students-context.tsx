@@ -1,5 +1,9 @@
 ﻿import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { students as seedStudents, subjects } from "@/lib/edu-repository";
+import {
+   getAssignmentById,
+   students as seedStudents,
+   subjects,
+} from "@/lib/edu-repository";
 import type { Student } from "@/types";
 import {
    createStudentId,
@@ -8,7 +12,7 @@ import {
 } from "@/features/students/services/students-service";
 
 type NewStudentInput = {
-   subjectId: string;
+   assignmentId: string;
    name: string;
    lastName: string;
    dni: string;
@@ -20,6 +24,7 @@ type StudentsContextValue = {
    students: Student[];
    getStudentsByInstitution: (institutionId: string) => Student[];
    getStudentsBySubject: (subjectId: string) => Student[];
+   getStudentsByAssignment: (assignmentId: string) => Student[];
    addStudent: (input: NewStudentInput) => Student;
 };
 
@@ -49,14 +54,28 @@ export function StudentsProvider({ children }: { children: React.ReactNode }) {
          },
          getStudentsBySubject: (subjectId) =>
             students.filter((student) => student.subjectIds.includes(subjectId)),
+         getStudentsByAssignment: (assignmentId) => {
+            const assignment = getAssignmentById(assignmentId);
+            if (!assignment) {
+               return [];
+            }
+            return students.filter((student) =>
+               student.subjectIds.includes(assignment.subjectId),
+            );
+         },
          addStudent: (input) => {
+            const assignment = getAssignmentById(input.assignmentId);
+            if (!assignment) {
+               throw new Error("Assignment not found for student creation.");
+            }
+
             const nextStudent: Student = {
                id: createStudentId(),
                name: input.name.trim(),
                lastName: input.lastName.trim(),
                dni: input.dni.trim(),
                email: input.email?.trim() || undefined,
-               subjectIds: [input.subjectId],
+               subjectIds: [assignment.subjectId],
                attendance: 100,
                average: 0,
                status: "regular",
@@ -81,4 +100,3 @@ export function useStudentsContext() {
    }
    return context;
 }
-
