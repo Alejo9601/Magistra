@@ -1,4 +1,8 @@
-import { classSessions } from "@/lib/edu-repository";
+﻿import {
+   classSessions,
+   getAssignmentIdBySubjectId,
+   getSubjectIdByAssignmentId,
+} from "@/lib/edu-repository";
 import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
 import type {
    ActivityStatus,
@@ -34,7 +38,6 @@ function sanitizeActivity(raw: unknown): SubjectActivity | null {
    const input = raw as Partial<SubjectActivity>;
    if (
       typeof input.id !== "string" ||
-      typeof input.subjectId !== "string" ||
       typeof input.title !== "string" ||
       !isActivityType(input.type) ||
       !isActivityStatus(input.status) ||
@@ -43,9 +46,28 @@ function sanitizeActivity(raw: unknown): SubjectActivity | null {
       return null;
    }
 
+   const resolvedSubjectId =
+      typeof input.subjectId === "string"
+         ? input.subjectId
+         : typeof input.assignmentId === "string"
+            ? getSubjectIdByAssignmentId(input.assignmentId)
+            : undefined;
+
+   const resolvedAssignmentId =
+      typeof input.assignmentId === "string"
+         ? input.assignmentId
+         : resolvedSubjectId
+            ? getAssignmentIdBySubjectId(resolvedSubjectId)
+            : undefined;
+
+   if (!resolvedSubjectId || !resolvedAssignmentId) {
+      return null;
+   }
+
    return {
       id: input.id,
-      subjectId: input.subjectId,
+      subjectId: resolvedSubjectId,
+      assignmentId: resolvedAssignmentId,
       title: input.title,
       description:
          typeof input.description === "string" ? input.description : undefined,
@@ -78,11 +100,14 @@ function titleCase(value: string) {
 }
 
 function seedActivities(): SubjectActivity[] {
-   const grouped = new Map<string, { subjectId: string; linkedClassIds: string[] }>();
+   const grouped = new Map<string, { subjectId: string; assignmentId: string; linkedClassIds: string[] }>();
    classSessions.forEach((classSession) => {
       parseActivityLines(classSession.activities).forEach((title) => {
          const normalizedTitle = title.toLowerCase();
-         const key = `${classSession.subjectId}|${normalizedTitle}`;
+         const assignmentId =
+            classSession.assignmentId ??
+            getAssignmentIdBySubjectId(classSession.subjectId);
+         const key = `${assignmentId}|${normalizedTitle}`;
          const current = grouped.get(key);
          if (current) {
             if (!current.linkedClassIds.includes(classSession.id)) {
@@ -91,6 +116,7 @@ function seedActivities(): SubjectActivity[] {
             return;
          }
          grouped.set(key, {
+            assignmentId,
             subjectId: classSession.subjectId,
             linkedClassIds: [classSession.id],
          });
@@ -102,6 +128,7 @@ function seedActivities(): SubjectActivity[] {
       return {
          id: `act-seed-${index + 1}`,
          subjectId: entry.subjectId,
+         assignmentId: entry.assignmentId,
          title: titleCase(normalizedTitle),
          type: "classwork",
          status: "planned",

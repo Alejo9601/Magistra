@@ -4,12 +4,16 @@ import {
    loadActivities,
    saveActivities,
 } from "@/features/activities/services/activities-service";
+import {
+   getAssignmentById,
+   getAssignmentIdBySubjectId,
+} from "@/lib/edu-repository";
 import type { ActivityStatus, ActivityType, SubjectActivity } from "@/types";
 
 export type { ActivityStatus, ActivityType, SubjectActivity };
 
 type NewActivityInput = {
-   subjectId: string;
+   assignmentId: string;
    title: string;
    description?: string;
    type?: ActivityType;
@@ -18,6 +22,7 @@ type NewActivityInput = {
 };
 
 type UpdateActivityInput = {
+   assignmentId?: string;
    title?: string;
    description?: string;
    type?: ActivityType;
@@ -28,6 +33,7 @@ type UpdateActivityInput = {
 type ActivitiesContextValue = {
    activities: SubjectActivity[];
    getActivitiesBySubject: (subjectId: string) => SubjectActivity[];
+   getActivitiesByAssignment: (assignmentId: string) => SubjectActivity[];
    addActivity: (input: NewActivityInput) => SubjectActivity;
    updateActivity: (id: string, patch: UpdateActivityInput) => void;
    removeActivity: (id: string) => void;
@@ -48,10 +54,21 @@ export function ActivitiesProvider({ children }: { children: React.ReactNode }) 
          activities,
          getActivitiesBySubject: (subjectId) =>
             activities.filter((activity) => activity.subjectId === subjectId),
+         getActivitiesByAssignment: (assignmentId) =>
+            activities.filter(
+               (activity) =>
+                  (activity.assignmentId ??
+                     getAssignmentIdBySubjectId(activity.subjectId)) === assignmentId,
+            ),
          addActivity: (input) => {
+            const assignment = getAssignmentById(input.assignmentId);
+            if (!assignment) {
+               throw new Error("Assignment not found for activity creation.");
+            }
             const nextActivity: SubjectActivity = {
                id: createActivityId(),
-               subjectId: input.subjectId,
+               subjectId: assignment.subjectId,
+               assignmentId: assignment.id,
                title: input.title.trim(),
                description: input.description?.trim() || undefined,
                type: input.type ?? "classwork",
@@ -62,12 +79,17 @@ export function ActivitiesProvider({ children }: { children: React.ReactNode }) 
             return nextActivity;
          },
          updateActivity: (id, patch) => {
+            const assignment = patch.assignmentId
+               ? getAssignmentById(patch.assignmentId)
+               : null;
             setActivities((prev) =>
                prev.map((activity) =>
                   activity.id === id
                      ? {
                           ...activity,
                           ...patch,
+                          subjectId: assignment?.subjectId ?? activity.subjectId,
+                          assignmentId: assignment?.id ?? activity.assignmentId,
                           title: patch.title?.trim() ?? activity.title,
                           description:
                              patch.description === undefined
@@ -115,4 +137,3 @@ export function useActivitiesContext() {
    }
    return context;
 }
-
