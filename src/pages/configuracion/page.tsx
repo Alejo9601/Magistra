@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app-shell";
-import { ConfiguracionContent } from "@/components/configuracion";
+import { ConfiguracionContent } from "@/features/settings";
 
 export default function ConfiguracionPage() {
    return (
