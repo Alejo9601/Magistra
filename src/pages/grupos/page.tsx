@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app-shell";
-import { GruposContent } from "@/components/grupos";
+import { GruposContent } from "@/features/groups";
 
 export default function GruposPage() {
    return (
