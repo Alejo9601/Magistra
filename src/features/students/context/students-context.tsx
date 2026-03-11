@@ -26,6 +26,7 @@ type StudentsContextValue = {
    getStudentsBySubject: (subjectId: string) => Student[];
    getStudentsByAssignment: (assignmentId: string) => Student[];
    addStudent: (input: NewStudentInput) => Student;
+   unlinkSubjectFromStudents: (subjectId: string) => void;
 };
 
 const StudentsContext = createContext<StudentsContextValue | null>(null);
@@ -83,6 +84,16 @@ export function StudentsProvider({ children }: { children: React.ReactNode }) {
             };
             setStudents((prev) => [...prev, nextStudent]);
             return nextStudent;
+         },
+         unlinkSubjectFromStudents: (subjectId) => {
+            setStudents((prev) =>
+               prev
+                  .map((student) => ({
+                     ...student,
+                     subjectIds: student.subjectIds.filter((id) => id !== subjectId),
+                  }))
+                  .filter((student) => student.subjectIds.length > 0),
+            );
          },
       }),
       [students],

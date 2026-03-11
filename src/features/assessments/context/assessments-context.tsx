@@ -42,6 +42,7 @@ type AssessmentsContextValue = {
    addAssessment: (input: NewAssessmentInput) => Assessment;
    updateAssessment: (id: string, patch: UpdateAssessmentInput) => void;
    removeAssessment: (id: string) => void;
+   removeAssessmentsByAssignment: (assignmentId: string) => void;
 };
 
 const AssessmentsContext = createContext<AssessmentsContextValue | null>(null);
@@ -110,6 +111,16 @@ export function AssessmentsProvider({ children }: { children: React.ReactNode })
          removeAssessment: (id) => {
             setAssessments((prev) =>
                prev.filter((assessment) => assessment.id !== id),
+            );
+         },
+         removeAssessmentsByAssignment: (assignmentId) => {
+            setAssessments((prev) =>
+               prev.filter(
+                  (assessment) =>
+                     (assessment.assignmentId ??
+                        getAssignmentIdBySubjectId(assessment.subjectId)) !==
+                     assignmentId,
+               ),
             );
          },
       }),

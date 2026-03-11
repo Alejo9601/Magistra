@@ -27,6 +27,7 @@ type PlanningContextValue = {
    classes: ClassSession[];
    createClass: (input: ClassInput) => ClassSession;
    createRecurringClasses: (input: RecurringInput) => number;
+   removeClassesByAssignment: (assignmentId: string) => string[];
    updateClass: (id: string, updates: Partial<ClassInput>) => void;
    duplicateClass: (
       id: string,
@@ -155,6 +156,23 @@ export function PlanningProvider({ children }: { children: React.ReactNode }) {
             });
 
             return createdCount;
+         },
+         removeClassesByAssignment: (assignmentId) => {
+            let removedClassIds: string[] = [];
+            setClasses((prev) => {
+               removedClassIds = prev
+                  .filter(
+                     (classSession) =>
+                        (classSession.assignmentId ??
+                           getAssignmentIdBySubjectId(classSession.subjectId)) ===
+                        assignmentId,
+                  )
+                  .map((classSession) => classSession.id);
+               return prev.filter(
+                  (classSession) => !removedClassIds.includes(classSession.id),
+               );
+            });
+            return removedClassIds;
          },
          updateClass: (id, updates) => {
             const assignment = updates.assignmentId

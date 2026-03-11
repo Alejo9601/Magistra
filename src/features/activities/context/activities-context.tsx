@@ -37,6 +37,7 @@ type ActivitiesContextValue = {
    addActivity: (input: NewActivityInput) => SubjectActivity;
    updateActivity: (id: string, patch: UpdateActivityInput) => void;
    removeActivity: (id: string) => void;
+   removeActivitiesByAssignment: (assignmentId: string) => void;
    toggleActivityLink: (activityId: string, classId: string) => void;
 };
 
@@ -102,6 +103,16 @@ export function ActivitiesProvider({ children }: { children: React.ReactNode }) 
          },
          removeActivity: (id) => {
             setActivities((prev) => prev.filter((activity) => activity.id !== id));
+         },
+         removeActivitiesByAssignment: (assignmentId) => {
+            setActivities((prev) =>
+               prev.filter(
+                  (activity) =>
+                     (activity.assignmentId ??
+                        getAssignmentIdBySubjectId(activity.subjectId)) !==
+                     assignmentId,
+               ),
+            );
          },
          toggleActivityLink: (activityId, classId) => {
             setActivities((prev) =>

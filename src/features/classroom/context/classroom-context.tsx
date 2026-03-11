@@ -16,6 +16,7 @@ type ClassroomContextValue = {
       attendance: Record<string, AttendanceStatus>,
    ) => void;
    setNotes: (classId: string, notes: string) => void;
+   removeRecordsByClassIds: (classIds: string[]) => void;
 };
 
 const ClassroomContext = createContext<ClassroomContextValue | null>(null);
@@ -79,6 +80,17 @@ export function ClassroomProvider({ children }: { children: React.ReactNode }) {
                   },
                };
             });
+         },
+         removeRecordsByClassIds: (classIds) => {
+            if (classIds.length === 0) {
+               return;
+            }
+            const classIdSet = new Set(classIds);
+            setRecordsByClass((prev) =>
+               Object.fromEntries(
+                  Object.entries(prev).filter(([classId]) => !classIdSet.has(classId)),
+               ),
+            );
          },
       }),
       [recordsByClass],
