@@ -1,8 +1,9 @@
 import { FileText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { getSubjectById, getInstitutionById, type ContentItem } from "@/lib/edu-repository";
+import { getSubjectById, getInstitutionById } from "@/lib/edu-repository";
 import { fileTypeIcons } from "@/components/contenidos/constants";
+import type { ContentItem } from "@/types";
 
 export function ContentCard({ item }: { item: ContentItem }) {
    const IconComp = fileTypeIcons[item.fileType] || FileText;

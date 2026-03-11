@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { classSessions, type ClassSession } from "@/lib/edu-repository";
+import { classSessions } from "@/lib/edu-repository";
+import type { ClassSession } from "@/types";
 import {
    createPlanningClassId,
    loadPlanningClasses,

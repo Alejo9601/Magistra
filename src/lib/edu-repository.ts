@@ -1,84 +1,24 @@
-﻿import rawData from "@/data/edu-data.json";
+import rawData from "@/data/edu-data.json";
+import type {
+   AttendanceRecord,
+   ClassSession,
+   ContentItem,
+   Evaluation,
+   Institution,
+   Student,
+   Subject,
+   TeacherProfile,
+} from "@/types";
 
-export type Institution = {
-   id: string;
-   name: string;
-   address: string;
-   level: string;
-   color: string;
-};
-
-export type Subject = {
-   id: string;
-   name: string;
-   institutionId: string;
-   course: string;
-   studentCount: number;
-   planProgress: number;
-};
-
-export type Student = {
-   id: string;
-   name: string;
-   lastName: string;
-   dni: string;
-   email?: string;
-   subjectIds: string[];
-   attendance: number;
-   average: number;
-   status: "regular" | "en-riesgo" | "destacado";
-   observations?: string;
-};
-
-export type ClassSession = {
-   id: string;
-   subjectId: string;
-   institutionId: string;
-   date: string;
-   time: string;
-   scheduleTemplateId?: string;
-   topic: string;
-   subtopics: string[];
-   type: "teorica" | "practica" | "evaluacion" | "repaso" | "recuperatorio";
-   status: "planificada" | "sin-planificar" | "finalizada";
-   activities?: string;
-   notes?: string;
-   resources?: string[];
-};
-
-export type Evaluation = {
-   id: string;
-   name: string;
-   subjectId: string;
-   date: string;
-   type: "parcial" | "tp" | "final" | "quiz";
-   grades: { studentId: string; grade: number | string; observation?: string }[];
-};
-
-export type ContentItem = {
-   id: string;
-   name: string;
-   description: string;
-   subjectId: string;
-   institutionId: string;
-   unit: string[];
-   type: "apunte" | "consigna" | "evaluacion" | "presentacion" | "link" | "otro";
-   fileType: "pdf" | "image" | "video" | "link" | "doc";
-   uploadDate: string;
-   tags: string[];
-};
-
-export type AttendanceRecord = {
-   studentId: string;
-   classId: string;
-   status: "P" | "A" | "T" | "J";
-};
-
-export type TeacherProfile = {
-   name: string;
-   lastName: string;
-   email: string;
-   avatar: string;
+export type {
+   AttendanceRecord,
+   ClassSession,
+   ContentItem,
+   Evaluation,
+   Institution,
+   Student,
+   Subject,
+   TeacherProfile,
 };
 
 export const institutions = rawData.institutions as Institution[];
@@ -151,7 +91,9 @@ export function getInstitutionRepository(institutionId: string) {
             student.subjectIds.some((subjectId) => subjectIds.has(subjectId)),
          ),
       getClasses: () =>
-         classSessions.filter((classSession) => classSession.institutionId === institutionId),
+         classSessions.filter(
+            (classSession) => classSession.institutionId === institutionId,
+         ),
       getContent: () =>
          contentItems.filter((content) => content.institutionId === institutionId),
       getSubjectsMap: () =>
@@ -160,9 +102,12 @@ export function getInstitutionRepository(institutionId: string) {
          classSessions
             .filter(
                (classSession) =>
-                  classSession.institutionId === institutionId && classSession.date >= fromDate,
+                  classSession.institutionId === institutionId &&
+                  classSession.date >= fromDate,
             )
-            .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)),
+            .sort((a, b) =>
+               `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`),
+            ),
    };
 }
 

@@ -18,10 +18,11 @@ import {
    SelectTrigger,
    SelectValue,
 } from "@/components/ui/select";
-import { institutions, subjects, type ClassSession } from "@/lib/edu-repository";
+import { institutions, subjects } from "@/lib/edu-repository";
 import { classTypeLabels } from "@/components/planificacion/constants";
 import type { ClassFormInput } from "@/components/planificacion/types";
 import { toast } from "sonner";
+import type { ClassSession } from "@/types";
 
 export function ClassEditorModal({
    open,

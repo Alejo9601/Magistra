@@ -1,4 +1,4 @@
-import { type Student } from "@/lib/edu-repository";
+import type { Student } from "@/types";
 import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
 
 const STUDENTS_STORAGE_KEY = "aula.students";

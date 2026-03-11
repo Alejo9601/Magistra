@@ -1,9 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import {
-   students as seedStudents,
-   subjects,
-   type Student,
-} from "@/lib/edu-repository";
+import { students as seedStudents, subjects } from "@/lib/edu-repository";
+import type { Student } from "@/types";
 import {
    createStudentId,
    loadStudents,

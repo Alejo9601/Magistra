@@ -1,4 +1,4 @@
-import { type ClassSession } from "@/lib/edu-repository";
+import type { ClassSession } from "@/types";
 import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
 
 const PLANNING_STORAGE_KEY = "aula.planning.classes";
