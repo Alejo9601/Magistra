@@ -194,13 +194,10 @@ export function ClassEditorModal({
                </div>
 
                <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs">
-                     Fecha
-                     {isScheduledSlotLocked ? " (bloqueada)" : ""}
-                  </Label>
+                  <Label className="text-xs">Fecha</Label>
                   <Input
                      type="date"
-                     className={`h-9 text-xs ${isScheduledSlotLocked ? "disabled:opacity-100 disabled:text-foreground disabled:bg-muted/20 font-medium" : ""}`}
+                     className="h-9 text-xs"
                      value={date}
                      min={initialClass ? undefined : todayStr}
                      disabled={isScheduledSlotLocked}
@@ -209,13 +206,10 @@ export function ClassEditorModal({
                </div>
 
                <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs">
-                     Hora
-                     {isScheduledSlotLocked ? " (bloqueada)" : ""}
-                  </Label>
+                  <Label className="text-xs">Hora</Label>
                   <Input
                      type="time"
-                     className={`h-9 text-xs ${isScheduledSlotLocked ? "disabled:opacity-100 disabled:text-foreground disabled:bg-muted/20 font-medium" : ""}`}
+                     className="h-9 text-xs"
                      value={time}
                      disabled={isScheduledSlotLocked}
                      onChange={(event) => setTime(event.target.value)}
