@@ -1,4 +1,8 @@
-import { evaluations } from "@/lib/edu-repository";
+﻿import {
+   evaluations,
+   getAssignmentIdBySubjectId,
+   getSubjectIdByAssignmentId,
+} from "@/lib/edu-repository";
 import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
 import type {
    Assessment,
@@ -30,7 +34,6 @@ function sanitizeAssessment(raw: unknown): Assessment | null {
    const input = raw as Partial<Assessment>;
    if (
       typeof input.id !== "string" ||
-      typeof input.subjectId !== "string" ||
       typeof input.title !== "string" ||
       typeof input.date !== "string" ||
       !isAssessmentType(input.type) ||
@@ -42,9 +45,28 @@ function sanitizeAssessment(raw: unknown): Assessment | null {
       return null;
    }
 
+   const resolvedSubjectId =
+      typeof input.subjectId === "string"
+         ? input.subjectId
+         : typeof input.assignmentId === "string"
+            ? getSubjectIdByAssignmentId(input.assignmentId)
+            : undefined;
+
+   const resolvedAssignmentId =
+      typeof input.assignmentId === "string"
+         ? input.assignmentId
+         : resolvedSubjectId
+            ? getAssignmentIdBySubjectId(resolvedSubjectId)
+            : undefined;
+
+   if (!resolvedSubjectId || !resolvedAssignmentId) {
+      return null;
+   }
+
    return {
       id: input.id,
-      subjectId: input.subjectId,
+      subjectId: resolvedSubjectId,
+      assignmentId: resolvedAssignmentId,
       title: input.title,
       description:
          typeof input.description === "string" ? input.description : undefined,
@@ -61,6 +83,7 @@ function seedAssessments(): Assessment[] {
    return evaluations.map((evaluation) => ({
       id: evaluation.id,
       subjectId: evaluation.subjectId,
+      assignmentId: getAssignmentIdBySubjectId(evaluation.subjectId),
       title: evaluation.name,
       date: evaluation.date,
       description: undefined,

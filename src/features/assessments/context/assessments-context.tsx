@@ -4,12 +4,16 @@ import {
    loadAssessments,
    saveAssessments,
 } from "@/features/assessments/services/assessments-service";
+import {
+   getAssignmentById,
+   getAssignmentIdBySubjectId,
+} from "@/lib/edu-repository";
 import type { Assessment, AssessmentStatus, AssessmentType } from "@/types";
 
 export type { Assessment, AssessmentStatus, AssessmentType };
 
 type NewAssessmentInput = {
-   subjectId: string;
+   assignmentId: string;
    title: string;
    description?: string;
    date: string;
@@ -20,6 +24,7 @@ type NewAssessmentInput = {
 };
 
 type UpdateAssessmentInput = {
+   assignmentId?: string;
    title?: string;
    description?: string;
    date?: string;
@@ -33,6 +38,7 @@ type UpdateAssessmentInput = {
 type AssessmentsContextValue = {
    assessments: Assessment[];
    getAssessmentsBySubject: (subjectId: string) => Assessment[];
+   getAssessmentsByAssignment: (assignmentId: string) => Assessment[];
    addAssessment: (input: NewAssessmentInput) => Assessment;
    updateAssessment: (id: string, patch: UpdateAssessmentInput) => void;
    removeAssessment: (id: string) => void;
@@ -52,10 +58,21 @@ export function AssessmentsProvider({ children }: { children: React.ReactNode })
          assessments,
          getAssessmentsBySubject: (subjectId) =>
             assessments.filter((assessment) => assessment.subjectId === subjectId),
+         getAssessmentsByAssignment: (assignmentId) =>
+            assessments.filter(
+               (assessment) =>
+                  (assessment.assignmentId ??
+                     getAssignmentIdBySubjectId(assessment.subjectId)) === assignmentId,
+            ),
          addAssessment: (input) => {
+            const assignment = getAssignmentById(input.assignmentId);
+            if (!assignment) {
+               throw new Error("Assignment not found for assessment creation.");
+            }
             const nextAssessment: Assessment = {
                id: createAssessmentId(),
-               subjectId: input.subjectId,
+               subjectId: assignment.subjectId,
+               assignmentId: assignment.id,
                title: input.title.trim(),
                description: input.description?.trim() || undefined,
                date: input.date,
@@ -69,12 +86,17 @@ export function AssessmentsProvider({ children }: { children: React.ReactNode })
             return nextAssessment;
          },
          updateAssessment: (id, patch) => {
+            const assignment = patch.assignmentId
+               ? getAssignmentById(patch.assignmentId)
+               : null;
             setAssessments((prev) =>
                prev.map((assessment) =>
                   assessment.id === id
                      ? {
                           ...assessment,
                           ...patch,
+                          subjectId: assignment?.subjectId ?? assessment.subjectId,
+                          assignmentId: assignment?.id ?? assessment.assignmentId,
                           title: patch.title?.trim() ?? assessment.title,
                           description:
                              patch.description === undefined
@@ -110,4 +132,3 @@ export function useAssessmentsContext() {
    }
    return context;
 }
-
