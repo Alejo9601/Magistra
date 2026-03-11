@@ -1,7 +1,7 @@
 import {
    initialDashboardTasks,
    type DashboardTask,
-} from "@/components/dashboard/constants";
+} from "@/features/dashboard/constants";
 import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
 
 const DASHBOARD_TASKS_STORAGE_KEY = "aula.dashboard.tasks";
