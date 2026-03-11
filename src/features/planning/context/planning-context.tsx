@@ -40,11 +40,18 @@ type PlanningContextValue = {
 const PlanningContext = createContext<PlanningContextValue | null>(null);
 
 function addDays(dateStr: string, days: number) {
-   const date = new Date(`${dateStr}T12:00:00`);
-   date.setDate(date.getDate() + days);
-   const yyyy = date.getFullYear();
-   const mm = String(date.getMonth() + 1).padStart(2, "0");
-   const dd = String(date.getDate()).padStart(2, "0");
+   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+   if (!match) {
+      return dateStr;
+   }
+   const year = Number(match[1]);
+   const month = Number(match[2]);
+   const day = Number(match[3]);
+   const date = new Date(Date.UTC(year, month - 1, day));
+   date.setUTCDate(date.getUTCDate() + days);
+   const yyyy = date.getUTCFullYear();
+   const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
+   const dd = String(date.getUTCDate()).padStart(2, "0");
    return `${yyyy}-${mm}-${dd}`;
 }
 

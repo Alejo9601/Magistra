@@ -106,12 +106,17 @@ export function PlanificacionContent() {
    };
 
    const onDuplicate = (id: string) => {
+      const source = classes.find((classSession) => classSession.id === id);
       const duplicated = duplicateClass(id);
       if (!duplicated) {
          toast.error("No se pudo duplicar la clase.");
          return;
       }
-      toast.success("Clase duplicada para la semana siguiente.");
+      toast.success(
+         source
+            ? `Clase duplicada: ${source.date} -> ${duplicated.date}`
+            : "Clase duplicada para la semana siguiente.",
+      );
    };
 
    const onSave = (payload: ClassFormInput, mode: "draft" | "publish") => {
