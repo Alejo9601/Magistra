@@ -45,6 +45,7 @@ export function ClassEditorModal({
    initialDate?: string;
    onSubmit: (payload: ClassFormInput, mode: "draft" | "publish") => void;
 }) {
+   const isInstitutionLocked = true;
    const today = new Date();
    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
    const [institutionId, setInstitutionId] = useState(activeInstitution);
@@ -151,6 +152,7 @@ export function ClassEditorModal({
                         const firstAssignment = getAssignmentsByInstitution(value)[0];
                         setAssignmentId(firstAssignment?.id ?? "");
                      }}
+                     disabled={isInstitutionLocked}
                   >
                      <SelectTrigger className="h-9 text-xs">
                         <SelectValue placeholder="Seleccionar..." />

@@ -91,6 +91,7 @@ export function ClassScheduleModal({
    }) => number;
 }) {
    const isLockedToInitialSelection = Boolean(initialAssignmentId);
+   const isInstitutionLocked = true;
    const [institutionId, setInstitutionId] = useState(activeInstitution);
    const [assignmentId, setAssignmentId] = useState("");
    const [startDate, setStartDate] = useState(todayDate());
@@ -196,7 +197,7 @@ export function ClassScheduleModal({
                         setInstitutionId(value);
                         setAssignmentId("");
                      }}
-                     disabled={isLockedToInitialSelection}
+                     disabled={isLockedToInitialSelection || isInstitutionLocked}
                   >
                      <SelectTrigger className="h-9 text-xs">
                         <SelectValue placeholder="Seleccionar..." />
