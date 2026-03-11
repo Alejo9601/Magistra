@@ -33,9 +33,10 @@ import {
    SelectValue,
 } from "@/components/ui/select";
 import {
-   subjects,
+   getAssignmentById,
+   getClassesByAssignment,
    getInstitutionById,
-   getClassesBySubject,
+   getSubjectById,
 } from "@/lib/edu-repository";
 import { StudentStatusBadge } from "@/features/groups/status-badge";
 import { toast } from "sonner";
@@ -92,16 +93,16 @@ const activityStatusBadgeClass: Record<ActivityStatus, string> = {
 };
 
 export function GroupDetail({
-   subjectId,
+   assignmentId,
    onBack,
 }: {
-   subjectId: string;
+   assignmentId: string;
    onBack: () => void;
 }) {
-   const { getStudentsBySubject, addStudent } = useStudentsContext();
-   const { getAssessmentsBySubject, addAssessment, removeAssessment } =
+   const { getStudentsByAssignment, addStudent } = useStudentsContext();
+   const { getAssessmentsByAssignment, addAssessment, removeAssessment } =
       useAssessmentsContext();
-   const { getActivitiesBySubject, addActivity, removeActivity } =
+   const { getActivitiesByAssignment, addActivity, removeActivity } =
       useActivitiesContext();
    const [addStudentOpen, setAddStudentOpen] = useState(false);
    const [addAssessmentOpen, setAddAssessmentOpen] = useState(false);
@@ -126,16 +127,17 @@ export function GroupDetail({
    const [newActivityStatus, setNewActivityStatus] =
       useState<ActivityStatus>("planned");
    const [newActivityDescription, setNewActivityDescription] = useState("");
-   const subject = subjects.find((s) => s.id === subjectId);
-   const inst = subject ? getInstitutionById(subject.institutionId) : null;
-   const groupStudents = getStudentsBySubject(subjectId);
-   const groupClasses = getClassesBySubject(subjectId);
+   const assignment = getAssignmentById(assignmentId);
+   const subject = assignment ? getSubjectById(assignment.subjectId) : null;
+   const inst = assignment ? getInstitutionById(assignment.institutionId) : null;
+   const groupStudents = getStudentsByAssignment(assignmentId);
+   const groupClasses = getClassesByAssignment(assignmentId);
    const groupAssessments = useMemo(
       () =>
-         [...getAssessmentsBySubject(subjectId)].sort((a, b) =>
+         [...getAssessmentsByAssignment(assignmentId)].sort((a, b) =>
             a.date.localeCompare(b.date),
          ),
-      [getAssessmentsBySubject, subjectId],
+      [assignmentId, getAssessmentsByAssignment],
    );
    const filteredStudents = useMemo(() => {
       const query = studentSearch.trim().toLowerCase();
@@ -148,13 +150,13 @@ export function GroupDetail({
    }, [groupStudents, studentSearch]);
    const groupActivities = useMemo(
       () =>
-         [...getActivitiesBySubject(subjectId)].sort((a, b) =>
+         [...getActivitiesByAssignment(assignmentId)].sort((a, b) =>
             a.title.localeCompare(b.title),
          ),
-      [getActivitiesBySubject, subjectId],
+      [assignmentId, getActivitiesByAssignment],
    );
 
-   if (!subject || !inst) return null;
+   if (!assignment || !subject || !inst) return null;
 
    const resetStudentForm = () => {
       setNewName("");
@@ -186,7 +188,7 @@ export function GroupDetail({
       }
 
       addStudent({
-         subjectId,
+         assignmentId,
          name: newName,
          lastName: newLastName,
          dni: newDni,
@@ -216,7 +218,7 @@ export function GroupDetail({
       }
 
       addAssessment({
-         subjectId,
+         assignmentId,
          title: newAssessmentTitle,
          date: newAssessmentDate,
          type: newAssessmentType,
@@ -236,7 +238,7 @@ export function GroupDetail({
          return;
       }
       addActivity({
-         subjectId,
+         assignmentId,
          title: newActivityTitle,
          type: newActivityType,
          status: newActivityStatus,
@@ -263,7 +265,7 @@ export function GroupDetail({
                   {subject.name}
                </h1>
                <p className="text-sm text-muted-foreground">
-                  {inst.name} - {subject.course}
+                  {inst.name} - {assignment.section}
                </p>
             </div>
          </div>
@@ -678,7 +680,7 @@ export function GroupDetail({
                   <DialogTitle>Agregar Alumno</DialogTitle>
                   <DialogDescription>
                      Agrega un nuevo alumno al grupo {subject.name} -{" "}
-                     {subject.course}.
+                     {assignment.section}.
                   </DialogDescription>
                </DialogHeader>
                <div className="flex flex-col gap-4 py-2">
@@ -765,7 +767,7 @@ export function GroupDetail({
                   <DialogTitle>Nueva evaluacion</DialogTitle>
                   <DialogDescription>
                      Crea una instancia evaluativa para {subject.name} -{" "}
-                     {subject.course}.
+                     {assignment.section}.
                   </DialogDescription>
                </DialogHeader>
                <div className="grid grid-cols-1 gap-4 py-2">
@@ -904,7 +906,7 @@ export function GroupDetail({
                <DialogHeader>
                   <DialogTitle>Nueva actividad</DialogTitle>
                   <DialogDescription>
-                     Crea una actividad para {subject.name} - {subject.course}.
+                     Crea una actividad para {subject.name} - {assignment.section}.
                   </DialogDescription>
                </DialogHeader>
                <div className="grid grid-cols-1 gap-4 py-2">

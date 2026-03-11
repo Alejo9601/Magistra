@@ -1,27 +1,35 @@
-import { getInstitutionById, subjects } from "@/lib/edu-repository";
+import {
+   getAssignmentsByInstitution,
+   getInstitutionById,
+   getSubjectById,
+} from "@/lib/edu-repository";
 import { GroupsListView } from "@/features/groups/components/groups-list-view";
 
 export function GroupsList({
    onSelect,
    activeInstitution,
 }: {
-   onSelect: (subjectId: string) => void;
+   onSelect: (assignmentId: string) => void;
    activeInstitution: string;
 }) {
-   const groups = subjects
-      .filter((subject) => subject.institutionId === activeInstitution)
-      .map((subject) => {
-         const institution = getInstitutionById(subject.institutionId);
+   const groups = getAssignmentsByInstitution(activeInstitution)
+      .map((assignment) => {
+         const subject = getSubjectById(assignment.subjectId);
+         if (!subject) {
+            return null;
+         }
+         const institution = getInstitutionById(assignment.institutionId);
          return {
-            id: subject.id,
+            id: assignment.id,
             name: subject.name,
-            course: subject.course,
+            course: assignment.section,
             studentCount: subject.studentCount,
             planProgress: subject.planProgress,
             institutionName: institution?.name ?? "Institucion",
             institutionColor: institution?.color ?? "#64748b",
          };
-      });
+      })
+      .filter((group): group is NonNullable<typeof group> => group !== null);
 
    return <GroupsListView groups={groups} onSelect={onSelect} />;
 }
