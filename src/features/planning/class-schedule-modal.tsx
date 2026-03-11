@@ -90,6 +90,7 @@ export function ClassScheduleModal({
       }>;
    }) => number;
 }) {
+   const isLockedToInitialSelection = Boolean(initialAssignmentId);
    const [institutionId, setInstitutionId] = useState(activeInstitution);
    const [assignmentId, setAssignmentId] = useState("");
    const [startDate, setStartDate] = useState(todayDate());
@@ -195,6 +196,7 @@ export function ClassScheduleModal({
                         setInstitutionId(value);
                         setAssignmentId("");
                      }}
+                     disabled={isLockedToInitialSelection}
                   >
                      <SelectTrigger className="h-9 text-xs">
                         <SelectValue placeholder="Seleccionar..." />
@@ -211,7 +213,11 @@ export function ClassScheduleModal({
 
                <div className="flex flex-col gap-1.5">
                   <Label className="text-xs">Materia</Label>
-                  <Select value={assignmentId} onValueChange={setAssignmentId}>
+                  <Select
+                     value={assignmentId}
+                     onValueChange={setAssignmentId}
+                     disabled={isLockedToInitialSelection}
+                  >
                      <SelectTrigger className="h-9 text-xs">
                         <SelectValue placeholder="Seleccionar..." />
                      </SelectTrigger>
