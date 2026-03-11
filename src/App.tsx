@@ -13,7 +13,7 @@ import { PlanningProvider } from "@/features/planning";
 import { DashboardProvider } from "@/features/dashboard";
 import { StudentsProvider } from "@/features/students";
 import { ClassroomProvider } from "@/features/classroom";
-import { AssessmentsProvider } from "@/contexts/assessments-context";
+import { AssessmentsProvider } from "@/features/assessments";
 import { ActivitiesProvider } from "@/features/activities";
 import "@/pages/globals.css";
 import ClaseDictadoPage from "@/pages/clase/[id]/dictado/page";
@@ -74,6 +74,7 @@ function App() {
 }
 
 export default App;
+
 
 
 

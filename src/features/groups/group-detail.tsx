@@ -44,7 +44,7 @@ import {
    useAssessmentsContext,
    type AssessmentStatus,
    type AssessmentType,
-} from "@/contexts/assessments-context";
+} from "@/features/assessments";
 import {
    useActivitiesContext,
    type ActivityStatus,
@@ -991,5 +991,6 @@ export function GroupDetail({
       </div>
    );
 }
+
 
 
