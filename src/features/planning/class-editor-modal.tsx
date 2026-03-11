@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
    Dialog,
@@ -46,6 +46,9 @@ export function ClassEditorModal({
    onSubmit: (payload: ClassFormInput, mode: "draft" | "publish") => void;
 }) {
    const isInstitutionLocked = true;
+   const isScheduledSlotLocked = Boolean(
+      initialClass && initialClass.date && initialClass.time,
+   );
    const today = new Date();
    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
    const [institutionId, setInstitutionId] = useState(activeInstitution);
@@ -83,6 +86,12 @@ export function ClassEditorModal({
       setResourcesText(initialClass?.resources?.join(", ") ?? "");
    };
 
+
+   useEffect(() => {
+      if (open) {
+         reset();
+      }
+   }, [open, initialClass, initialDate, activeInstitution]);
    const submit = (mode: "draft" | "publish") => {
       if (!institutionId || !assignmentId || !date || !time || !topic.trim()) {
          toast.error("Completa institucion, materia, fecha, hora y tema principal.");
@@ -131,10 +140,7 @@ export function ClassEditorModal({
    return (
       <Dialog
          open={open}
-         onOpenChange={(isOpen) => {
-            onOpenChange(isOpen);
-            if (isOpen) reset();
-         }}
+         onOpenChange={onOpenChange}
       >
          <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto">
             <DialogHeader>
@@ -188,22 +194,30 @@ export function ClassEditorModal({
                </div>
 
                <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs">Fecha</Label>
+                  <Label className="text-xs">
+                     Fecha
+                     {isScheduledSlotLocked ? " (bloqueada)" : ""}
+                  </Label>
                   <Input
                      type="date"
-                     className="h-9 text-xs"
+                     className={`h-9 text-xs ${isScheduledSlotLocked ? "disabled:opacity-100 disabled:text-foreground disabled:bg-muted/20 font-medium" : ""}`}
                      value={date}
                      min={initialClass ? undefined : todayStr}
+                     disabled={isScheduledSlotLocked}
                      onChange={(event) => setDate(event.target.value)}
                   />
                </div>
 
                <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs">Hora</Label>
+                  <Label className="text-xs">
+                     Hora
+                     {isScheduledSlotLocked ? " (bloqueada)" : ""}
+                  </Label>
                   <Input
                      type="time"
-                     className="h-9 text-xs"
+                     className={`h-9 text-xs ${isScheduledSlotLocked ? "disabled:opacity-100 disabled:text-foreground disabled:bg-muted/20 font-medium" : ""}`}
                      value={time}
+                     disabled={isScheduledSlotLocked}
                      onChange={(event) => setTime(event.target.value)}
                   />
                </div>
@@ -302,4 +316,3 @@ export function ClassEditorModal({
       </Dialog>
    );
 }
-
