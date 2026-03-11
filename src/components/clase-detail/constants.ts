@@ -1,4 +1,5 @@
-export type AttendanceStatus = "P" | "A" | "T" | "J";
+import type { AttendanceStatus } from "@/types";
+export type { AttendanceStatus };
 
 export const attendanceConfig: Record<
    AttendanceStatus,

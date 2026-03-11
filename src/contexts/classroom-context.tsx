@@ -4,8 +4,8 @@ import {
    createFallbackClassroomRecord,
    loadClassroomRecords,
    saveClassroomRecords,
-   type ClassroomRecord,
 } from "@/services/classroom-service";
+import type { ClassroomRecord } from "@/types";
 
 type ClassroomContextValue = {
    getRecord: (classId: string) => ClassroomRecord;

@@ -1,14 +1,7 @@
-import type { AttendanceStatus } from "@/components/clase-detail/constants";
+import type { AttendanceStatus, ClassroomRecord } from "@/types";
 import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
 
 const CLASSROOM_STORAGE_KEY = "aula.classroom.records";
-
-export type ClassroomRecord = {
-   completedSubtopics: string[];
-   completedActivities: string[];
-   attendance: Record<string, AttendanceStatus>;
-   notes?: string;
-};
 
 function isAttendanceStatus(value: unknown): value is AttendanceStatus {
    return value === "P" || value === "A" || value === "T" || value === "J";
