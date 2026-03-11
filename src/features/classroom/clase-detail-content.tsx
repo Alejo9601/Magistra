@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { getInstitutionById, getSubjectById } from "@/lib/edu-repository";
-import { usePlanningContext } from "@/contexts/planning-context";
+import { usePlanningContext } from "@/features/planning";
 import { toast } from "sonner";
 import { type AttendanceStatus } from "@/features/classroom/constants";
 import {
@@ -163,5 +163,6 @@ export function ClaseDetailContent() {
       </div>
    );
 }
+
 
 

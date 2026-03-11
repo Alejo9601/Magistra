@@ -4,7 +4,7 @@ import {
    getTodayStr,
    getWeekDaysFromToday,
 } from "@/features/dashboard/constants";
-import { usePlanningContext } from "@/contexts/planning-context";
+import { usePlanningContext } from "@/features/planning";
 
 export function WeekTimeline({ activeInstitution }: { activeInstitution: string }) {
    const { classes } = usePlanningContext();
@@ -71,4 +71,5 @@ export function WeekTimeline({ activeInstitution }: { activeInstitution: string 
       </div>
    );
 }
+
 

@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { getInstitutionById, getSubjectById } from "@/lib/edu-repository";
-import { usePlanningContext } from "@/contexts/planning-context";
+import { usePlanningContext } from "@/features/planning";
 import { useStudentsContext } from "@/contexts/students-context";
 import { useClassroomContext } from "@/features/classroom";
 import { useActivitiesContext } from "@/contexts/activities-context";
@@ -217,5 +217,6 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
+
 
 

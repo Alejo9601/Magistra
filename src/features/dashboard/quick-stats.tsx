@@ -14,7 +14,7 @@ import {
    semaphoreScore,
    type SemaphoreLevel,
 } from "@/features/dashboard/constants";
-import { usePlanningContext } from "@/contexts/planning-context";
+import { usePlanningContext } from "@/features/planning";
 import { useDashboardContext } from "@/contexts/dashboard-context";
 import { useStudentsContext } from "@/contexts/students-context";
 
@@ -337,4 +337,5 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
       </div>
    );
 }
+
 

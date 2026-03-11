@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ClassStatusBadge } from "@/features/dashboard/class-status-badge";
 import { getInstitutionById, getSubjectById } from "@/lib/edu-repository";
 import { getTodayStr } from "@/features/dashboard/constants";
-import { usePlanningContext } from "@/contexts/planning-context";
+import { usePlanningContext } from "@/features/planning";
 
 export function TodayClasses({ activeInstitution }: { activeInstitution: string }) {
    const { classes } = usePlanningContext();
@@ -54,4 +54,5 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
       </div>
    );
 }
+
 

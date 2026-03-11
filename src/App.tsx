@@ -9,7 +9,7 @@ import ContenidosPage from "@/pages/contenidos/page";
 import ConfiguracionPage from "@/pages/configuracion/page";
 import ClaseDetailPage from "@/pages/clase/[id]/page";
 import { InstitutionProvider } from "@/contexts/institution-context";
-import { PlanningProvider } from "@/contexts/planning-context";
+import { PlanningProvider } from "@/features/planning";
 import { DashboardProvider } from "@/contexts/dashboard-context";
 import { StudentsProvider } from "@/contexts/students-context";
 import { ClassroomProvider } from "@/features/classroom";
@@ -74,4 +74,5 @@ function App() {
 }
 
 export default App;
+
 

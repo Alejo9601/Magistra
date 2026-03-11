@@ -44,7 +44,7 @@ import {
 } from "@/lib/edu-repository";
 import { toast } from "sonner";
 import { useStudentsContext } from "@/contexts/students-context";
-import { usePlanningContext } from "@/contexts/planning-context";
+import { usePlanningContext } from "@/features/planning";
 import { useClassroomContext } from "@/features/classroom";
 
 export function StudentProfile({
@@ -536,4 +536,5 @@ export function StudentProfile({
       </div>
    );
 }
+
 
