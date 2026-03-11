@@ -10,7 +10,7 @@ import ConfiguracionPage from "@/pages/configuracion/page";
 import ClaseDetailPage from "@/pages/clase/[id]/page";
 import { InstitutionProvider } from "@/contexts/institution-context";
 import { PlanningProvider } from "@/features/planning";
-import { DashboardProvider } from "@/contexts/dashboard-context";
+import { DashboardProvider } from "@/features/dashboard";
 import { StudentsProvider } from "@/features/students";
 import { ClassroomProvider } from "@/features/classroom";
 import { AssessmentsProvider } from "@/contexts/assessments-context";
@@ -74,6 +74,7 @@ function App() {
 }
 
 export default App;
+
 
 
 

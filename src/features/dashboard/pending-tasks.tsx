@@ -1,7 +1,7 @@
 ﻿import { CheckSquare } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useDashboardContext } from "@/contexts/dashboard-context";
+import { useDashboardContext } from "@/features/dashboard";
 
 export function PendingTasks({ activeInstitution }: { activeInstitution: string }) {
    const { tasks, toggleTask } = useDashboardContext();
@@ -48,4 +48,5 @@ export function PendingTasks({ activeInstitution }: { activeInstitution: string 
       </Card>
    );
 }
+
 

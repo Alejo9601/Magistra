@@ -15,7 +15,7 @@ import {
    type SemaphoreLevel,
 } from "@/features/dashboard/constants";
 import { usePlanningContext } from "@/features/planning";
-import { useDashboardContext } from "@/contexts/dashboard-context";
+import { useDashboardContext } from "@/features/dashboard";
 import { useStudentsContext } from "@/features/students";
 
 function statusClasses(level: SemaphoreLevel) {
@@ -337,6 +337,7 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
       </div>
    );
 }
+
 
 
 
