@@ -1,0 +1,170 @@
+import { useState } from "react";
+import { Building2, Plus } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+   Dialog,
+   DialogContent,
+   DialogHeader,
+   DialogTitle,
+   DialogFooter,
+   DialogDescription,
+} from "@/components/ui/dialog";
+import { institutions } from "@/lib/edu-repository";
+import { toast } from "sonner";
+
+const colorOptions = [
+   "#4F46E5",
+   "#0891B2",
+   "#059669",
+   "#D97706",
+   "#DC2626",
+   "#7C3AED",
+];
+
+export function InstitutionsSection() {
+   const [addOpen, setAddOpen] = useState(false);
+   const [selectedColor, setSelectedColor] = useState(colorOptions[0]);
+
+   return (
+      <>
+         <Card>
+            <CardHeader className="pb-3">
+               <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                     <Building2 className="size-4" />
+                     Instituciones
+                  </CardTitle>
+                  <Button
+                     variant="outline"
+                     size="sm"
+                     className="text-xs"
+                     onClick={() => setAddOpen(true)}
+                  >
+                     <Plus className="size-3.5 mr-1.5" />
+                     Agregar institucion
+                  </Button>
+               </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+               <div className="flex flex-col gap-3">
+                  {institutions.map((inst) => (
+                     <div
+                        key={inst.id}
+                        className="flex items-center gap-3 py-2 border-b border-border last:border-0"
+                     >
+                        <div
+                           className="flex size-10 shrink-0 items-center justify-center rounded-lg"
+                           style={{ backgroundColor: inst.color + "15" }}
+                        >
+                           <Building2
+                              className="size-5"
+                              style={{ color: inst.color }}
+                           />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                           <p className="text-xs font-semibold text-foreground">
+                              {inst.name}
+                           </p>
+                           <p className="text-[10px] text-muted-foreground">
+                              {inst.address}
+                           </p>
+                        </div>
+                        <Badge variant="secondary" className="text-[10px]">
+                           {inst.level}
+                        </Badge>
+                        <div
+                           className="size-4 rounded-full"
+                           style={{ backgroundColor: inst.color }}
+                        />
+                     </div>
+                  ))}
+               </div>
+            </CardContent>
+         </Card>
+
+         <Dialog open={addOpen} onOpenChange={setAddOpen}>
+            <DialogContent className="sm:max-w-[420px]">
+               <DialogHeader>
+                  <DialogTitle>Agregar Institucion</DialogTitle>
+                  <DialogDescription>
+                     Vincula una nueva institucion educativa a tu perfil.
+                  </DialogDescription>
+               </DialogHeader>
+               <div className="flex flex-col gap-4 py-2">
+                  <div className="flex flex-col gap-1.5">
+                     <Label className="text-xs">Nombre de la institucion</Label>
+                     <Input
+                        className="h-9 text-xs"
+                        placeholder="Ej: Colegio Nacional Buenos Aires"
+                     />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                     <Label className="text-xs">Direccion</Label>
+                     <Input
+                        className="h-9 text-xs"
+                        placeholder="Ej: Av. San Martin 123"
+                     />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                     <Label className="text-xs">Nivel educativo</Label>
+                     <div className="flex flex-wrap gap-2">
+                        {[
+                           "Primaria",
+                           "Secundaria",
+                           "Terciaria",
+                           "Universidad",
+                           "Otro",
+                        ].map((level) => (
+                           <button
+                              key={level}
+                              className="px-3 py-1.5 rounded-md text-xs font-medium bg-muted text-muted-foreground hover:bg-muted/80 transition-colors data-[active=true]:bg-primary data-[active=true]:text-primary-foreground"
+                           >
+                              {level}
+                           </button>
+                        ))}
+                     </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                     <Label className="text-xs">Color identificador</Label>
+                     <div className="flex gap-2">
+                        {colorOptions.map((color) => (
+                           <button
+                              key={color}
+                              onClick={() => setSelectedColor(color)}
+                              className={`size-8 rounded-full transition-all ${selectedColor === color ? "ring-2 ring-offset-2 ring-foreground" : "hover:scale-110"}`}
+                              style={{ backgroundColor: color }}
+                           />
+                        ))}
+                     </div>
+                  </div>
+               </div>
+               <DialogFooter>
+                  <Button
+                     variant="outline"
+                     size="sm"
+                     onClick={() => setAddOpen(false)}
+                     className="text-xs"
+                  >
+                     Cancelar
+                  </Button>
+                  <Button
+                     size="sm"
+                     className="text-xs"
+                     onClick={() => {
+                        setAddOpen(false);
+                        toast.success("Institucion agregada correctamente");
+                     }}
+                  >
+                     Guardar
+                  </Button>
+               </DialogFooter>
+            </DialogContent>
+         </Dialog>
+      </>
+   );
+}
+
