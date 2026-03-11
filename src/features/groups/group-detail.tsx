@@ -49,7 +49,7 @@ import {
    useActivitiesContext,
    type ActivityStatus,
    type ActivityType,
-} from "@/contexts/activities-context";
+} from "@/features/activities";
 
 const assessmentTypeLabel: Record<AssessmentType, string> = {
    exam: "Examen",
@@ -991,4 +991,5 @@ export function GroupDetail({
       </div>
    );
 }
+
 

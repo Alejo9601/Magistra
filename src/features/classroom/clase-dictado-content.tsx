@@ -12,7 +12,7 @@ import { getInstitutionById, getSubjectById } from "@/lib/edu-repository";
 import { usePlanningContext } from "@/features/planning";
 import { useStudentsContext } from "@/features/students";
 import { useClassroomContext } from "@/features/classroom";
-import { useActivitiesContext } from "@/contexts/activities-context";
+import { useActivitiesContext } from "@/features/activities";
 import { AttendanceCard } from "@/features/classroom/attendance-card";
 import { type AttendanceStatus } from "@/features/classroom/constants";
 
@@ -217,6 +217,7 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
+
 
 
 

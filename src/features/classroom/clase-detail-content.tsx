@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { useClassroomContext } from "@/features/classroom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useActivitiesContext } from "@/contexts/activities-context";
+import { useActivitiesContext } from "@/features/activities";
 
 export function ClaseDetailContent() {
    const params = useParams();
@@ -163,6 +163,7 @@ export function ClaseDetailContent() {
       </div>
    );
 }
+
 
 
 
