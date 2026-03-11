@@ -30,10 +30,11 @@ export function PlanificacionContent() {
    const { activeInstitution } = useInstitutionContext();
    const { classes, createClass, createRecurringClasses, updateClass, duplicateClass } = usePlanningContext();
    const [searchParams] = useSearchParams();
+   const today = new Date();
 
    const [view, setView] = useState<ViewMode>("calendar");
-   const [month, setMonth] = useState(1);
-   const [year, setYear] = useState(2026);
+   const [month, setMonth] = useState(today.getMonth());
+   const [year, setYear] = useState(today.getFullYear());
    const initialStatusFilter =
       searchParams.get("status") === "planificada" ||
       searchParams.get("status") === "sin-planificar" ||
@@ -48,7 +49,6 @@ export function PlanificacionContent() {
    const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
    const [editingClassId, setEditingClassId] = useState<string | null>(null);
    const [prefillDate, setPrefillDate] = useState<string | undefined>(undefined);
-   const today = new Date();
    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
    const scopedClasses = useMemo(
