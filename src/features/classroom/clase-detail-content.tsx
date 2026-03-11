@@ -10,7 +10,7 @@ import {
 import { ClassNotesCard } from "@/features/classroom/class-notes-card";
 import { AttendanceCard } from "@/features/classroom/attendance-card";
 import { Link, useParams } from "react-router-dom";
-import { useStudentsContext } from "@/contexts/students-context";
+import { useStudentsContext } from "@/features/students";
 import { Button } from "@/components/ui/button";
 import { useClassroomContext } from "@/features/classroom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -163,6 +163,7 @@ export function ClaseDetailContent() {
       </div>
    );
 }
+
 
 
 

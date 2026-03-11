@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Plus, Search, BookOpen, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,7 +39,7 @@ import {
 } from "@/lib/edu-repository";
 import { StudentStatusBadge } from "@/features/groups/status-badge";
 import { toast } from "sonner";
-import { useStudentsContext } from "@/contexts/students-context";
+import { useStudentsContext } from "@/features/students";
 import {
    useAssessmentsContext,
    type AssessmentStatus,
@@ -991,3 +991,4 @@ export function GroupDetail({
       </div>
    );
 }
+

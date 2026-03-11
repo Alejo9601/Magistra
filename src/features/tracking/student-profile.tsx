@@ -43,7 +43,7 @@ import {
    getInstitutionById,
 } from "@/lib/edu-repository";
 import { toast } from "sonner";
-import { useStudentsContext } from "@/contexts/students-context";
+import { useStudentsContext } from "@/features/students";
 import { usePlanningContext } from "@/features/planning";
 import { useClassroomContext } from "@/features/classroom";
 
@@ -536,5 +536,6 @@ export function StudentProfile({
       </div>
    );
 }
+
 
 

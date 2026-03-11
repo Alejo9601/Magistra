@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { getInstitutionById, getSubjectById } from "@/lib/edu-repository";
 import { usePlanningContext } from "@/features/planning";
-import { useStudentsContext } from "@/contexts/students-context";
+import { useStudentsContext } from "@/features/students";
 import { useClassroomContext } from "@/features/classroom";
 import { useActivitiesContext } from "@/contexts/activities-context";
 import { AttendanceCard } from "@/features/classroom/attendance-card";
@@ -217,6 +217,7 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
+
 
 
 

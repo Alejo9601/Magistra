@@ -11,7 +11,7 @@ import ClaseDetailPage from "@/pages/clase/[id]/page";
 import { InstitutionProvider } from "@/contexts/institution-context";
 import { PlanningProvider } from "@/features/planning";
 import { DashboardProvider } from "@/contexts/dashboard-context";
-import { StudentsProvider } from "@/contexts/students-context";
+import { StudentsProvider } from "@/features/students";
 import { ClassroomProvider } from "@/features/classroom";
 import { AssessmentsProvider } from "@/contexts/assessments-context";
 import { ActivitiesProvider } from "@/contexts/activities-context";
@@ -74,5 +74,6 @@ function App() {
 }
 
 export default App;
+
 
 

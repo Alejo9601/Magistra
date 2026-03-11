@@ -2,7 +2,7 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useStudentsContext } from "@/contexts/students-context";
+import { useStudentsContext } from "@/features/students";
 
 export function AtRiskStudents({ activeInstitution }: { activeInstitution: string }) {
    const { getStudentsByInstitution } = useStudentsContext();
@@ -61,5 +61,6 @@ export function AtRiskStudents({ activeInstitution }: { activeInstitution: strin
       </Card>
    );
 }
+
 
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,7 @@ import {
    TableRow,
 } from "@/components/ui/table";
 import { getSubjectById } from "@/lib/edu-repository";
-import { useStudentsContext } from "@/contexts/students-context";
+import { useStudentsContext } from "@/features/students";
 
 export function StudentList({
    onSelect,
@@ -145,3 +145,4 @@ export function StudentList({
       </div>
    );
 }
+
