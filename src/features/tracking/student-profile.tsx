@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import {
    Calendar,
    Star,
@@ -45,7 +45,7 @@ import {
 import { toast } from "sonner";
 import { useStudentsContext } from "@/contexts/students-context";
 import { usePlanningContext } from "@/contexts/planning-context";
-import { useClassroomContext } from "@/contexts/classroom-context";
+import { useClassroomContext } from "@/features/classroom";
 
 export function StudentProfile({
    studentId,
@@ -536,3 +536,4 @@ export function StudentProfile({
       </div>
    );
 }
+

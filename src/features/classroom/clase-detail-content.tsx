@@ -12,7 +12,7 @@ import { AttendanceCard } from "@/features/classroom/attendance-card";
 import { Link, useParams } from "react-router-dom";
 import { useStudentsContext } from "@/contexts/students-context";
 import { Button } from "@/components/ui/button";
-import { useClassroomContext } from "@/contexts/classroom-context";
+import { useClassroomContext } from "@/features/classroom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useActivitiesContext } from "@/contexts/activities-context";
@@ -163,4 +163,5 @@ export function ClaseDetailContent() {
       </div>
    );
 }
+
 

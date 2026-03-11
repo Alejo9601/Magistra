@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+﻿import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 import HomePage from "@/pages/page";
 import PlanificacionPage from "@/pages/planificacion/page";
@@ -12,7 +12,7 @@ import { InstitutionProvider } from "@/contexts/institution-context";
 import { PlanningProvider } from "@/contexts/planning-context";
 import { DashboardProvider } from "@/contexts/dashboard-context";
 import { StudentsProvider } from "@/contexts/students-context";
-import { ClassroomProvider } from "@/contexts/classroom-context";
+import { ClassroomProvider } from "@/features/classroom";
 import { AssessmentsProvider } from "@/contexts/assessments-context";
 import { ActivitiesProvider } from "@/contexts/activities-context";
 import "@/pages/globals.css";
@@ -74,3 +74,4 @@ function App() {
 }
 
 export default App;
+

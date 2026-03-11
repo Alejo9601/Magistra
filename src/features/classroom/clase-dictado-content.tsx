@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { getInstitutionById, getSubjectById } from "@/lib/edu-repository";
 import { usePlanningContext } from "@/contexts/planning-context";
 import { useStudentsContext } from "@/contexts/students-context";
-import { useClassroomContext } from "@/contexts/classroom-context";
+import { useClassroomContext } from "@/features/classroom";
 import { useActivitiesContext } from "@/contexts/activities-context";
 import { AttendanceCard } from "@/features/classroom/attendance-card";
 import { type AttendanceStatus } from "@/features/classroom/constants";
@@ -217,4 +217,5 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
+
 
