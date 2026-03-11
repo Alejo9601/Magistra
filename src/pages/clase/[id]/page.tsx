@@ -1,5 +1,5 @@
-import { AppShell } from "@/components/app-shell";
-import { ClaseDetailContent } from "@/components/clase-detail";
+﻿import { AppShell } from "@/components/app-shell";
+import { ClaseDetailContent } from "@/features/classroom";
 
 export default function ClaseDetailPage() {
    return (
@@ -8,3 +8,4 @@ export default function ClaseDetailPage() {
       </AppShell>
    );
 }
+

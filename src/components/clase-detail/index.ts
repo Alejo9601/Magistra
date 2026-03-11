@@ -1,1 +1,1 @@
-export { ClaseDetailContent } from "@/components/clase-detail/clase-detail-content";
+﻿export { ClaseDetailContent } from "@/features/classroom/clase-detail-content";

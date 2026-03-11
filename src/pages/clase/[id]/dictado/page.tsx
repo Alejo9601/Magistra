@@ -1,5 +1,5 @@
-import { AppShell } from "@/components/app-shell";
-import { ClaseDictadoContent } from "@/components/clase-dictado";
+﻿import { AppShell } from "@/components/app-shell";
+import { ClaseDictadoContent } from "@/features/classroom";
 
 export default function ClaseDictadoPage() {
    return (
@@ -8,3 +8,4 @@ export default function ClaseDictadoPage() {
       </AppShell>
    );
 }
+

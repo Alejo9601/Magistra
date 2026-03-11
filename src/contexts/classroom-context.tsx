@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import type { AttendanceStatus } from "@/components/clase-detail/constants";
+import type { AttendanceStatus } from "@/features/classroom/constants";
 import {
    createFallbackClassroomRecord,
    loadClassroomRecords,
