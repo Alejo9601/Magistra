@@ -45,6 +45,8 @@ function sanitizeClassSession(raw: unknown): ClassSession | null {
       id: input.id,
       subjectId: input.subjectId,
       institutionId: input.institutionId,
+      assignmentId:
+         typeof input.assignmentId === "string" ? input.assignmentId : undefined,
       date: input.date,
       time: input.time,
       scheduleTemplateId:

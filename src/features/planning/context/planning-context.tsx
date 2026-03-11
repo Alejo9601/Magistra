@@ -1,5 +1,9 @@
 ﻿import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { classSessions } from "@/lib/edu-repository";
+import {
+   classSessions,
+   getAssignmentById,
+   getAssignmentIdBySubjectId,
+} from "@/lib/edu-repository";
 import type { ClassSession } from "@/types";
 import {
    createPlanningClassId,
@@ -10,7 +14,7 @@ import {
 type ClassInput = Omit<ClassSession, "id">;
 type RecurringInput = {
    institutionId: string;
-   subjectId: string;
+   assignmentId: string;
    startDate: string;
    endDate: string;
    slots: Array<{
@@ -45,7 +49,12 @@ function addDays(dateStr: string, days: number) {
 
 export function PlanningProvider({ children }: { children: React.ReactNode }) {
    const [classes, setClasses] = useState<ClassSession[]>(() =>
-      loadPlanningClasses(classSessions),
+      loadPlanningClasses(classSessions).map((classSession) => ({
+         ...classSession,
+         assignmentId:
+            classSession.assignmentId ??
+            getAssignmentIdBySubjectId(classSession.subjectId),
+      })),
    );
 
    useEffect(() => {
@@ -56,9 +65,18 @@ export function PlanningProvider({ children }: { children: React.ReactNode }) {
       () => ({
          classes,
          createClass: (input) => {
+            const assignment = input.assignmentId
+               ? getAssignmentById(input.assignmentId)
+               : null;
             const nextClass: ClassSession = {
                ...input,
                id: createPlanningClassId(),
+               assignmentId:
+                  assignment?.id ??
+                  input.assignmentId ??
+                  getAssignmentIdBySubjectId(input.subjectId),
+               subjectId: assignment?.subjectId ?? input.subjectId,
+               institutionId: assignment?.institutionId ?? input.institutionId,
             };
 
             setClasses((prev) => [...prev, nextClass]);
@@ -79,9 +97,13 @@ export function PlanningProvider({ children }: { children: React.ReactNode }) {
                const existingSlot = new Set(
                   prev.map(
                      (classSession) =>
-                        `${classSession.institutionId}|${classSession.subjectId}|${classSession.date}|${classSession.time}`,
+                        `${classSession.assignmentId ?? getAssignmentIdBySubjectId(classSession.subjectId)}|${classSession.date}|${classSession.time}`,
                   ),
                );
+               const assignment = getAssignmentById(input.assignmentId);
+               if (!assignment) {
+                  return prev;
+               }
 
                const today = new Date();
                const todayAtNoon = new Date(
@@ -106,13 +128,14 @@ export function PlanningProvider({ children }: { children: React.ReactNode }) {
                      const date = `${yyyy}-${mm}-${dd}`;
 
                      daySlots.forEach((slot) => {
-                        const slotKey = `${input.institutionId}|${input.subjectId}|${date}|${slot.time}`;
+                        const slotKey = `${assignment.id}|${date}|${slot.time}`;
                         if (!existingSlot.has(slotKey)) {
                            next.push({
                               id: createPlanningClassId(),
                               scheduleTemplateId,
-                              institutionId: input.institutionId,
-                              subjectId: input.subjectId,
+                              institutionId: assignment.institutionId,
+                              subjectId: assignment.subjectId,
+                              assignmentId: assignment.id,
                               date,
                               time: slot.time,
                               topic: "Por planificar",
@@ -134,6 +157,9 @@ export function PlanningProvider({ children }: { children: React.ReactNode }) {
             return createdCount;
          },
          updateClass: (id, updates) => {
+            const assignment = updates.assignmentId
+               ? getAssignmentById(updates.assignmentId)
+               : null;
             setClasses((prev) =>
                prev.map((classSession) =>
                   classSession.id === id
@@ -141,6 +167,18 @@ export function PlanningProvider({ children }: { children: React.ReactNode }) {
                           ...classSession,
                           ...updates,
                           id: classSession.id,
+                          subjectId:
+                             assignment?.subjectId ??
+                             updates.subjectId ??
+                             classSession.subjectId,
+                          institutionId:
+                             assignment?.institutionId ??
+                             updates.institutionId ??
+                             classSession.institutionId,
+                          assignmentId:
+                             assignment?.id ??
+                             updates.assignmentId ??
+                             classSession.assignmentId,
                        }
                      : classSession,
                ),
@@ -205,4 +243,3 @@ export function usePlanningContext() {
    }
    return context;
 }
-

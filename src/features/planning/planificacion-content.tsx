@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getSubjectById, getInstitutionById } from "@/lib/edu-repository";
+import { getAssignmentById, getSubjectById, getInstitutionById } from "@/lib/edu-repository";
 import { useInstitutionContext } from "@/features/institution";
 import { usePlanningContext } from "@/features/planning";
 import { Link, useSearchParams } from "react-router-dom";
@@ -261,6 +261,9 @@ export function PlanificacionContent() {
                         <TableBody>
                            {listClasses.map((cls) => {
                               const subject = getSubjectById(cls.subjectId);
+                              const assignment = cls.assignmentId
+                                 ? getAssignmentById(cls.assignmentId)
+                                 : null;
                               const inst = getInstitutionById(cls.institutionId);
                               const dateObj = new Date(cls.date + "T12:00:00");
                               return (
@@ -268,7 +271,9 @@ export function PlanificacionContent() {
                                     <TableCell className="text-xs whitespace-nowrap">{dateObj.toLocaleDateString("es-AR", { day: "2-digit", month: "short" })} {cls.time}</TableCell>
                                     <TableCell className="text-xs font-medium">{subject?.name}</TableCell>
                                     <TableCell className="text-xs text-muted-foreground">{inst?.name}</TableCell>
-                                    <TableCell className="text-xs text-muted-foreground">{subject?.course}</TableCell>
+                                    <TableCell className="text-xs text-muted-foreground">
+                                       {assignment?.section ?? subject?.course}
+                                    </TableCell>
                                     <TableCell className="text-xs max-w-[190px] truncate">{cls.topic}</TableCell>
                                     <TableCell><Badge className={`border-0 text-[10px] ${classTypeColors[cls.type]}`}>{classTypeLabels[cls.type]}</Badge></TableCell>
                                     <TableCell><Badge className={`border-0 text-[10px] ${getStatusColor(cls.status)}`}>{getStatusLabel(cls.status)}</Badge></TableCell>

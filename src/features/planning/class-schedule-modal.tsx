@@ -18,7 +18,11 @@ import {
    SelectTrigger,
    SelectValue,
 } from "@/components/ui/select";
-import { institutions, subjects } from "@/lib/edu-repository";
+import {
+   getAssignmentsByInstitution,
+   getSubjectById,
+   institutions,
+} from "@/lib/edu-repository";
 import { toast } from "sonner";
 
 const weekDays = [
@@ -73,7 +77,7 @@ export function ClassScheduleModal({
    activeInstitution: string;
    onSchedule: (payload: {
       institutionId: string;
-      subjectId: string;
+      assignmentId: string;
       startDate: string;
       endDate: string;
       slots: Array<{
@@ -83,7 +87,7 @@ export function ClassScheduleModal({
    }) => number;
 }) {
    const [institutionId, setInstitutionId] = useState(activeInstitution);
-   const [subjectId, setSubjectId] = useState("");
+   const [assignmentId, setAssignmentId] = useState("");
    const [startDate, setStartDate] = useState(todayDate());
    const [endDate, setEndDate] = useState(addDays(todayDate(), 60));
    const [slots, setSlots] = useState<SlotInput[]>([
@@ -91,14 +95,14 @@ export function ClassScheduleModal({
       createSlot(3, "08:00"),
    ]);
 
-   const availableSubjects = useMemo(
-      () => subjects.filter((subject) => subject.institutionId === institutionId),
+   const availableAssignments = useMemo(
+      () => getAssignmentsByInstitution(institutionId),
       [institutionId],
    );
 
    const reset = () => {
       setInstitutionId(activeInstitution);
-      setSubjectId("");
+      setAssignmentId("");
       setStartDate(todayDate());
       setEndDate(addDays(todayDate(), 60));
       setSlots([createSlot(1, "08:00"), createSlot(3, "08:00")]);
@@ -119,7 +123,7 @@ export function ClassScheduleModal({
    };
 
    const submit = () => {
-      if (!institutionId || !subjectId || !startDate || !endDate) {
+      if (!institutionId || !assignmentId || !startDate || !endDate) {
          toast.error("Completa institucion, materia y rango de fechas.");
          return;
       }
@@ -147,7 +151,7 @@ export function ClassScheduleModal({
 
       const created = onSchedule({
          institutionId,
-         subjectId,
+         assignmentId,
          startDate,
          endDate,
          slots: normalizedSlots,
@@ -180,7 +184,13 @@ export function ClassScheduleModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
                <div className="flex flex-col gap-1.5">
                   <Label className="text-xs">Institucion</Label>
-                  <Select value={institutionId} onValueChange={setInstitutionId}>
+                  <Select
+                     value={institutionId}
+                     onValueChange={(value) => {
+                        setInstitutionId(value);
+                        setAssignmentId("");
+                     }}
+                  >
                      <SelectTrigger className="h-9 text-xs">
                         <SelectValue placeholder="Seleccionar..." />
                      </SelectTrigger>
@@ -196,16 +206,20 @@ export function ClassScheduleModal({
 
                <div className="flex flex-col gap-1.5">
                   <Label className="text-xs">Materia</Label>
-                  <Select value={subjectId} onValueChange={setSubjectId}>
+                  <Select value={assignmentId} onValueChange={setAssignmentId}>
                      <SelectTrigger className="h-9 text-xs">
                         <SelectValue placeholder="Seleccionar..." />
                      </SelectTrigger>
                      <SelectContent>
-                        {availableSubjects.map((subject) => (
-                           <SelectItem key={subject.id} value={subject.id}>
-                              {subject.name} ({subject.course})
+                        {availableAssignments.map((assignment) => {
+                           const subject = getSubjectById(assignment.subjectId);
+                           if (!subject) return null;
+                           return (
+                              <SelectItem key={assignment.id} value={assignment.id}>
+                                 {subject.name} ({assignment.section})
                            </SelectItem>
-                        ))}
+                           );
+                        })}
                      </SelectContent>
                   </Select>
                </div>

@@ -18,7 +18,13 @@ import {
    SelectTrigger,
    SelectValue,
 } from "@/components/ui/select";
-import { institutions, subjects } from "@/lib/edu-repository";
+import {
+   getAssignmentById,
+   getAssignmentIdBySubjectId,
+   getAssignmentsByInstitution,
+   getSubjectById,
+   institutions,
+} from "@/lib/edu-repository";
 import { classTypeLabels } from "@/features/planning/constants";
 import type { ClassFormInput } from "@/features/planning/types";
 import { toast } from "sonner";
@@ -42,7 +48,7 @@ export function ClassEditorModal({
    const today = new Date();
    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
    const [institutionId, setInstitutionId] = useState(activeInstitution);
-   const [subjectId, setSubjectId] = useState("");
+   const [assignmentId, setAssignmentId] = useState("");
    const [date, setDate] = useState("");
    const [time, setTime] = useState("08:00");
    const [topic, setTopic] = useState("");
@@ -52,15 +58,20 @@ export function ClassEditorModal({
    const [notes, setNotes] = useState("");
    const [resourcesText, setResourcesText] = useState("");
 
-   const availableSubjects = useMemo(
-      () => subjects.filter((subject) => subject.institutionId === institutionId),
+   const availableAssignments = useMemo(
+      () => getAssignmentsByInstitution(institutionId),
       [institutionId],
    );
 
    const reset = () => {
       const nextInstitution = initialClass?.institutionId ?? activeInstitution;
       setInstitutionId(nextInstitution);
-      setSubjectId(initialClass?.subjectId ?? "");
+      setAssignmentId(
+         initialClass?.assignmentId ??
+            (initialClass?.subjectId
+               ? getAssignmentIdBySubjectId(initialClass.subjectId)
+               : ""),
+      );
       setDate(initialClass?.date ?? initialDate ?? "");
       setTime(initialClass?.time ?? "08:00");
       setTopic(initialClass?.topic ?? "");
@@ -72,7 +83,7 @@ export function ClassEditorModal({
    };
 
    const submit = (mode: "draft" | "publish") => {
-      if (!institutionId || !subjectId || !date || !time || !topic.trim()) {
+      if (!institutionId || !assignmentId || !date || !time || !topic.trim()) {
          toast.error("Completa institucion, materia, fecha, hora y tema principal.");
          return;
       }
@@ -86,10 +97,18 @@ export function ClassEditorModal({
          .map((value) => value.trim())
          .filter(Boolean);
 
+      const assignment = getAssignmentById(assignmentId);
+      const subject = assignment ? getSubjectById(assignment.subjectId) : null;
+      if (!assignment || !subject) {
+         toast.error("Selecciona un grupo valido.");
+         return;
+      }
+
       onSubmit(
          {
-            institutionId,
-            subjectId,
+            institutionId: assignment.institutionId,
+            subjectId: assignment.subjectId,
+            assignmentId: assignment.id,
             date,
             time,
             topic: topic.trim(),
@@ -129,10 +148,8 @@ export function ClassEditorModal({
                      value={institutionId}
                      onValueChange={(value) => {
                         setInstitutionId(value);
-                        const firstSubject = subjects.find(
-                           (subject) => subject.institutionId === value,
-                        );
-                        setSubjectId(firstSubject?.id ?? "");
+                        const firstAssignment = getAssignmentsByInstitution(value)[0];
+                        setAssignmentId(firstAssignment?.id ?? "");
                      }}
                   >
                      <SelectTrigger className="h-9 text-xs">
@@ -150,16 +167,20 @@ export function ClassEditorModal({
 
                <div className="flex flex-col gap-1.5">
                   <Label className="text-xs">Materia</Label>
-                  <Select value={subjectId} onValueChange={setSubjectId}>
+                  <Select value={assignmentId} onValueChange={setAssignmentId}>
                      <SelectTrigger className="h-9 text-xs">
                         <SelectValue placeholder="Seleccionar..." />
                      </SelectTrigger>
                      <SelectContent>
-                        {availableSubjects.map((subject) => (
-                           <SelectItem key={subject.id} value={subject.id}>
-                              {subject.name} ({subject.course})
+                        {availableAssignments.map((assignment) => {
+                           const subject = getSubjectById(assignment.subjectId);
+                           if (!subject) return null;
+                           return (
+                              <SelectItem key={assignment.id} value={assignment.id}>
+                                 {subject.name} ({assignment.section})
                            </SelectItem>
-                        ))}
+                           );
+                        })}
                      </SelectContent>
                   </Select>
                </div>
