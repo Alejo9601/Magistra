@@ -1,23 +1,13 @@
 import { evaluations } from "@/lib/edu-repository";
 import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
+import type {
+   Assessment,
+   AssessmentStatus,
+   AssessmentType,
+} from "@/types";
 
 const ASSESSMENTS_STORAGE_KEY = "aula.assessments";
-
-export type AssessmentType = "exam" | "practice_work";
-export type AssessmentStatus = "draft" | "scheduled" | "published" | "graded";
-
-export type Assessment = {
-   id: string;
-   subjectId: string;
-   title: string;
-   description?: string;
-   date: string;
-   type: AssessmentType;
-   status: AssessmentStatus;
-   weight: number;
-   maxScore: number;
-   gradesLoaded: number;
-};
+export type { Assessment, AssessmentStatus, AssessmentType };
 
 function isAssessmentType(value: unknown): value is AssessmentType {
    return value === "exam" || value === "practice_work";

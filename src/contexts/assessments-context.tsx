@@ -3,10 +3,8 @@ import {
    createAssessmentId,
    loadAssessments,
    saveAssessments,
-   type Assessment,
-   type AssessmentStatus,
-   type AssessmentType,
 } from "@/services/assessments-service";
+import type { Assessment, AssessmentStatus, AssessmentType } from "@/types";
 
 export type { Assessment, AssessmentStatus, AssessmentType };
 
