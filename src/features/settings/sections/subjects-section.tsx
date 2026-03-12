@@ -6,6 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+   AlertDialog,
+   AlertDialogAction,
+   AlertDialogCancel,
+   AlertDialogContent,
+   AlertDialogDescription,
+   AlertDialogFooter,
+   AlertDialogHeader,
+   AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
    Dialog,
    DialogContent,
    DialogDescription,
@@ -50,6 +60,9 @@ export function SubjectsSection() {
    const [scheduleOpen, setScheduleOpen] = useState(false);
    const [scheduleInstitutionId, setScheduleInstitutionId] = useState("");
    const [scheduleAssignmentId, setScheduleAssignmentId] = useState("");
+   const [pendingDeleteSubjectId, setPendingDeleteSubjectId] = useState<
+      string | null
+   >(null);
 
    const groupedSubjects = useMemo(
       () =>
@@ -169,7 +182,7 @@ export function SubjectsSection() {
                                     variant="ghost"
                                     size="icon"
                                     className="size-7"
-                                    onClick={() => handleDelete(sub.id)}
+                                    onClick={() => setPendingDeleteSubjectId(sub.id)}
                                     title="Eliminar materia"
                                  >
                                     <Trash2 className="size-3.5 text-destructive" />
@@ -270,6 +283,37 @@ export function SubjectsSection() {
             initialAssignmentId={scheduleAssignmentId || undefined}
             onSchedule={(payload) => createRecurringClasses(payload)}
          />
+
+         <AlertDialog
+            open={Boolean(pendingDeleteSubjectId)}
+            onOpenChange={(open) => {
+               if (!open) setPendingDeleteSubjectId(null);
+            }}
+         >
+            <AlertDialogContent>
+               <AlertDialogHeader>
+                  <AlertDialogTitle>Eliminar materia</AlertDialogTitle>
+                  <AlertDialogDescription>
+                     Esta accion eliminara la materia y sus datos relacionados
+                     (clases, asistencia, evaluaciones y actividades). No se puede
+                     deshacer.
+                  </AlertDialogDescription>
+               </AlertDialogHeader>
+               <AlertDialogFooter>
+                  <AlertDialogCancel className="text-xs">Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                     className="text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                     onClick={() => {
+                        if (!pendingDeleteSubjectId) return;
+                        handleDelete(pendingDeleteSubjectId);
+                        setPendingDeleteSubjectId(null);
+                     }}
+                  >
+                     Eliminar
+                  </AlertDialogAction>
+               </AlertDialogFooter>
+            </AlertDialogContent>
+         </AlertDialog>
       </>
    );
 }

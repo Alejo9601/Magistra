@@ -8,6 +8,16 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+   AlertDialog,
+   AlertDialogAction,
+   AlertDialogCancel,
+   AlertDialogContent,
+   AlertDialogDescription,
+   AlertDialogFooter,
+   AlertDialogHeader,
+   AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
    Collapsible,
@@ -137,6 +147,11 @@ export function GroupDetail({
    const [newActivityStatus, setNewActivityStatus] =
       useState<ActivityStatus>("planned");
    const [newActivityDescription, setNewActivityDescription] = useState("");
+   const [pendingDelete, setPendingDelete] = useState<{
+      kind: "assessment" | "activity";
+      id: string;
+      title: string;
+   } | null>(null);
    const assignment = getAssignmentById(assignmentId);
    const subject = assignment ? getSubjectById(assignment.subjectId) : null;
    const inst = assignment ? getInstitutionById(assignment.institutionId) : null;
@@ -685,10 +700,13 @@ export function GroupDetail({
                                           variant="ghost"
                                           size="icon"
                                           className="size-7"
-                                          onClick={() => {
-                                             removeAssessment(assessment.id);
-                                             toast.success("Evaluacion eliminada");
-                                          }}
+                                          onClick={() =>
+                                             setPendingDelete({
+                                                kind: "assessment",
+                                                id: assessment.id,
+                                                title: assessment.title,
+                                             })
+                                          }
                                        >
                                           <Trash2 className="size-3.5 text-muted-foreground" />
                                        </Button>
@@ -788,10 +806,13 @@ export function GroupDetail({
                                        variant="ghost"
                                        size="icon"
                                        className="size-7"
-                                       onClick={() => {
-                                          removeActivity(activity.id);
-                                          toast.success("Actividad eliminada");
-                                       }}
+                                       onClick={() =>
+                                          setPendingDelete({
+                                             kind: "activity",
+                                             id: activity.id,
+                                             title: activity.title,
+                                          })
+                                       }
                                     >
                                        <Trash2 className="size-3.5 text-muted-foreground" />
                                     </Button>
@@ -826,6 +847,48 @@ export function GroupDetail({
                </Card>
             </TabsContent>
          </Tabs>
+
+         <AlertDialog
+            open={Boolean(pendingDelete)}
+            onOpenChange={(open) => {
+               if (!open) setPendingDelete(null);
+            }}
+         >
+            <AlertDialogContent>
+               <AlertDialogHeader>
+                  <AlertDialogTitle>
+                     {pendingDelete?.kind === "assessment"
+                        ? "Eliminar evaluacion"
+                        : "Eliminar actividad"}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                     {pendingDelete?.kind === "assessment"
+                        ? `Se eliminara la evaluacion "${pendingDelete.title}".`
+                        : `Se eliminara la actividad "${pendingDelete?.title}".`}{" "}
+                     Esta accion no se puede deshacer.
+                  </AlertDialogDescription>
+               </AlertDialogHeader>
+               <AlertDialogFooter>
+                  <AlertDialogCancel className="text-xs">Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                     className="text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                     onClick={() => {
+                        if (!pendingDelete) return;
+                        if (pendingDelete.kind === "assessment") {
+                           removeAssessment(pendingDelete.id);
+                           toast.success("Evaluacion eliminada");
+                        } else {
+                           removeActivity(pendingDelete.id);
+                           toast.success("Actividad eliminada");
+                        }
+                        setPendingDelete(null);
+                     }}
+                  >
+                     Eliminar
+                  </AlertDialogAction>
+               </AlertDialogFooter>
+            </AlertDialogContent>
+         </AlertDialog>
 
          <Dialog
             open={addStudentOpen}

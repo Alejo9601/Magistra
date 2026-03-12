@@ -6,6 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+   AlertDialog,
+   AlertDialogAction,
+   AlertDialogCancel,
+   AlertDialogContent,
+   AlertDialogDescription,
+   AlertDialogFooter,
+   AlertDialogHeader,
+   AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
    Dialog,
    DialogContent,
    DialogHeader,
@@ -59,6 +69,9 @@ export function InstitutionsSection() {
    const [name, setName] = useState("");
    const [address, setAddress] = useState("");
    const [level, setLevel] = useState<(typeof levelOptions)[number]>("Secundaria");
+   const [pendingDeleteInstitutionId, setPendingDeleteInstitutionId] = useState<
+      string | null
+   >(null);
 
    const institutionList = useMemo(() => institutions, [revision]);
 
@@ -177,7 +190,7 @@ export function InstitutionsSection() {
                            variant="ghost"
                            size="icon"
                            className="size-7"
-                           onClick={() => handleDelete(inst.id)}
+                           onClick={() => setPendingDeleteInstitutionId(inst.id)}
                            title="Eliminar institucion"
                         >
                            <Trash2 className="size-3.5 text-destructive" />
@@ -267,6 +280,37 @@ export function InstitutionsSection() {
                </DialogFooter>
             </DialogContent>
          </Dialog>
+
+         <AlertDialog
+            open={Boolean(pendingDeleteInstitutionId)}
+            onOpenChange={(open) => {
+               if (!open) setPendingDeleteInstitutionId(null);
+            }}
+         >
+            <AlertDialogContent>
+               <AlertDialogHeader>
+                  <AlertDialogTitle>Eliminar institucion</AlertDialogTitle>
+                  <AlertDialogDescription>
+                     Esta accion eliminara la institucion y todos sus datos
+                     relacionados (materias, clases, asistencia, evaluaciones y
+                     actividades). No se puede deshacer.
+                  </AlertDialogDescription>
+               </AlertDialogHeader>
+               <AlertDialogFooter>
+                  <AlertDialogCancel className="text-xs">Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                     className="text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                     onClick={() => {
+                        if (!pendingDeleteInstitutionId) return;
+                        handleDelete(pendingDeleteInstitutionId);
+                        setPendingDeleteInstitutionId(null);
+                     }}
+                  >
+                     Eliminar
+                  </AlertDialogAction>
+               </AlertDialogFooter>
+            </AlertDialogContent>
+         </AlertDialog>
       </>
    );
 }

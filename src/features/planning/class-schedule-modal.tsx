@@ -2,6 +2,16 @@ import { useMemo, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
+   AlertDialog,
+   AlertDialogAction,
+   AlertDialogCancel,
+   AlertDialogContent,
+   AlertDialogDescription,
+   AlertDialogFooter,
+   AlertDialogHeader,
+   AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
    Dialog,
    DialogContent,
    DialogDescription,
@@ -101,6 +111,9 @@ export function ClassScheduleModal({
    const [assignmentId, setAssignmentId] = useState("");
    const [startDate, setStartDate] = useState(todayDate());
    const [endDate, setEndDate] = useState(addDays(todayDate(), 60));
+   const [pendingDeleteSlotId, setPendingDeleteSlotId] = useState<string | null>(
+      null,
+   );
    const [slots, setSlots] = useState<SlotInput[]>([
       createSlot(1, "08:00"),
       createSlot(3, "08:00"),
@@ -183,7 +196,8 @@ export function ClassScheduleModal({
    };
 
    return (
-      <Dialog
+      <>
+         <Dialog
          open={open}
          onOpenChange={(isOpen) => {
             onOpenChange(isOpen);
@@ -318,7 +332,7 @@ export function ClassScheduleModal({
                            variant="ghost"
                            size="icon"
                            className="size-9"
-                           onClick={() => removeSlot(slot.id)}
+                           onClick={() => setPendingDeleteSlotId(slot.id)}
                            disabled={slots.length === 1}
                         >
                            <Trash2 className="size-4 text-muted-foreground" />
@@ -350,6 +364,36 @@ export function ClassScheduleModal({
                </Button>
             </DialogFooter>
          </DialogContent>
-      </Dialog>
+         </Dialog>
+
+         <AlertDialog
+         open={Boolean(pendingDeleteSlotId)}
+         onOpenChange={(open) => {
+            if (!open) setPendingDeleteSlotId(null);
+         }}
+      >
+         <AlertDialogContent>
+            <AlertDialogHeader>
+               <AlertDialogTitle>Eliminar bloque</AlertDialogTitle>
+               <AlertDialogDescription>
+                  Se eliminara este bloque semanal de dia y horario.
+               </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+               <AlertDialogCancel className="text-xs">Cancelar</AlertDialogCancel>
+               <AlertDialogAction
+                  className="text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={() => {
+                     if (!pendingDeleteSlotId) return;
+                     removeSlot(pendingDeleteSlotId);
+                     setPendingDeleteSlotId(null);
+                  }}
+               >
+                  Eliminar
+               </AlertDialogAction>
+            </AlertDialogFooter>
+         </AlertDialogContent>
+         </AlertDialog>
+      </>
    );
 }
