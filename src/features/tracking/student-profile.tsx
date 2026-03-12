@@ -1,42 +1,9 @@
-﻿import { useMemo, useState } from "react";
-import {
-   Calendar,
-   Star,
-   FileText,
-   Plus,
-   ArrowLeft,
-   MessageSquare,
-} from "lucide-react";
+﻿import { useMemo } from "react";
+import { Calendar, Star, ShieldAlert, ArrowLeft, MessageSquare } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-   Dialog,
-   DialogContent,
-   DialogDescription,
-   DialogFooter,
-   DialogHeader,
-   DialogTitle,
-} from "@/components/ui/dialog";
-import {
-   Select,
-   SelectContent,
-   SelectItem,
-   SelectTrigger,
-   SelectValue,
-} from "@/components/ui/select";
-import {
-   Table,
-   TableBody,
-   TableCell,
-   TableHead,
-   TableHeader,
-   TableRow,
-} from "@/components/ui/table";
 import {
    attendanceRecords,
    getAssignmentById,
@@ -44,11 +11,9 @@ import {
    getSubjectById,
    getInstitutionById,
 } from "@/lib/edu-repository";
-import { toast } from "sonner";
 import { useStudentsContext } from "@/features/students";
 import { usePlanningContext } from "@/features/planning";
 import { useClassroomContext } from "@/features/classroom";
-import { useAssessmentsContext } from "@/features/assessments";
 
 export function StudentProfile({
    studentId,
@@ -64,52 +29,41 @@ export function StudentProfile({
    const { students } = useStudentsContext();
    const { classes } = usePlanningContext();
    const { getRecord } = useClassroomContext();
-   const { assessments } = useAssessmentsContext();
-   const [gradeModalOpen, setGradeModalOpen] = useState(false);
    const student = students.find((s) => s.id === studentId);
 
    if (!student) return null;
 
-   const selectedAssignment = assignmentId
-      ? getAssignmentById(assignmentId)
-      : null;
+   const selectedAssignment = assignmentId ? getAssignmentById(assignmentId) : null;
    const scopedSubjectId = selectedAssignment?.subjectId;
    const studentSubjects = (scopedSubjectId ? [scopedSubjectId] : student.subjectIds)
       .map((sid) => getSubjectById(sid))
       .filter((subject) => Boolean(subject))
       .filter((subject) => subject?.institutionId === activeInstitution);
-   const firstSubject =
-      studentSubjects[0] || getSubjectById(student.subjectIds[0]);
-   const inst = firstSubject
-      ? getInstitutionById(firstSubject.institutionId)
-      : null;
-   const studentAssessments = assessments
-      .filter((assessment) =>
-         scopedSubjectId
-            ? assessment.subjectId === scopedSubjectId
-            : student.subjectIds.includes(assessment.subjectId),
-      )
-      .sort((a, b) => a.date.localeCompare(b.date));
+   const firstSubject = studentSubjects[0] || getSubjectById(student.subjectIds[0]);
+   const inst = firstSubject ? getInstitutionById(firstSubject.institutionId) : null;
+
    const attendanceEntries = useMemo(() => {
-      const relevantClasses = classes.filter(
-         (classSession) => {
-            if (classSession.institutionId !== activeInstitution) {
-               return false;
-            }
-            if (!scopedSubjectId) {
-               return student.subjectIds.includes(classSession.subjectId);
-            }
-            const classAssignmentId =
-               classSession.assignmentId ??
-               getAssignmentIdBySubjectId(classSession.subjectId);
-            return classAssignmentId === assignmentId;
-         },
-      );
+      const relevantClasses = classes.filter((classSession) => {
+         if (classSession.institutionId !== activeInstitution) {
+            return false;
+         }
+         if (!scopedSubjectId) {
+            return student.subjectIds.includes(classSession.subjectId);
+         }
+         const classAssignmentId =
+            classSession.assignmentId ?? getAssignmentIdBySubjectId(classSession.subjectId);
+         return classAssignmentId === assignmentId;
+      });
+
       const seededAttendanceByClass = new Map(
          attendanceRecords
             .filter((entry) => entry.studentId === studentId)
-            .map((entry) => [entry.classId, entry.status as "P" | "A" | "T" | "J"] as const),
+            .map(
+               (entry) =>
+                  [entry.classId, entry.status as "P" | "A" | "T" | "J"] as const,
+            ),
       );
+
       return relevantClasses
          .map((classSession) => {
             const fromClassroom = getRecord(classSession.id).attendance[studentId];
@@ -121,7 +75,9 @@ export function StudentProfile({
             };
          })
          .filter(
-            (entry): entry is { classId: string; date: string; status: "P" | "A" | "T" | "J" } =>
+            (
+               entry,
+            ): entry is { classId: string; date: string; status: "P" | "A" | "T" | "J" } =>
                Boolean(entry.status),
          );
    }, [activeInstitution, assignmentId, classes, getRecord, scopedSubjectId, student.subjectIds, studentId]);
@@ -179,6 +135,7 @@ export function StudentProfile({
          };
       });
    }, [attendanceByDate]);
+
    const calendarOffset = useMemo(() => {
       if (calendarDays.length === 0) {
          return 0;
@@ -187,6 +144,16 @@ export function StudentProfile({
       const jsDay = firstDate.getDay();
       return (jsDay + 6) % 7;
    }, [calendarDays]);
+
+   const absentCount = attendanceEntries.filter((entry) => entry.status === "A").length;
+   const lateCount = attendanceEntries.filter((entry) => entry.status === "T").length;
+
+   const riskLevel =
+      attendancePct < 65 || student.average < 6
+         ? "alto"
+         : attendancePct < 80 || student.average < 7
+           ? "medio"
+           : "bajo";
 
    const observations = student.observations
       ? [
@@ -200,12 +167,7 @@ export function StudentProfile({
    return (
       <div className="p-6 max-w-7xl mx-auto">
          <div className="flex items-center gap-3 mb-6">
-            <Button
-               variant="ghost"
-               size="icon"
-               className="size-8"
-               onClick={onBack}
-            >
+            <Button variant="ghost" size="icon" className="size-8" onClick={onBack}>
                <ArrowLeft className="size-4" />
             </Button>
             <div className="flex items-center gap-3">
@@ -220,8 +182,7 @@ export function StudentProfile({
                      {student.name} {student.lastName}
                   </h1>
                   <p className="text-sm text-muted-foreground">
-                     {inst?.name} - {firstSubject?.name} -{" "}
-                     {firstSubject?.course}
+                     {inst?.name} - {firstSubject?.name} - {firstSubject?.course}
                   </p>
                </div>
             </div>
@@ -252,7 +213,7 @@ export function StudentProfile({
                   </div>
                   <div>
                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                        Promedio General
+                        Promedio
                      </p>
                      <p className="text-2xl font-bold text-foreground">
                         {student.average.toFixed(1)}
@@ -262,16 +223,18 @@ export function StudentProfile({
             </Card>
             <Card>
                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-lg bg-info/10">
-                     <FileText className="size-5 text-info" />
+                  <div className="flex size-10 items-center justify-center rounded-lg bg-destructive/10">
+                     <ShieldAlert className="size-5 text-destructive" />
                   </div>
                   <div>
                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                        Evaluaciones
+                        Riesgo academico
                      </p>
-                     <p className="text-2xl font-bold text-foreground">
-                        {studentAssessments.length}
-                     </p>
+                     <Badge
+                        className={`border-0 text-[10px] capitalize ${riskLevel === "alto" ? "bg-destructive/15 text-destructive" : riskLevel === "medio" ? "bg-warning/15 text-warning-foreground" : "bg-success/15 text-success"}`}
+                     >
+                        {riskLevel}
+                     </Badge>
                   </div>
                </CardContent>
             </Card>
@@ -317,123 +280,28 @@ export function StudentProfile({
                            </div>
                         ))}
                      </div>
-                     <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border">
-                        <div className="flex items-center gap-1.5">
-                           <div className="size-2.5 rounded bg-success/40" />
-                           <span className="text-[10px] text-muted-foreground">
-                              Presente
-                           </span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                           <div className="size-2.5 rounded bg-destructive/40" />
-                           <span className="text-[10px] text-muted-foreground">
-                              Ausente
-                           </span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                           <div className="size-2.5 rounded bg-warning/40" />
-                           <span className="text-[10px] text-muted-foreground">
-                              Tarde
-                           </span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                           <div className="size-2.5 rounded bg-info/40" />
-                           <span className="text-[10px] text-muted-foreground">
-                              Justificada
-                           </span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                           <div className="size-2.5 rounded bg-muted" />
-                           <span className="text-[10px] text-muted-foreground">
-                              Sin clase
-                           </span>
-                        </div>
-                     </div>
                   </CardContent>
                </Card>
 
                <Card>
                   <CardHeader className="pb-3">
-                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm font-semibold">
-                           Evaluaciones y TPs
-                        </CardTitle>
-                        <Button
-                           variant="outline"
-                           size="sm"
-                           className="text-xs"
-                           onClick={() => setGradeModalOpen(true)}
-                        >
-                           <Plus className="size-3.5 mr-1.5" />
-                           Cargar Nota
-                        </Button>
-                     </div>
+                     <CardTitle className="text-sm font-semibold">Indicadores de riesgo</CardTitle>
                   </CardHeader>
-                  <CardContent className="p-0">
-                     <Table>
-                        <TableHeader>
-                           <TableRow>
-                              <TableHead className="text-xs">Fecha</TableHead>
-                              <TableHead className="text-xs">
-                                 Evaluacion
-                              </TableHead>
-                              <TableHead className="text-xs">Tipo</TableHead>
-                              <TableHead className="text-xs">Estado</TableHead>
-                              <TableHead className="text-xs">Cargas</TableHead>
-                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                           {studentAssessments.map((assessment) => {
-                              const dateObj = new Date(assessment.date + "T12:00:00");
-                              return (
-                                 <TableRow key={assessment.id}>
-                                    <TableCell className="text-xs">
-                                       {dateObj.toLocaleDateString("es-AR", {
-                                          day: "2-digit",
-                                          month: "short",
-                                       })}
-                                    </TableCell>
-                                    <TableCell className="text-xs font-medium">
-                                       {assessment.title}
-                                    </TableCell>
-                                    <TableCell>
-                                       <Badge
-                                          variant="secondary"
-                                          className="text-[10px] capitalize"
-                                       >
-                                          {assessment.type === "practice_work"
-                                             ? "TP"
-                                             : "Examen"}
-                                       </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                       <Badge
-                                          variant="secondary"
-                                          className="text-[10px] capitalize"
-                                       >
-                                          {assessment.status}
-                                       </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-xs text-muted-foreground">
-                                       {assessment.gradesLoaded}
-                                    </TableCell>
-                                 </TableRow>
-                              );
-                           })}
-                           {studentAssessments.length === 0 && (
-                              <TableRow>
-                                 <TableCell
-                                    colSpan={5}
-                                    className="text-center py-6"
-                                 >
-                                    <p className="text-xs text-muted-foreground">
-                                       No hay evaluaciones para este alumno
-                                    </p>
-                                 </TableCell>
-                              </TableRow>
-                           )}
-                        </TableBody>
-                     </Table>
+                  <CardContent className="pt-0">
+                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-2">
+                           <p className="text-[10px] text-muted-foreground uppercase">Ausencias</p>
+                           <p className="text-lg font-semibold text-foreground">{absentCount}</p>
+                        </div>
+                        <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-2">
+                           <p className="text-[10px] text-muted-foreground uppercase">Tardanzas</p>
+                           <p className="text-lg font-semibold text-foreground">{lateCount}</p>
+                        </div>
+                        <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-2">
+                           <p className="text-[10px] text-muted-foreground uppercase">Clases computadas</p>
+                           <p className="text-lg font-semibold text-foreground">{attendanceEntries.length}</p>
+                        </div>
+                     </div>
                   </CardContent>
                </Card>
             </div>
@@ -441,26 +309,14 @@ export function StudentProfile({
             <div>
                <Card>
                   <CardHeader className="pb-3">
-                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm font-semibold">
-                           Observaciones
-                        </CardTitle>
-                        <Button variant="ghost" size="icon" className="size-7">
-                           <Plus className="size-3.5" />
-                        </Button>
-                     </div>
+                     <CardTitle className="text-sm font-semibold">Observaciones</CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
                      <div className="flex flex-col gap-0">
                         {observations.map((obs, idx) => {
-                           const dateObj = obs.date
-                              ? new Date(obs.date + "T12:00:00")
-                              : null;
+                           const dateObj = obs.date ? new Date(obs.date + "T12:00:00") : null;
                            return (
-                              <div
-                                 key={idx}
-                                 className="relative flex gap-3 pb-4 last:pb-0"
-                              >
+                              <div key={idx} className="relative flex gap-3 pb-4 last:pb-0">
                                  {idx < observations.length - 1 && (
                                     <div className="absolute left-[11px] top-6 bottom-0 w-px bg-border" />
                                  )}
@@ -477,92 +333,19 @@ export function StudentProfile({
                                           })}
                                        </p>
                                     )}
-                                    <p className="text-xs text-foreground leading-relaxed">
-                                       {obs.text}
-                                    </p>
+                                    <p className="text-xs text-foreground leading-relaxed">{obs.text}</p>
                                  </div>
                               </div>
                            );
                         })}
                         {observations.length === 0 && (
-                           <p className="text-xs text-muted-foreground">
-                              Sin observaciones registradas.
-                           </p>
+                           <p className="text-xs text-muted-foreground">Sin observaciones registradas.</p>
                         )}
                      </div>
                   </CardContent>
                </Card>
             </div>
          </div>
-
-         <Dialog open={gradeModalOpen} onOpenChange={setGradeModalOpen}>
-            <DialogContent className="sm:max-w-[420px]">
-               <DialogHeader>
-                  <DialogTitle>Cargar Nota</DialogTitle>
-                  <DialogDescription>
-                     Registra una calificacion para {student.name}{" "}
-                     {student.lastName}.
-                  </DialogDescription>
-               </DialogHeader>
-               <div className="flex flex-col gap-4 py-2">
-                  <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Evaluacion</Label>
-                     <Select>
-                        <SelectTrigger className="h-9 text-xs">
-                           <SelectValue placeholder="Seleccionar evaluacion..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                           {studentAssessments.map((assessment) => (
-                                 <SelectItem key={assessment.id} value={assessment.id}>
-                                    {assessment.title}
-                                 </SelectItem>
-                              ))}
-                        </SelectContent>
-                     </Select>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Nota</Label>
-                     <Input
-                        className="h-9 text-xs"
-                        type="number"
-                        min="1"
-                        max="10"
-                        placeholder="1 - 10"
-                     />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Observacion</Label>
-                     <Textarea
-                        className="text-xs min-h-[60px] resize-none"
-                        placeholder="Observacion opcional..."
-                     />
-                  </div>
-               </div>
-               <DialogFooter>
-                  <Button
-                     variant="outline"
-                     size="sm"
-                     onClick={() => setGradeModalOpen(false)}
-                     className="text-xs"
-                  >
-                     Cancelar
-                  </Button>
-                  <Button
-                     size="sm"
-                     className="text-xs"
-                     onClick={() => {
-                        setGradeModalOpen(false);
-                        toast.success("Nota guardada correctamente");
-                     }}
-                  >
-                     Guardar
-                  </Button>
-               </DialogFooter>
-            </DialogContent>
-         </Dialog>
       </div>
    );
 }
-
-
-

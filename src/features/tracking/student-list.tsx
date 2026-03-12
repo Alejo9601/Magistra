@@ -12,10 +12,17 @@ import {
    TableHeader,
    TableRow,
 } from "@/components/ui/table";
-import { getSubjectById } from "@/lib/edu-repository";
 import { useStudentsContext } from "@/features/students";
 import { usePlanningContext } from "@/features/planning";
 import { useClassroomContext } from "@/features/classroom";
+
+type RiskLevel = "high" | "medium" | "low";
+
+function getRiskLevel(attendance: number, average: number): RiskLevel {
+   if (attendance < 65 || average < 6) return "high";
+   if (attendance < 80 || average < 7) return "medium";
+   return "low";
+}
 
 export function StudentList({
    onSelect,
@@ -39,11 +46,14 @@ export function StudentList({
       return matchesSearch && matchesStatus;
    });
 
-   const attendanceByStudent = useMemo(() => {
+   const studentStats = useMemo(() => {
       const classesInInstitution = classes.filter(
          (classSession) => classSession.institutionId === activeInstitution,
       );
-      const output = new Map<string, number>();
+      const output = new Map<
+         string,
+         { attendance: number; absences: number; lateness: number; risk: RiskLevel }
+      >();
 
       filtered.forEach((student) => {
          const subjectIdSet = new Set(student.subjectIds);
@@ -54,8 +64,16 @@ export function StudentList({
             .map((classSession) => getRecord(classSession.id).attendance[student.id])
             .filter((status): status is "P" | "A" | "T" | "J" => Boolean(status));
 
+         const absences = statuses.filter((status) => status === "A").length;
+         const lateness = statuses.filter((status) => status === "T").length;
+
          if (statuses.length === 0) {
-            output.set(student.id, student.attendance);
+            output.set(student.id, {
+               attendance: student.attendance,
+               absences: 0,
+               lateness: 0,
+               risk: getRiskLevel(student.attendance, student.average),
+            });
             return;
          }
 
@@ -64,7 +82,14 @@ export function StudentList({
             if (status === "T") return sum + 0.5;
             return sum;
          }, 0);
-         output.set(student.id, Math.round((attendedWeight / statuses.length) * 100));
+         const attendance = Math.round((attendedWeight / statuses.length) * 100);
+
+         output.set(student.id, {
+            attendance,
+            absences,
+            lateness,
+            risk: getRiskLevel(attendance, student.average),
+         });
       });
 
       return output;
@@ -75,7 +100,7 @@ export function StudentList({
          <div className="mb-6">
             <h1 className="text-xl font-bold text-foreground">Seguimiento</h1>
             <p className="text-sm text-muted-foreground">
-               Perfil y seguimiento de alumnos
+               Vista longitudinal por alumno: riesgo, alertas y evolucion
             </p>
          </div>
 
@@ -95,85 +120,80 @@ export function StudentList({
                   <TableHeader>
                      <TableRow>
                         <TableHead className="text-xs">Alumno</TableHead>
-                        <TableHead className="text-xs">DNI</TableHead>
-                        <TableHead className="text-xs">Materias</TableHead>
                         <TableHead className="text-xs">Asistencia</TableHead>
                         <TableHead className="text-xs">Promedio</TableHead>
-                        <TableHead className="text-xs">Estado</TableHead>
+                        <TableHead className="text-xs">Alertas</TableHead>
+                        <TableHead className="text-xs">Riesgo</TableHead>
                      </TableRow>
                   </TableHeader>
                   <TableBody>
-                     {filtered.map((student) => (
-                        <TableRow
-                           key={student.id}
-                           className="hover:bg-muted/30 cursor-pointer"
-                           onClick={() => onSelect(student.id)}
-                        >
-                           <TableCell>
-                              <div className="flex items-center gap-2.5">
-                                 <Avatar className="size-7">
-                                    <AvatarFallback className="bg-muted text-muted-foreground text-[10px] font-semibold">
-                                       {student.name[0]}
-                                       {student.lastName[0]}
-                                    </AvatarFallback>
-                                 </Avatar>
-                                 <span className="text-xs font-medium">
-                                    {student.lastName}, {student.name}
-                                 </span>
-                              </div>
-                           </TableCell>
-                           <TableCell className="text-xs text-muted-foreground">
-                              {student.dni}
-                           </TableCell>
-                           <TableCell>
-                              <div className="flex flex-wrap gap-1">
-                                 {student.subjectIds.slice(0, 2).map((sid) => {
-                                    const sub = getSubjectById(sid);
-                                    return (
-                                       <Badge
-                                          key={sid}
-                                          variant="secondary"
-                                          className="text-[10px]"
-                                       >
-                                          {sub?.name}
-                                       </Badge>
-                                    );
-                                 })}
-                                 {student.subjectIds.length > 2 && (
-                                    <Badge
-                                       variant="secondary"
-                                       className="text-[10px]"
-                                    >
-                                       +{student.subjectIds.length - 2}
+                     {filtered.map((student) => {
+                        const stats =
+                           studentStats.get(student.id) ??
+                           {
+                              attendance: student.attendance,
+                              absences: 0,
+                              lateness: 0,
+                              risk: getRiskLevel(student.attendance, student.average),
+                           };
+                        return (
+                           <TableRow
+                              key={student.id}
+                              className="hover:bg-muted/30 cursor-pointer"
+                              onClick={() => onSelect(student.id)}
+                           >
+                              <TableCell>
+                                 <div className="flex items-center gap-2.5">
+                                    <Avatar className="size-7">
+                                       <AvatarFallback className="bg-muted text-muted-foreground text-[10px] font-semibold">
+                                          {student.name[0]}
+                                          {student.lastName[0]}
+                                       </AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                       <p className="text-xs font-medium">
+                                          {student.lastName}, {student.name}
+                                       </p>
+                                       <p className="text-[10px] text-muted-foreground">
+                                          {student.dni}
+                                       </p>
+                                    </div>
+                                 </div>
+                              </TableCell>
+                              <TableCell className="text-xs">{stats.attendance}%</TableCell>
+                              <TableCell className="text-xs font-medium">
+                                 {student.average.toFixed(1)}
+                              </TableCell>
+                              <TableCell>
+                                 <div className="flex gap-1">
+                                    <Badge variant="secondary" className="text-[10px]">
+                                       A: {stats.absences}
                                     </Badge>
-                                 )}
-                              </div>
-                           </TableCell>
-                           <TableCell className="text-xs">
-                              {attendanceByStudent.get(student.id) ?? student.attendance}%
-                           </TableCell>
-                           <TableCell className="text-xs font-medium">
-                              {student.average.toFixed(1)}
-                           </TableCell>
-                           <TableCell>
-                              <Badge
-                                 className={`border-0 text-[10px] ${
-                                    student.status === "destacado"
-                                       ? "bg-success/10 text-success"
-                                       : student.status === "en-riesgo"
-                                         ? "bg-destructive/10 text-destructive"
-                                         : "bg-muted text-muted-foreground"
-                                 }`}
-                              >
-                                 {student.status === "destacado"
-                                    ? "Destacado"
-                                    : student.status === "en-riesgo"
-                                      ? "En riesgo"
-                                      : "Regular"}
-                              </Badge>
-                           </TableCell>
-                        </TableRow>
-                     ))}
+                                    <Badge variant="secondary" className="text-[10px]">
+                                       T: {stats.lateness}
+                                    </Badge>
+                                 </div>
+                              </TableCell>
+                              <TableCell>
+                                 <Badge
+                                    className={`border-0 text-[10px] capitalize ${
+                                       stats.risk === "high"
+                                          ? "bg-destructive/15 text-destructive"
+                                          : stats.risk === "medium"
+                                            ? "bg-warning/15 text-warning-foreground"
+                                            : "bg-success/15 text-success"
+                                    }`}
+                                 >
+                                    {stats.risk === "high"
+                                       ? "alto"
+                                       : stats.risk === "medium"
+                                         ? "medio"
+                                         : "bajo"}
+                                 </Badge>
+                              </TableCell>
+                           </TableRow>
+                        );
+                     })}
                   </TableBody>
                </Table>
             </CardContent>
