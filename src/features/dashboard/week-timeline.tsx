@@ -105,16 +105,16 @@ export function WeekTimeline({ activeInstitution }: { activeInstitution: string 
          >
             <DialogContent className="sm:max-w-[560px]">
                <DialogHeader>
-                  <DialogTitle>Day slot details</DialogTitle>
+                  <DialogTitle>Detalle del dia</DialogTitle>
                   <DialogDescription>
                      {selectedDayData
                         ? `${selectedDayData.label.replace(".", "")} ${selectedDayData.date}`
-                        : "Select a day"}
+                        : "Selecciona un dia"}
                   </DialogDescription>
                </DialogHeader>
                {selectedDayClasses.length === 0 ? (
                   <p className="text-xs text-muted-foreground py-2">
-                     No classes scheduled for this day.
+                     No hay clases programadas para este dia.
                   </p>
                ) : (
                   <div className="max-h-[360px] overflow-y-auto pr-1 space-y-2">
@@ -149,10 +149,10 @@ export function WeekTimeline({ activeInstitution }: { activeInstitution: string 
                               </div>
                               <div className="mt-3 flex items-center gap-2">
                                  <Button asChild variant="outline" size="sm" className="h-7 text-[11px]">
-                                    <Link to={`/clase/${classSession.id}`}>View details</Link>
+                                    <Link to={`/clase/${classSession.id}`}>Ver detalle</Link>
                                  </Button>
                                  <Button asChild size="sm" className="h-7 text-[11px]">
-                                    <Link to={`/clase/${classSession.id}/dictado`}>Open class</Link>
+                                    <Link to={`/clase/${classSession.id}/dictado`}>Ir a dictado</Link>
                                  </Button>
                               </div>
                            </div>

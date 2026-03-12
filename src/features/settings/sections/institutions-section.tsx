@@ -71,7 +71,7 @@ export function InstitutionsSection() {
 
    const handleCreate = () => {
       if (!name.trim() || !address.trim()) {
-         toast.error("Complete institution name and address.");
+         toast.error("Completa nombre y direccion de la institucion.");
          return;
       }
 
@@ -85,12 +85,12 @@ export function InstitutionsSection() {
       setRevision((prev) => prev + 1);
       setAddOpen(false);
       resetForm();
-      toast.success("Institution created successfully.");
+      toast.success("Institucion creada correctamente.");
    };
 
    const handleDelete = (institutionId: string) => {
       if (institutions.length <= 1) {
-         toast.error("At least one institution must remain.");
+         toast.error("Debe existir al menos una institucion.");
          return;
       }
 
@@ -110,7 +110,7 @@ export function InstitutionsSection() {
 
       const deleted = deleteInstitution(institutionId);
       if (!deleted) {
-         toast.error("Institution could not be deleted.");
+         toast.error("No se pudo eliminar la institucion.");
          return;
       }
 
@@ -119,7 +119,7 @@ export function InstitutionsSection() {
       }
 
       setRevision((prev) => prev + 1);
-      toast.success("Institution deleted with related data.");
+      toast.success("Institucion eliminada con sus datos relacionados.");
    };
 
    return (
@@ -129,7 +129,7 @@ export function InstitutionsSection() {
                <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
                      <Building2 className="size-4" />
-                     Institutions
+                     Instituciones
                   </CardTitle>
                   <Button
                      variant="outline"
@@ -138,7 +138,7 @@ export function InstitutionsSection() {
                      onClick={() => setAddOpen(true)}
                   >
                      <Plus className="size-3.5 mr-1.5" />
-                     Add institution
+                     Agregar institucion
                   </Button>
                </div>
             </CardHeader>
@@ -178,7 +178,7 @@ export function InstitutionsSection() {
                            size="icon"
                            className="size-7"
                            onClick={() => handleDelete(inst.id)}
-                           title="Delete institution"
+                           title="Eliminar institucion"
                         >
                            <Trash2 className="size-3.5 text-destructive" />
                         </Button>
@@ -199,32 +199,32 @@ export function InstitutionsSection() {
          >
             <DialogContent className="sm:max-w-[420px]">
                <DialogHeader>
-                  <DialogTitle>Add Institution</DialogTitle>
+                  <DialogTitle>Agregar Institucion</DialogTitle>
                   <DialogDescription>
-                     Link a new institution to your profile.
+                     Vincula una nueva institucion a tu perfil.
                   </DialogDescription>
                </DialogHeader>
                <div className="flex flex-col gap-4 py-2">
                   <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Institution name</Label>
+                     <Label className="text-xs">Nombre de la institucion</Label>
                      <Input
                         className="h-9 text-xs"
-                        placeholder="Ex: Colegio Nacional Buenos Aires"
+                        placeholder="Ej: Colegio Nacional Buenos Aires"
                         value={name}
                         onChange={(event) => setName(event.target.value)}
                      />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Address</Label>
+                     <Label className="text-xs">Direccion</Label>
                      <Input
                         className="h-9 text-xs"
-                        placeholder="Ex: Av. San Martin 123"
+                        placeholder="Ej: Av. San Martin 123"
                         value={address}
                         onChange={(event) => setAddress(event.target.value)}
                      />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Education level</Label>
+                     <Label className="text-xs">Nivel educativo</Label>
                      <div className="flex flex-wrap gap-2">
                         {levelOptions.map((candidateLevel) => (
                            <button
@@ -239,7 +239,7 @@ export function InstitutionsSection() {
                      </div>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Identifier color</Label>
+                     <Label className="text-xs">Color identificador</Label>
                      <div className="flex gap-2">
                         {colorOptions.map((color) => (
                            <button
@@ -259,10 +259,10 @@ export function InstitutionsSection() {
                      onClick={() => setAddOpen(false)}
                      className="text-xs"
                   >
-                     Cancel
+                     Cancelar
                   </Button>
                   <Button size="sm" className="text-xs" onClick={handleCreate}>
-                     Save
+                     Guardar
                   </Button>
                </DialogFooter>
             </DialogContent>

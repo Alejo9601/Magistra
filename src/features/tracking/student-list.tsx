@@ -232,21 +232,21 @@ export function StudentList({
 
                                  <p className="text-xs font-medium text-foreground">
                                     {isInstitutionEmpty
-                                       ? "No students yet for this institution."
+                                       ? "Aun no hay alumnos para esta institucion."
                                        : isSearchEmpty
-                                         ? "No students match your search."
+                                         ? "No hay alumnos que coincidan con tu busqueda."
                                          : isFilterEmpty
-                                           ? "No students match the selected filter."
-                                           : "No students to display."}
+                                           ? "No hay alumnos para el filtro seleccionado."
+                                           : "No hay alumnos para mostrar."}
                                  </p>
                                  <p className="mt-1 text-[11px] text-muted-foreground">
                                     {isInstitutionEmpty
-                                       ? "Add students from Groups to start tracking."
+                                       ? "Agrega alumnos desde Grupos para comenzar el seguimiento."
                                        : isSearchEmpty
-                                         ? "Try another name or clear the search."
+                                         ? "Prueba con otro nombre o limpia la busqueda."
                                          : isFilterEmpty
-                                           ? "Try another risk/status filter."
-                                           : "Create data to populate this view."}
+                                           ? "Prueba con otro filtro de riesgo/estado."
+                                           : "Crea datos para poblar esta vista."}
                                  </p>
                               </div>
                            </TableCell>

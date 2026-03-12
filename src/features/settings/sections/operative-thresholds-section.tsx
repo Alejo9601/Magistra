@@ -67,7 +67,7 @@ function RangeField({
          <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="space-y-1">
                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                  Warning
+                  Alerta
                </label>
                <div className="relative">
                   <Input
@@ -84,7 +84,7 @@ function RangeField({
             </div>
             <div className="space-y-1">
                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                  Critical
+                  Critico
                </label>
                <div className="relative">
                   <Input
@@ -135,7 +135,7 @@ export function OperativeThresholdsSection() {
       };
 
       if (Object.values(nextThresholds).some((value) => value === null)) {
-         toast.error("Use valid positive numeric values.");
+         toast.error("Usa valores numericos positivos validos.");
          return;
       }
 
@@ -144,7 +144,7 @@ export function OperativeThresholdsSection() {
          nextThresholds.pendingWarning! >= nextThresholds.pendingCritical! ||
          nextThresholds.unplannedPctWarning! >= nextThresholds.unplannedPctCritical!
       ) {
-         toast.error("Warning values must be lower than critical values.");
+         toast.error("Los valores de alerta deben ser menores que los criticos.");
          return;
       }
 
@@ -157,7 +157,7 @@ export function OperativeThresholdsSection() {
          unplannedPctCritical: nextThresholds.unplannedPctCritical!,
          unplannedClassCriticalHours: nextThresholds.unplannedClassCriticalHours!,
       });
-      toast.success("Operative rules saved.");
+      toast.success("Reglas operativas guardadas.");
    };
 
    return (
@@ -165,16 +165,16 @@ export function OperativeThresholdsSection() {
          <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
                <AlertOctagon className="size-4" />
-               Operative Risk Rules
+               Reglas Operativas de Riesgo
             </CardTitle>
             <p className="text-xs text-muted-foreground">
-               Configure alerts for: {activeInstitutionName ?? activeInstitution}
+               Configura alertas para: {activeInstitutionName ?? activeInstitution}
             </p>
          </CardHeader>
          <CardContent className="pt-0 space-y-3">
             <RangeField
-               title="Students at risk"
-               description="How many students in risk triggers warning and critical state."
+               title="Alumnos en riesgo"
+               description="Que porcentaje de alumnos en riesgo activa alerta y estado critico."
                unit="%"
                warningValue={form.atRiskPctWarning}
                criticalValue={form.atRiskPctCritical}
@@ -187,9 +187,9 @@ export function OperativeThresholdsSection() {
             />
 
             <RangeField
-               title="Pending tasks"
-               description="Number of tasks pending to move operational status to warning/critical."
-               unit="qty"
+               title="Tareas pendientes"
+               description="Cantidad de tareas pendientes para pasar a alerta/critico."
+               unit="cant"
                warningValue={form.pendingWarning}
                criticalValue={form.pendingCritical}
                onWarningChange={(value) =>
@@ -201,8 +201,8 @@ export function OperativeThresholdsSection() {
             />
 
             <RangeField
-               title="Unplanned classes (next 7 days)"
-               description="Percentage of classes without planning that escalates the semaphore."
+               title="Clases sin planificar (proximos 7 dias)"
+               description="Porcentaje de clases sin planificar que escala el semaforo."
                unit="%"
                warningValue={form.unplannedPctWarning}
                criticalValue={form.unplannedPctCritical}
@@ -216,10 +216,10 @@ export function OperativeThresholdsSection() {
 
             <div className="rounded-lg border border-border/70 p-3">
                <p className="text-xs font-semibold text-foreground">
-                  Critical timer for unplanned class
+                  Temporizador critico para clase sin planificar
                </p>
                <p className="mt-0.5 text-[11px] text-muted-foreground">
-                  If an unplanned class starts in this window or less, it becomes critical.
+                  Si una clase sin planificar inicia en esta ventana o menos, pasa a critico.
                </p>
                <div className="mt-2 max-w-[220px] relative">
                   <Input
@@ -235,17 +235,17 @@ export function OperativeThresholdsSection() {
                      }
                   />
                   <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
-                     hours
+                     horas
                   </span>
                </div>
             </div>
 
             <div className="flex items-center gap-2 pt-1">
                <Button size="sm" className="text-xs" onClick={onSave}>
-                  Save rules
+                  Guardar reglas
                </Button>
                <Button variant="outline" size="sm" className="text-xs" onClick={onReset}>
-                  Use defaults
+                  Usar predeterminadas
                </Button>
             </div>
          </CardContent>
