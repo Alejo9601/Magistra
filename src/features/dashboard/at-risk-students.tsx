@@ -3,19 +3,63 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useStudentsContext } from "@/features/students";
+import { usePlanningContext } from "@/features/planning";
+import { useClassroomContext } from "@/features/classroom";
+import { getAtRiskStudentsFromLiveData } from "@/features/dashboard/dashboard-derived";
+
+function computeAttendancePct(
+   studentId: string,
+   studentSubjectIds: string[],
+   institutionClasses: Array<{ id: string; subjectId: string }>,
+   getStatus: (classId: string, studentId: string) => "P" | "A" | "T" | "J" | undefined,
+) {
+   const subjectIdSet = new Set(studentSubjectIds);
+   const statuses = institutionClasses
+      .filter((classSession) => subjectIdSet.has(classSession.subjectId))
+      .map((classSession) => getStatus(classSession.id, studentId))
+      .filter((status): status is "P" | "A" | "T" | "J" => Boolean(status));
+
+   if (statuses.length === 0) return 100;
+
+   const attendedWeight = statuses.reduce((sum, status) => {
+      if (status === "P" || status === "J") return sum + 1;
+      if (status === "T") return sum + 0.5;
+      return sum;
+   }, 0);
+
+   return Math.round((attendedWeight / statuses.length) * 100);
+}
 
 export function AtRiskStudents({ activeInstitution }: { activeInstitution: string }) {
    const { getStudentsByInstitution } = useStudentsContext();
-   const atRisk = getStudentsByInstitution(activeInstitution).filter(
-      (s) => s.status === "en-riesgo",
+   const { classes } = usePlanningContext();
+   const { getRecord } = useClassroomContext();
+
+   const institutionStudents = getStudentsByInstitution(activeInstitution);
+   const institutionClasses = classes.filter(
+      (classSession) => classSession.institutionId === activeInstitution,
    );
+
+   const atRisk = getAtRiskStudentsFromLiveData(
+      institutionStudents,
+      institutionClasses,
+      (classId, studentId) => getRecord(classId).attendance[studentId],
+   ).map((student) => ({
+      ...student,
+      attendanceFromRecords: computeAttendancePct(
+         student.id,
+         student.subjectIds,
+         institutionClasses,
+         (classId, studentId) => getRecord(classId).attendance[studentId],
+      ),
+   }));
 
    return (
       <Card>
          <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                <AlertTriangle className="size-4 text-destructive" />
-               Alumnos en riesgo
+               Seguimiento de riesgo
             </CardTitle>
          </CardHeader>
          <CardContent className="pt-0">
@@ -30,8 +74,8 @@ export function AtRiskStudents({ activeInstitution }: { activeInstitution: strin
                <div className="flex flex-col gap-2.5">
                   {atRisk.map((student) => {
                      const reason =
-                        student.attendance < 65
-                           ? `${student.attendance}% asistencia`
+                        student.attendanceFromRecords < 65
+                           ? `${student.attendanceFromRecords}% asistencia`
                            : `Promedio ${student.average}`;
                      return (
                         <div
@@ -61,6 +105,3 @@ export function AtRiskStudents({ activeInstitution }: { activeInstitution: strin
       </Card>
    );
 }
-
-
-
