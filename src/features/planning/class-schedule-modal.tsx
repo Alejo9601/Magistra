@@ -92,7 +92,7 @@ export function ClassScheduleModal({
 }) {
    const isLockedToInitialSelection = Boolean(initialAssignmentId);
    const isInstitutionLocked = true;
-   const [institutionId, setInstitutionId] = useState(activeInstitution);
+   const institutionId = initialInstitutionId ?? activeInstitution;
    const [assignmentId, setAssignmentId] = useState("");
    const [startDate, setStartDate] = useState(todayDate());
    const [endDate, setEndDate] = useState(addDays(todayDate(), 60));
@@ -107,9 +107,9 @@ export function ClassScheduleModal({
    );
 
    const reset = () => {
-      const nextInstitution = initialInstitutionId ?? activeInstitution;
-      setInstitutionId(nextInstitution);
-      setAssignmentId(initialAssignmentId ?? "");
+      const firstAssignmentId =
+         getAssignmentsByInstitution(institutionId)[0]?.id ?? "";
+      setAssignmentId(initialAssignmentId ?? firstAssignmentId);
       setStartDate(todayDate());
       setEndDate(addDays(todayDate(), 60));
       setSlots([createSlot(1, "08:00"), createSlot(3, "08:00")]);
@@ -130,7 +130,7 @@ export function ClassScheduleModal({
    };
 
    const submit = () => {
-      if (!institutionId || !assignmentId || !startDate || !endDate) {
+      if (!assignmentId || !startDate || !endDate) {
          toast.error("Completa institucion, materia y rango de fechas.");
          return;
       }
@@ -193,10 +193,6 @@ export function ClassScheduleModal({
                   <Label className="text-xs">Institucion</Label>
                   <Select
                      value={institutionId}
-                     onValueChange={(value) => {
-                        setInstitutionId(value);
-                        setAssignmentId("");
-                     }}
                      disabled={isLockedToInitialSelection || isInstitutionLocked}
                   >
                      <SelectTrigger className="h-9 text-xs">

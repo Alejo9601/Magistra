@@ -49,9 +49,9 @@ export function ClassEditorModal({
    const isScheduledSlotLocked = Boolean(
       initialClass && initialClass.date && initialClass.time,
    );
+   const institutionId = activeInstitution;
    const today = new Date();
    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-   const [institutionId, setInstitutionId] = useState(activeInstitution);
    const [assignmentId, setAssignmentId] = useState("");
    const [date, setDate] = useState("");
    const [time, setTime] = useState("08:00");
@@ -68,13 +68,21 @@ export function ClassEditorModal({
    );
 
    const reset = () => {
-      const nextInstitution = initialClass?.institutionId ?? activeInstitution;
-      setInstitutionId(nextInstitution);
-      setAssignmentId(
+      const nextInstitution = activeInstitution;
+      const candidateAssignmentId =
          initialClass?.assignmentId ??
-            (initialClass?.subjectId
-               ? getAssignmentIdBySubjectId(initialClass.subjectId)
-               : ""),
+         (initialClass?.subjectId
+            ? getAssignmentIdBySubjectId(initialClass.subjectId)
+            : "");
+      const candidateAssignment = candidateAssignmentId
+         ? getAssignmentById(candidateAssignmentId)
+         : null;
+      const firstAssignmentId =
+         getAssignmentsByInstitution(nextInstitution)[0]?.id ?? "";
+      setAssignmentId(
+         candidateAssignment?.institutionId === nextInstitution
+            ? candidateAssignmentId
+            : firstAssignmentId,
       );
       setDate(initialClass?.date ?? initialDate ?? "");
       setTime(initialClass?.time ?? "08:00");
@@ -93,7 +101,7 @@ export function ClassEditorModal({
       }
    }, [open, initialClass, initialDate, activeInstitution]);
    const submit = (mode: "draft" | "publish") => {
-      if (!institutionId || !assignmentId || !date || !time || !topic.trim()) {
+      if (!assignmentId || !date || !time || !topic.trim()) {
          toast.error("Completa institucion, materia, fecha, hora y tema principal.");
          return;
       }
@@ -153,11 +161,6 @@ export function ClassEditorModal({
                   <Label className="text-xs">Institucion</Label>
                   <Select
                      value={institutionId}
-                     onValueChange={(value) => {
-                        setInstitutionId(value);
-                        const firstAssignment = getAssignmentsByInstitution(value)[0];
-                        setAssignmentId(firstAssignment?.id ?? "");
-                     }}
                      disabled={isInstitutionLocked}
                   >
                      <SelectTrigger className="h-9 text-xs">
