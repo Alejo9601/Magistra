@@ -28,6 +28,7 @@ type TodayAlert = {
    id: string;
    text: string;
    severity: "high" | "medium";
+   priority: number;
    actionTo?: string;
    actionLabel?: string;
 };
@@ -122,6 +123,7 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
    const alerts: TodayAlert[] = [];
    todayClasses.forEach((classSession) => {
       const classDateMs = classDateTimeMs(classSession.date, classSession.time);
+      const subjectName = getSubjectById(classSession.subjectId)?.name ?? "Clase";
       const assignmentId =
          classSession.assignmentId ??
          getAssignmentIdBySubjectId(classSession.subjectId);
@@ -143,17 +145,21 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
                : "medium";
          alerts.push({
             id: `plan-${classSession.id}`,
-            text: `${classSession.time} - clase sin planificar (${hoursToClass}h para iniciar)`,
+            text: `${classSession.time} - ${subjectName} sin planificar (${hoursToClass}h para iniciar)`,
             severity,
+            priority: hoursToClass,
             actionTo: "/planificacion?status=sin-planificar",
             actionLabel: "Planificar",
          });
       }
       if (classDateMs <= nowMs && classSession.status !== "finalizada") {
+         const minutesSinceStart = Math.floor((nowMs - classDateMs) / (1000 * 60));
+         const severity: TodayAlert["severity"] = minutesSinceStart >= 60 ? "high" : "medium";
          alerts.push({
             id: `close-${classSession.id}`,
-            text: `${classSession.time} - clase abierta pendiente de cierre`,
-            severity: "medium",
+            text: `${classSession.time} - ${subjectName} abierta sin cierre (${minutesSinceStart} min)`,
+            severity,
+            priority: Math.max(0, 120 - minutesSinceStart),
             actionTo: `/clase/${classSession.id}/dictado`,
             actionLabel: "Cerrar clase",
          });
@@ -161,13 +167,55 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
       if (classSession.status === "finalizada" && !hasAttendance && students.length > 0) {
          alerts.push({
             id: `att-${classSession.id}`,
-            text: `${classSession.time} - clase finalizada sin asistencia registrada`,
+            text: `${classSession.time} - ${subjectName} finalizada sin asistencia registrada`,
             severity: "high",
+            priority: 10,
             actionTo: `/clase/${classSession.id}/dictado`,
             actionLabel: "Tomar asistencia",
          });
       }
+      if (classSession.status === "finalizada" && hasAttendance) {
+         const attendancePct = computeAttendancePct(attendanceValues);
+         if (attendancePct !== null && attendancePct < 65) {
+            alerts.push({
+               id: `low-att-${classSession.id}`,
+               text: `${classSession.time} - ${subjectName} con asistencia baja (${attendancePct}%)`,
+               severity: "high",
+               priority: 20,
+               actionTo: "/seguimiento?status=en-riesgo",
+               actionLabel: "Ver alumnos",
+            });
+         }
+      }
    });
+
+   scopedClasses
+      .filter(
+         (classSession) =>
+            classSession.status === "sin-planificar" &&
+            classSession.date > todayStr &&
+            classSession.date <= tomorrowStr,
+      )
+      .forEach((classSession) => {
+         const classDateMs = classDateTimeMs(classSession.date, classSession.time);
+         const hoursToClass = Math.max(
+            0,
+            Math.floor((classDateMs - nowMs) / (1000 * 60 * 60)),
+         );
+         const severity: TodayAlert["severity"] =
+            hoursToClass <= thresholds.unplannedClassCriticalHours
+               ? "high"
+               : "medium";
+         const subjectName = getSubjectById(classSession.subjectId)?.name ?? "Clase";
+         alerts.push({
+            id: `upcoming-plan-${classSession.id}`,
+            text: `${classSession.date} ${classSession.time} - ${subjectName} sin planificar`,
+            severity,
+            priority: hoursToClass,
+            actionTo: "/planificacion?status=sin-planificar",
+            actionLabel: "Planificar",
+         });
+      });
 
    const scopedAssessments = assessments
       .filter((assessment) => {
@@ -187,7 +235,8 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
       alerts.push({
          id: `assessment-${assessment.id}`,
          text: `${assessment.date === todayStr ? "Hoy" : "Manana"} - revisar evaluacion: ${assessment.title}`,
-         severity: "medium",
+         severity: assessment.date === todayStr ? "high" : "medium",
+         priority: assessment.date === todayStr ? 12 : 36,
       });
    });
 
@@ -204,8 +253,18 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
          id: "activities-today",
          text: `${scopedActivities.length} actividad(es) vinculadas para clases de hoy`,
          severity: "medium",
+         priority: 60,
       });
    }
+   const sortedAlerts = [...alerts].sort((a, b) => {
+      if (a.severity !== b.severity) {
+         return a.severity === "high" ? -1 : 1;
+      }
+      return a.priority - b.priority;
+   });
+   const criticalAlerts = sortedAlerts.filter((alert) => alert.severity === "high");
+   const displayedUrgentAlerts =
+      criticalAlerts.length > 0 ? criticalAlerts.slice(0, 4) : sortedAlerts.slice(0, 2);
 
    return (
       <div>
@@ -312,13 +371,13 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
                   </CardTitle>
                </CardHeader>
                <CardContent className="pt-0">
-                  {alerts.length === 0 ? (
+                  {displayedUrgentAlerts.length === 0 ? (
                      <p className="text-xs text-muted-foreground">
-                        Sin alertas para hoy.
+                        Sin alertas criticas por ahora.
                      </p>
                   ) : (
-                     <div className="space-y-2">
-                        {alerts.slice(0, 5).map((alert) => (
+                     <div className="max-h-[205px] overflow-y-auto pr-1 space-y-2">
+                        {displayedUrgentAlerts.map((alert) => (
                            <div key={alert.id} className="rounded-md border border-border/70 p-2">
                               <p className="text-xs text-foreground">{alert.text}</p>
                               <div className="mt-1 flex items-center justify-between gap-2">
@@ -329,7 +388,7 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
                                           : "bg-warning/15 text-warning-foreground"
                                     }`}
                                  >
-                                    {alert.severity === "high" ? "Alta" : "Media"}
+                                  {alert.severity === "high" ? "Alta" : "Media"}
                                  </Badge>
                                  {alert.actionTo && alert.actionLabel && (
                                     <Button asChild variant="link" className="h-auto p-0 text-[11px]">
