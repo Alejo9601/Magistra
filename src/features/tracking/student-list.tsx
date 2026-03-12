@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/table";
 import { getSubjectById } from "@/lib/edu-repository";
 import { useStudentsContext } from "@/features/students";
+import { usePlanningContext } from "@/features/planning";
+import { useClassroomContext } from "@/features/classroom";
 
 export function StudentList({
    onSelect,
@@ -25,7 +27,10 @@ export function StudentList({
    statusFilter?: "en-riesgo" | "regular" | "destacado";
 }) {
    const { getStudentsByInstitution } = useStudentsContext();
+   const { classes } = usePlanningContext();
+   const { getRecord } = useClassroomContext();
    const [search, setSearch] = useState("");
+
    const filtered = getStudentsByInstitution(activeInstitution).filter((s) => {
       const matchesSearch = `${s.name} ${s.lastName}`
          .toLowerCase()
@@ -33,6 +38,37 @@ export function StudentList({
       const matchesStatus = !statusFilter || s.status === statusFilter;
       return matchesSearch && matchesStatus;
    });
+
+   const attendanceByStudent = useMemo(() => {
+      const classesInInstitution = classes.filter(
+         (classSession) => classSession.institutionId === activeInstitution,
+      );
+      const output = new Map<string, number>();
+
+      filtered.forEach((student) => {
+         const subjectIdSet = new Set(student.subjectIds);
+         const relevantClasses = classesInInstitution.filter((classSession) =>
+            subjectIdSet.has(classSession.subjectId),
+         );
+         const statuses = relevantClasses
+            .map((classSession) => getRecord(classSession.id).attendance[student.id])
+            .filter((status): status is "P" | "A" | "T" | "J" => Boolean(status));
+
+         if (statuses.length === 0) {
+            output.set(student.id, student.attendance);
+            return;
+         }
+
+         const attendedWeight = statuses.reduce((sum, status) => {
+            if (status === "P" || status === "J") return sum + 1;
+            if (status === "T") return sum + 0.5;
+            return sum;
+         }, 0);
+         output.set(student.id, Math.round((attendedWeight / statuses.length) * 100));
+      });
+
+      return output;
+   }, [activeInstitution, classes, filtered, getRecord]);
 
    return (
       <div className="p-6 max-w-7xl mx-auto">
@@ -114,7 +150,7 @@ export function StudentList({
                               </div>
                            </TableCell>
                            <TableCell className="text-xs">
-                              {student.attendance}%
+                              {attendanceByStudent.get(student.id) ?? student.attendance}%
                            </TableCell>
                            <TableCell className="text-xs font-medium">
                               {student.average.toFixed(1)}
@@ -145,4 +181,3 @@ export function StudentList({
       </div>
    );
 }
-

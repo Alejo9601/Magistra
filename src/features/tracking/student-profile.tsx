@@ -38,7 +38,9 @@ import {
    TableRow,
 } from "@/components/ui/table";
 import {
-   evaluations,
+   attendanceRecords,
+   getAssignmentById,
+   getAssignmentIdBySubjectId,
    getSubjectById,
    getInstitutionById,
 } from "@/lib/edu-repository";
@@ -46,25 +48,33 @@ import { toast } from "sonner";
 import { useStudentsContext } from "@/features/students";
 import { usePlanningContext } from "@/features/planning";
 import { useClassroomContext } from "@/features/classroom";
+import { useAssessmentsContext } from "@/features/assessments";
 
 export function StudentProfile({
    studentId,
    onBack,
    activeInstitution,
+   assignmentId,
 }: {
    studentId: string;
    onBack: () => void;
    activeInstitution: string;
+   assignmentId?: string;
 }) {
    const { students } = useStudentsContext();
    const { classes } = usePlanningContext();
    const { getRecord } = useClassroomContext();
+   const { assessments } = useAssessmentsContext();
    const [gradeModalOpen, setGradeModalOpen] = useState(false);
    const student = students.find((s) => s.id === studentId);
 
    if (!student) return null;
 
-   const studentSubjects = student.subjectIds
+   const selectedAssignment = assignmentId
+      ? getAssignmentById(assignmentId)
+      : null;
+   const scopedSubjectId = selectedAssignment?.subjectId;
+   const studentSubjects = (scopedSubjectId ? [scopedSubjectId] : student.subjectIds)
       .map((sid) => getSubjectById(sid))
       .filter((subject) => Boolean(subject))
       .filter((subject) => subject?.institutionId === activeInstitution);
@@ -73,27 +83,48 @@ export function StudentProfile({
    const inst = firstSubject
       ? getInstitutionById(firstSubject.institutionId)
       : null;
-   const studentEvals = evaluations.filter((e) =>
-      e.grades.some((g) => g.studentId === studentId),
-   );
+   const studentAssessments = assessments
+      .filter((assessment) =>
+         scopedSubjectId
+            ? assessment.subjectId === scopedSubjectId
+            : student.subjectIds.includes(assessment.subjectId),
+      )
+      .sort((a, b) => a.date.localeCompare(b.date));
    const attendanceEntries = useMemo(() => {
-      const subjectIdSet = new Set(student.subjectIds);
       const relevantClasses = classes.filter(
-         (classSession) =>
-            subjectIdSet.has(classSession.subjectId) &&
-            classSession.institutionId === activeInstitution,
+         (classSession) => {
+            if (classSession.institutionId !== activeInstitution) {
+               return false;
+            }
+            if (!scopedSubjectId) {
+               return student.subjectIds.includes(classSession.subjectId);
+            }
+            const classAssignmentId =
+               classSession.assignmentId ??
+               getAssignmentIdBySubjectId(classSession.subjectId);
+            return classAssignmentId === assignmentId;
+         },
+      );
+      const seededAttendanceByClass = new Map(
+         attendanceRecords
+            .filter((entry) => entry.studentId === studentId)
+            .map((entry) => [entry.classId, entry.status as "P" | "A" | "T" | "J"] as const),
       );
       return relevantClasses
-         .map((classSession) => ({
-            classId: classSession.id,
-            date: classSession.date,
-            status: getRecord(classSession.id).attendance[studentId],
-         }))
+         .map((classSession) => {
+            const fromClassroom = getRecord(classSession.id).attendance[studentId];
+            const fallback = seededAttendanceByClass.get(classSession.id);
+            return {
+               classId: classSession.id,
+               date: classSession.date,
+               status: fromClassroom ?? fallback,
+            };
+         })
          .filter(
             (entry): entry is { classId: string; date: string; status: "P" | "A" | "T" | "J" } =>
                Boolean(entry.status),
          );
-   }, [activeInstitution, classes, getRecord, student.subjectIds, studentId]);
+   }, [activeInstitution, assignmentId, classes, getRecord, scopedSubjectId, student.subjectIds, studentId]);
 
    const attendancePct = useMemo(() => {
       if (attendanceEntries.length === 0) {
@@ -157,20 +188,14 @@ export function StudentProfile({
       return (jsDay + 6) % 7;
    }, [calendarDays]);
 
-   const observations = [
-      {
-         date: "2026-02-25",
-         text: "Presento dificultades con factorizacion de polinomios. Se le asigno practica extra.",
-      },
-      {
-         date: "2026-02-18",
-         text: "Muy buena participacion en clase. Ayudo a companieros con ejercicios.",
-      },
-      {
-         date: "2026-02-10",
-         text: "Entrego TP fuera de termino. Solicitar justificacion.",
-      },
-   ];
+   const observations = student.observations
+      ? [
+           {
+              date: null,
+              text: student.observations,
+           },
+        ]
+      : [];
 
    return (
       <div className="p-6 max-w-7xl mx-auto">
@@ -210,7 +235,7 @@ export function StudentProfile({
                   </div>
                   <div>
                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                        Asistencia
+                        {assignmentId ? "Asistencia del grupo" : "Asistencia general"}
                      </p>
                      <p
                         className={`text-2xl font-bold ${attendancePct >= 80 ? "text-success" : attendancePct >= 65 ? "text-warning-foreground" : "text-destructive"}`}
@@ -242,15 +267,10 @@ export function StudentProfile({
                   </div>
                   <div>
                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                        Trabajos entregados
+                        Evaluaciones
                      </p>
                      <p className="text-2xl font-bold text-foreground">
-                        {studentEvals.length} /{" "}
-                        {
-                           evaluations.filter((e) =>
-                              student.subjectIds.includes(e.subjectId),
-                           ).length
-                        }
+                        {studentAssessments.length}
                      </p>
                   </div>
                </CardContent>
@@ -358,20 +378,15 @@ export function StudentProfile({
                                  Evaluacion
                               </TableHead>
                               <TableHead className="text-xs">Tipo</TableHead>
-                              <TableHead className="text-xs">Nota</TableHead>
-                              <TableHead className="text-xs">
-                                 Observacion
-                              </TableHead>
+                              <TableHead className="text-xs">Estado</TableHead>
+                              <TableHead className="text-xs">Cargas</TableHead>
                            </TableRow>
                         </TableHeader>
                         <TableBody>
-                           {studentEvals.map((ev) => {
-                              const grade = ev.grades.find(
-                                 (g) => g.studentId === studentId,
-                              );
-                              const dateObj = new Date(ev.date + "T12:00:00");
+                           {studentAssessments.map((assessment) => {
+                              const dateObj = new Date(assessment.date + "T12:00:00");
                               return (
-                                 <TableRow key={ev.id}>
+                                 <TableRow key={assessment.id}>
                                     <TableCell className="text-xs">
                                        {dateObj.toLocaleDateString("es-AR", {
                                           day: "2-digit",
@@ -379,33 +394,40 @@ export function StudentProfile({
                                        })}
                                     </TableCell>
                                     <TableCell className="text-xs font-medium">
-                                       {ev.name}
+                                       {assessment.title}
                                     </TableCell>
                                     <TableCell>
                                        <Badge
                                           variant="secondary"
                                           className="text-[10px] capitalize"
                                        >
-                                          {ev.type}
+                                          {assessment.type === "practice_work"
+                                             ? "TP"
+                                             : "Examen"}
                                        </Badge>
                                     </TableCell>
-                                    <TableCell className="text-xs font-bold">
-                                       {grade?.grade ?? "-"}
+                                    <TableCell>
+                                       <Badge
+                                          variant="secondary"
+                                          className="text-[10px] capitalize"
+                                       >
+                                          {assessment.status}
+                                       </Badge>
                                     </TableCell>
-                                    <TableCell className="text-xs text-muted-foreground max-w-[150px] truncate">
-                                       {grade?.observation || "-"}
+                                    <TableCell className="text-xs text-muted-foreground">
+                                       {assessment.gradesLoaded}
                                     </TableCell>
                                  </TableRow>
                               );
                            })}
-                           {studentEvals.length === 0 && (
+                           {studentAssessments.length === 0 && (
                               <TableRow>
                                  <TableCell
                                     colSpan={5}
                                     className="text-center py-6"
                                  >
                                     <p className="text-xs text-muted-foreground">
-                                       No hay evaluaciones con notas cargadas
+                                       No hay evaluaciones para este alumno
                                     </p>
                                  </TableCell>
                               </TableRow>
@@ -431,7 +453,9 @@ export function StudentProfile({
                   <CardContent className="pt-0">
                      <div className="flex flex-col gap-0">
                         {observations.map((obs, idx) => {
-                           const dateObj = new Date(obs.date + "T12:00:00");
+                           const dateObj = obs.date
+                              ? new Date(obs.date + "T12:00:00")
+                              : null;
                            return (
                               <div
                                  key={idx}
@@ -444,13 +468,15 @@ export function StudentProfile({
                                     <MessageSquare className="size-3 text-muted-foreground" />
                                  </div>
                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[10px] text-muted-foreground mb-1">
-                                       {dateObj.toLocaleDateString("es-AR", {
-                                          day: "2-digit",
-                                          month: "short",
-                                          year: "numeric",
-                                       })}
-                                    </p>
+                                    {obs.date && dateObj && (
+                                       <p className="text-[10px] text-muted-foreground mb-1">
+                                          {dateObj.toLocaleDateString("es-AR", {
+                                             day: "2-digit",
+                                             month: "short",
+                                             year: "numeric",
+                                          })}
+                                       </p>
+                                    )}
                                     <p className="text-xs text-foreground leading-relaxed">
                                        {obs.text}
                                     </p>
@@ -458,6 +484,11 @@ export function StudentProfile({
                               </div>
                            );
                         })}
+                        {observations.length === 0 && (
+                           <p className="text-xs text-muted-foreground">
+                              Sin observaciones registradas.
+                           </p>
+                        )}
                      </div>
                   </CardContent>
                </Card>
@@ -481,13 +512,9 @@ export function StudentProfile({
                            <SelectValue placeholder="Seleccionar evaluacion..." />
                         </SelectTrigger>
                         <SelectContent>
-                           {evaluations
-                              .filter((e) =>
-                                 student.subjectIds.includes(e.subjectId),
-                              )
-                              .map((e) => (
-                                 <SelectItem key={e.id} value={e.id}>
-                                    {e.name}
+                           {studentAssessments.map((assessment) => (
+                                 <SelectItem key={assessment.id} value={assessment.id}>
+                                    {assessment.title}
                                  </SelectItem>
                               ))}
                         </SelectContent>

@@ -12,6 +12,7 @@ export function SeguimientoContent() {
    const { id } = useParams();
    const [searchParams] = useSearchParams();
    const statusParam = searchParams.get("status");
+   const assignmentIdParam = searchParams.get("assignmentId") ?? undefined;
    const selectedStudent = id ?? null;
    const institutionStudentIdSet = useMemo(
       () => new Set(getStudentsByInstitution(activeInstitution).map((s) => s.id)),
@@ -38,6 +39,7 @@ export function SeguimientoContent() {
             studentId={selectedStudent}
             onBack={handleBack}
             activeInstitution={activeInstitution}
+            assignmentId={assignmentIdParam}
          />
       );
    }
