@@ -1,12 +1,11 @@
 import { institutions } from "@/lib/edu-repository";
 import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
-
-const ACTIVE_INSTITUTION_STORAGE_KEY = "aula.activeInstitution";
+import { storageKeys } from "@/services/app-data-bootstrap-service";
 
 export function loadActiveInstitution() {
    const fallbackInstitution = institutions[0]?.id ?? "inst-1";
    return readJsonFromStorage(
-      ACTIVE_INSTITUTION_STORAGE_KEY,
+      storageKeys.activeInstitution,
       fallbackInstitution,
       (raw) => {
          if (typeof raw !== "string") {
@@ -20,5 +19,5 @@ export function loadActiveInstitution() {
 }
 
 export function saveActiveInstitution(institutionId: string) {
-   writeJsonToStorage(ACTIVE_INSTITUTION_STORAGE_KEY, institutionId);
+   writeJsonToStorage(storageKeys.activeInstitution, institutionId);
 }

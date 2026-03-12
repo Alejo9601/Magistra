@@ -1,5 +1,6 @@
-﻿import rawData from "@/data/edu-data.json";
-import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
+﻿import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
+import { defaultEduData } from "@/data/default-edu-data";
+import { storageKeys } from "@/services/app-data-bootstrap-service";
 import type {
    AttendanceRecord,
    ClassSession,
@@ -26,18 +27,38 @@ export type {
    TeacherProfile,
 };
 
-const SUBJECTS_STORAGE_KEY = "aula.catalog.subjects";
-const CONTENT_STORAGE_KEY = "aula.catalog.content-items";
-const INSTITUTIONS_STORAGE_KEY = "aula.catalog.institutions";
+const seedInstitutions = defaultEduData.institutions as Institution[];
+const seedSubjects = defaultEduData.subjects as Subject[];
+const seedStudents = defaultEduData.students as Student[];
+const seedClassSessions = defaultEduData.classSessions as ClassSession[];
+const seedEvaluations = defaultEduData.evaluations as Evaluation[];
+const seedContentItems = defaultEduData.contentItems as ContentItem[];
+const seedAttendanceRecords = defaultEduData.attendanceRecords as AttendanceRecord[];
+const seedTeacherProfile = defaultEduData.teacherProfile as TeacherProfile;
 
-const seedInstitutions = rawData.institutions as Institution[];
-const seedSubjects = rawData.subjects as Subject[];
-export const students = rawData.students as Student[];
-export const classSessions = rawData.classSessions as ClassSession[];
-export const evaluations = rawData.evaluations as Evaluation[];
-const seedContentItems = rawData.contentItems as ContentItem[];
-export const attendanceRecords = rawData.attendanceRecords as AttendanceRecord[];
-export const teacherProfile = rawData.teacherProfile as TeacherProfile;
+export const students = readJsonFromStorage(storageKeys.students, seedStudents, (raw) =>
+   Array.isArray(raw) ? (raw as Student[]) : null,
+);
+export const classSessions = readJsonFromStorage(
+   storageKeys.planningClasses,
+   seedClassSessions,
+   (raw) => (Array.isArray(raw) ? (raw as ClassSession[]) : null),
+);
+export const evaluations = readJsonFromStorage(
+   storageKeys.evaluations,
+   seedEvaluations,
+   (raw) => (Array.isArray(raw) ? (raw as Evaluation[]) : null),
+);
+export const attendanceRecords = readJsonFromStorage(
+   storageKeys.attendanceRecords,
+   seedAttendanceRecords,
+   (raw) => (Array.isArray(raw) ? (raw as AttendanceRecord[]) : null),
+);
+export const teacherProfile = readJsonFromStorage(
+   storageKeys.teacherProfile,
+   seedTeacherProfile,
+   (raw) => (raw && typeof raw === "object" ? (raw as TeacherProfile) : null),
+);
 
 function sanitizeInstitution(raw: unknown): Institution | null {
    if (!raw || typeof raw !== "object") {
@@ -121,7 +142,7 @@ function sanitizeContentItem(raw: unknown): ContentItem | null {
 }
 
 export let subjects: Subject[] = readJsonFromStorage(
-   SUBJECTS_STORAGE_KEY,
+   storageKeys.subjects,
    seedSubjects,
    (raw) => {
       if (!Array.isArray(raw)) {
@@ -135,7 +156,7 @@ export let subjects: Subject[] = readJsonFromStorage(
 );
 
 export let institutions: Institution[] = readJsonFromStorage(
-   INSTITUTIONS_STORAGE_KEY,
+   storageKeys.institutions,
    seedInstitutions,
    (raw) => {
       if (!Array.isArray(raw)) {
@@ -149,7 +170,7 @@ export let institutions: Institution[] = readJsonFromStorage(
 );
 
 export let contentItems: ContentItem[] = readJsonFromStorage(
-   CONTENT_STORAGE_KEY,
+   storageKeys.contentItems,
    seedContentItems,
    (raw) => {
       if (!Array.isArray(raw)) {
@@ -185,15 +206,15 @@ function rebuildDerivedCollections() {
 }
 
 function persistSubjects() {
-   writeJsonToStorage(SUBJECTS_STORAGE_KEY, subjects);
+   writeJsonToStorage(storageKeys.subjects, subjects);
 }
 
 function persistInstitutions() {
-   writeJsonToStorage(INSTITUTIONS_STORAGE_KEY, institutions);
+   writeJsonToStorage(storageKeys.institutions, institutions);
 }
 
 function persistContentItems() {
-   writeJsonToStorage(CONTENT_STORAGE_KEY, contentItems);
+   writeJsonToStorage(storageKeys.contentItems, contentItems);
 }
 
 rebuildDerivedCollections();
@@ -394,3 +415,7 @@ export function getInstitutionRepository(institutionId: string) {
 }
 
 export type InstitutionRepository = ReturnType<typeof getInstitutionRepository>;
+
+
+
+
