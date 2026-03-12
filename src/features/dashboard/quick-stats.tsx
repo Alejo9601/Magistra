@@ -98,20 +98,12 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
       totalStudents > 0 ? Math.round((atRiskCount / totalStudents) * 100) : 0;
 
    const upcomingWindowEnd = addDays(todayStr, 6);
-   const prevWindowStart = addDays(todayStr, -7);
-   const prevWindowEnd = addDays(todayStr, -1);
 
    const upcomingWindowClasses = scopedClasses.filter(
       (cls) => cls.date >= todayStr && cls.date <= upcomingWindowEnd,
    );
-   const prevWindowClasses = scopedClasses.filter(
-      (cls) => cls.date >= prevWindowStart && cls.date <= prevWindowEnd,
-   );
 
    const upcomingUnplanned = upcomingWindowClasses.filter(
-      (cls) => cls.status === "sin-planificar",
-   ).length;
-   const prevUnplanned = prevWindowClasses.filter(
       (cls) => cls.status === "sin-planificar",
    ).length;
 
@@ -119,11 +111,6 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
       upcomingWindowClasses.length > 0
          ? Math.round((upcomingUnplanned / upcomingWindowClasses.length) * 100)
          : 0;
-   const prevUnplannedPct =
-      prevWindowClasses.length > 0
-         ? Math.round((prevUnplanned / prevWindowClasses.length) * 100)
-         : 0;
-   const unplannedTrend = unplannedPct - prevUnplannedPct;
 
    const atRiskLevel = resolveSemaphoreLevel(
       atRiskPct,
@@ -156,7 +143,7 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
          value: atRiskCount,
          level: atRiskLevel,
          detail: `${atRiskPct}% de ${totalStudents} alumnos`,
-         rule: `Rojo >= ${thresholds.atRiskPctCritical}%`,
+         summary: "Controla asistencia y rendimiento de alumnos con alerta.",
          actionTo: "/seguimiento?status=en-riesgo",
          actionLabel: "Ver alumnos",
       },
@@ -166,7 +153,7 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
          value: pendingCount,
          level: pendingLevel,
          detail: `${scopedTasks.filter((task) => !task.done).length} manuales + ${suggestedTasks.length} sugeridas`,
-         rule: `Rojo > ${thresholds.pendingCritical - 1} tareas`,
+         summary: "Prioriza tareas operativas para hoy y proximos dias.",
          actionTo: "/#pending-tasks",
          actionLabel: "Ir a tareas",
       },
@@ -176,13 +163,13 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
          value: unplannedCount,
          level: unplannedLevel,
          detail: `${unplannedPct}% en los proximos 7 dias`,
-         rule: `Rojo >= ${thresholds.unplannedPctCritical}%`,
+         summary: "Reduce clases sin planificar en la semana activa.",
          actionTo: "/planificacion?status=sin-planificar",
          actionLabel: "Planificar",
       },
    ] as const;
 
-   const alerts = metrics.filter((metric) => metric.level !== "green");
+   const topAtRiskStudents = liveAtRiskStudents.slice(0, 4);
 
    return (
       <div>
@@ -221,7 +208,7 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
                               {metric.detail}
                            </p>
                            <p className="text-[10px] text-muted-foreground/80">
-                              {metric.rule}
+                              {metric.summary}
                            </p>
                            <Button
                               asChild
@@ -235,28 +222,42 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
                   })}
                </div>
 
-               <div className="rounded-md border border-border/60 bg-muted/20 px-2.5 py-2">
-                  <p className="text-[10px] font-medium text-foreground mb-1">
-                     Alertas operativas
-                  </p>
-                  {alerts.length === 0 ? (
-                     <p className="text-[10px] text-muted-foreground">
-                        Sin alertas activas para esta institucion.
+               <div className="rounded-md border border-border/60 bg-background px-2.5 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                     <p className="text-[10px] font-medium text-foreground">
+                        Seguimiento de riesgo
+                     </p>
+                     <Button
+                        asChild
+                        variant="link"
+                        className="h-auto p-0 text-[10px]"
+                     >
+                        <Link to="/seguimiento?status=en-riesgo">Abrir seguimiento</Link>
+                     </Button>
+                  </div>
+                  {topAtRiskStudents.length === 0 ? (
+                     <p className="mt-1 text-[10px] text-muted-foreground">
+                        Sin alumnos en riesgo en esta institucion.
                      </p>
                   ) : (
-                     <div className="space-y-1">
-                        {alerts.map((alert) => (
-                           <p key={alert.key} className="text-[10px] text-muted-foreground">
-                              {alert.label}: {alert.rule} ({levelLabel(alert.level)})
-                           </p>
+                     <div className="mt-1.5 space-y-1">
+                        {topAtRiskStudents.map((student) => (
+                           <div
+                              key={student.id}
+                              className="flex items-center justify-between gap-2 rounded-sm bg-muted/30 px-1.5 py-1"
+                           >
+                              <p className="text-[10px] text-foreground truncate">
+                                 {student.lastName}, {student.name}
+                              </p>
+                              <Badge className="border-0 bg-destructive/15 text-destructive text-[9px]">
+                                 {student.average < 6 ? `Prom. ${student.average}` : "Asistencia baja"}
+                              </Badge>
+                           </div>
                         ))}
                      </div>
                   )}
-                  <p className="mt-1 text-[10px] text-muted-foreground">
-                     Tendencia sin plan (7 dias): {unplannedTrend > 0 ? "+" : ""}
-                     {unplannedTrend} pts vs semana anterior.
-                  </p>
                </div>
+
             </CardContent>
          </Card>
       </div>
