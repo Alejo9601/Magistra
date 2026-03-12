@@ -26,6 +26,7 @@ import {
    institutions,
 } from "@/lib/edu-repository";
 import { classTypeLabels } from "@/features/planning/constants";
+import { resolveAssignmentIdForInstitution } from "@/features/planning/institution-context-guards";
 import type { ClassFormInput } from "@/features/planning/types";
 import { toast } from "sonner";
 import type { ClassSession } from "@/types";
@@ -74,15 +75,13 @@ export function ClassEditorModal({
          (initialClass?.subjectId
             ? getAssignmentIdBySubjectId(initialClass.subjectId)
             : "");
-      const candidateAssignment = candidateAssignmentId
-         ? getAssignmentById(candidateAssignmentId)
-         : null;
-      const firstAssignmentId =
-         getAssignmentsByInstitution(nextInstitution)[0]?.id ?? "";
       setAssignmentId(
-         candidateAssignment?.institutionId === nextInstitution
-            ? candidateAssignmentId
-            : firstAssignmentId,
+         resolveAssignmentIdForInstitution({
+            institutionId: nextInstitution,
+            candidateAssignmentId,
+            assignmentsByInstitution: getAssignmentsByInstitution(nextInstitution),
+            getAssignmentById,
+         }),
       );
       setDate(initialClass?.date ?? initialDate ?? "");
       setTime(initialClass?.time ?? "08:00");

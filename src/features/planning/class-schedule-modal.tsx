@@ -20,9 +20,14 @@ import {
 } from "@/components/ui/select";
 import {
    getAssignmentsByInstitution,
+   getAssignmentById,
    getSubjectById,
    institutions,
 } from "@/lib/edu-repository";
+import {
+   resolveAssignmentIdForInstitution,
+   resolveInstitutionId,
+} from "@/features/planning/institution-context-guards";
 import { toast } from "sonner";
 
 const weekDays = [
@@ -92,7 +97,7 @@ export function ClassScheduleModal({
 }) {
    const isLockedToInitialSelection = Boolean(initialAssignmentId);
    const isInstitutionLocked = true;
-   const institutionId = initialInstitutionId ?? activeInstitution;
+   const institutionId = resolveInstitutionId(activeInstitution, initialInstitutionId);
    const [assignmentId, setAssignmentId] = useState("");
    const [startDate, setStartDate] = useState(todayDate());
    const [endDate, setEndDate] = useState(addDays(todayDate(), 60));
@@ -107,9 +112,14 @@ export function ClassScheduleModal({
    );
 
    const reset = () => {
-      const firstAssignmentId =
-         getAssignmentsByInstitution(institutionId)[0]?.id ?? "";
-      setAssignmentId(initialAssignmentId ?? firstAssignmentId);
+      setAssignmentId(
+         resolveAssignmentIdForInstitution({
+            institutionId,
+            candidateAssignmentId: initialAssignmentId,
+            assignmentsByInstitution: getAssignmentsByInstitution(institutionId),
+            getAssignmentById,
+         }),
+      );
       setStartDate(todayDate());
       setEndDate(addDays(todayDate(), 60));
       setSlots([createSlot(1, "08:00"), createSlot(3, "08:00")]);
