@@ -13,7 +13,7 @@ import { useActivitiesContext } from "@/features/activities";
 import { useAssessmentsContext } from "@/features/assessments";
 import { useClassroomContext } from "@/features/classroom";
 import { ClassStatusBadge } from "@/features/dashboard/class-status-badge";
-import { getTodayStr } from "@/features/dashboard/constants";
+import { getThresholdsForInstitution, getTodayStr } from "@/features/dashboard/constants";
 import { usePlanningContext } from "@/features/planning";
 import { useStudentsContext } from "@/features/students";
 import {
@@ -85,6 +85,7 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
    const tomorrowStr = `${tomorrowDate.getFullYear()}-${String(tomorrowDate.getMonth() + 1).padStart(2, "0")}-${String(tomorrowDate.getDate()).padStart(2, "0")}`;
    const nowMs = Date.now();
+   const thresholds = getThresholdsForInstitution(activeInstitution);
 
    const todayClasses = useMemo(
       () =>
@@ -132,10 +133,18 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
       const hasAttendance = attendanceValues.length > 0;
 
       if (classSession.status === "sin-planificar") {
+         const hoursToClass = Math.max(
+            0,
+            Math.floor((classDateMs - nowMs) / (1000 * 60 * 60)),
+         );
+         const severity: TodayAlert["severity"] =
+            hoursToClass <= thresholds.unplannedClassCriticalHours
+               ? "high"
+               : "medium";
          alerts.push({
             id: `plan-${classSession.id}`,
-            text: `${classSession.time} - clase sin planificar`,
-            severity: "high",
+            text: `${classSession.time} - clase sin planificar (${hoursToClass}h para iniciar)`,
+            severity,
             actionTo: "/planificacion?status=sin-planificar",
             actionLabel: "Planificar",
          });

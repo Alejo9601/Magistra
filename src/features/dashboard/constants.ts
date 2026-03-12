@@ -1,4 +1,6 @@
-﻿export type DashboardTask = {
+﻿import { loadOperativeThresholdOverrides } from "@/features/dashboard/services/operative-thresholds-service";
+
+export type DashboardTask = {
    id: string;
    institutionId: string;
    text: string;
@@ -12,6 +14,7 @@ export type OperativeThresholds = {
    pendingCritical: number;
    unplannedPctWarning: number;
    unplannedPctCritical: number;
+   unplannedClassCriticalHours: number;
 };
 
 export type SemaphoreLevel = "green" | "yellow" | "red";
@@ -23,9 +26,10 @@ export const DEFAULT_THRESHOLDS: OperativeThresholds = {
    pendingCritical: 11,
    unplannedPctWarning: 20,
    unplannedPctCritical: 35,
+   unplannedClassCriticalHours: 24,
 };
 
-const thresholdsByInstitution: Record<string, Partial<OperativeThresholds>> = {
+const LEGACY_THRESHOLDS_BY_INSTITUTION: Record<string, Partial<OperativeThresholds>> = {
    "inst-1": {
       atRiskPctWarning: 9,
       pendingWarning: 5,
@@ -117,9 +121,11 @@ export function getWeekDaysFromToday() {
 export function getThresholdsForInstitution(
    institutionId: string,
 ): OperativeThresholds {
+   const persistedOverrides = loadOperativeThresholdOverrides();
    return {
       ...DEFAULT_THRESHOLDS,
-      ...(thresholdsByInstitution[institutionId] ?? {}),
+      ...(LEGACY_THRESHOLDS_BY_INSTITUTION[institutionId] ?? {}),
+      ...(persistedOverrides[institutionId] ?? {}),
    };
 }
 

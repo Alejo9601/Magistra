@@ -4,6 +4,7 @@ import { InstitutionsSection } from "@/features/settings/sections/institutions-s
 import { SubjectsSection } from "@/features/settings/sections/subjects-section";
 import { PeriodsSection } from "@/features/settings/sections/periods-section";
 import { NotificationsSection } from "@/features/settings/sections/notifications-section";
+import { OperativeThresholdsSection } from "@/features/settings/sections/operative-thresholds-section";
 
 export function ConfiguracionContent() {
    return (
@@ -32,6 +33,9 @@ export function ConfiguracionContent() {
                <TabsTrigger value="notificaciones" className="text-xs">
                   Notificaciones
                </TabsTrigger>
+               <TabsTrigger value="operativo" className="text-xs">
+                  Operativo
+               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="perfil">
@@ -48,6 +52,9 @@ export function ConfiguracionContent() {
             </TabsContent>
             <TabsContent value="notificaciones">
                <NotificationsSection />
+            </TabsContent>
+            <TabsContent value="operativo">
+               <OperativeThresholdsSection />
             </TabsContent>
          </Tabs>
       </div>

@@ -11,6 +11,7 @@ export const storageKeys = {
    attendanceRecords: "aula.attendanceRecords",
    teacherProfile: "aula.teacherProfile",
    activeInstitution: "aula.activeInstitution",
+   dashboardThresholds: "aula.dashboard.thresholds",
 } as const;
 
 function ensureStorageSeed<T>(key: string, seed: T) {
@@ -33,6 +34,7 @@ export function initializeAppDataStorage() {
    ensureStorageSeed(storageKeys.evaluations, defaultEduData.evaluations);
    ensureStorageSeed(storageKeys.attendanceRecords, defaultEduData.attendanceRecords);
    ensureStorageSeed(storageKeys.teacherProfile, defaultEduData.teacherProfile);
+   ensureStorageSeed(storageKeys.dashboardThresholds, {});
    ensureStorageSeed(
       storageKeys.activeInstitution,
       defaultEduData.institutions[0]?.id ?? "",
