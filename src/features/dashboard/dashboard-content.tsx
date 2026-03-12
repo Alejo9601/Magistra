@@ -1,4 +1,5 @@
 ﻿import { useInstitutionContext } from "@/features/institution";
+import { useTeacherContext } from "@/features/teacher";
 import {
    DashboardHero,
    QuickStats,
@@ -10,6 +11,7 @@ import {
 
 export function DashboardContent() {
    const { activeInstitution } = useInstitutionContext();
+   const { teacherProfile } = useTeacherContext();
    const today = new Date();
    const formattedDate = today.toLocaleDateString("es-AR", {
       weekday: "long",
@@ -20,7 +22,10 @@ export function DashboardContent() {
 
    return (
       <div className="p-6 max-w-7xl mx-auto">
-         <DashboardHero formattedDate={formattedDate} />
+         <DashboardHero
+            formattedDate={formattedDate}
+            teacherName={teacherProfile.name}
+         />
 
          <QuickStats activeInstitution={activeInstitution} />
 
@@ -40,5 +45,3 @@ export function DashboardContent() {
       </div>
    );
 }
-
-
