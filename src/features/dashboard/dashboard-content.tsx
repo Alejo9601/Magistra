@@ -4,7 +4,6 @@ import {
    DashboardHero,
    QuickStats,
    PendingTasks,
-   AtRiskStudents,
    TodayClasses,
    WeekTimeline,
 } from "@/features/dashboard";
@@ -28,14 +27,14 @@ export function DashboardContent() {
          />
 
          <div className="mt-6">
+            <TodayClasses activeInstitution={activeInstitution} />
+         </div>
+
+         <div className="mt-6">
             <h2 className="text-sm font-semibold text-foreground mb-3">
                Estado operativo
             </h2>
             <QuickStats activeInstitution={activeInstitution} />
-         </div>
-
-         <div className="mt-6">
-            <TodayClasses activeInstitution={activeInstitution} />
          </div>
 
          <div className="mt-6">
@@ -44,10 +43,6 @@ export function DashboardContent() {
 
          <div className="mt-6">
             <PendingTasks activeInstitution={activeInstitution} />
-         </div>
-
-         <div className="mt-6">
-            <AtRiskStudents activeInstitution={activeInstitution} />
          </div>
       </div>
    );
