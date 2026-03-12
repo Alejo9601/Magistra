@@ -38,13 +38,11 @@ export function StudentList({
    const { getRecord } = useClassroomContext();
    const [search, setSearch] = useState("");
 
-   const filtered = getStudentsByInstitution(activeInstitution).filter((s) => {
-      const matchesSearch = `${s.name} ${s.lastName}`
+   const searchedStudents = getStudentsByInstitution(activeInstitution).filter((student) =>
+      `${student.name} ${student.lastName}`
          .toLowerCase()
-         .includes(search.toLowerCase());
-      const matchesStatus = !statusFilter || s.status === statusFilter;
-      return matchesSearch && matchesStatus;
-   });
+         .includes(search.toLowerCase()),
+   );
 
    const studentStats = useMemo(() => {
       const classesInInstitution = classes.filter(
@@ -55,7 +53,7 @@ export function StudentList({
          { attendance: number; absences: number; lateness: number; risk: RiskLevel }
       >();
 
-      filtered.forEach((student) => {
+      searchedStudents.forEach((student) => {
          const subjectIdSet = new Set(student.subjectIds);
          const relevantClasses = classesInInstitution.filter((classSession) =>
             subjectIdSet.has(classSession.subjectId),
@@ -93,7 +91,22 @@ export function StudentList({
       });
 
       return output;
-   }, [activeInstitution, classes, filtered, getRecord]);
+   }, [activeInstitution, classes, searchedStudents, getRecord]);
+
+   const filtered = useMemo(
+      () =>
+         searchedStudents.filter((student) => {
+            if (!statusFilter) {
+               return true;
+            }
+            if (statusFilter === "en-riesgo") {
+               const stats = studentStats.get(student.id);
+               return stats?.risk === "high" || student.status === "en-riesgo";
+            }
+            return student.status === statusFilter;
+         }),
+      [searchedStudents, statusFilter, studentStats],
+   );
 
    return (
       <div className="p-6 max-w-7xl mx-auto">
