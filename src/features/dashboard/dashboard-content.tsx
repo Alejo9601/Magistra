@@ -27,20 +27,27 @@ export function DashboardContent() {
             teacherName={teacherProfile.name}
          />
 
-         <QuickStats activeInstitution={activeInstitution} />
-
-         <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-               <PendingTasks activeInstitution={activeInstitution} />
-            </div>
-            <div>
-               <AtRiskStudents activeInstitution={activeInstitution} />
-            </div>
+         <div className="mt-6">
+            <h2 className="text-sm font-semibold text-foreground mb-3">
+               Estado operativo
+            </h2>
+            <QuickStats activeInstitution={activeInstitution} />
          </div>
 
-         <div className="mt-6 grid grid-cols-1 gap-6">
+         <div className="mt-6">
             <TodayClasses activeInstitution={activeInstitution} />
+         </div>
+
+         <div className="mt-6">
             <WeekTimeline activeInstitution={activeInstitution} />
+         </div>
+
+         <div className="mt-6">
+            <PendingTasks activeInstitution={activeInstitution} />
+         </div>
+
+         <div className="mt-6">
+            <AtRiskStudents activeInstitution={activeInstitution} />
          </div>
       </div>
    );

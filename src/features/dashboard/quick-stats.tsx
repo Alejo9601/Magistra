@@ -2,10 +2,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-   getSubjectById,
-   getSubjectsByInstitution,
-} from "@/lib/edu-repository";
+import { getSubjectsByInstitution } from "@/lib/edu-repository";
 import {
    addDays,
    getThresholdsForInstitution,
@@ -14,9 +11,16 @@ import {
    semaphoreScore,
    type SemaphoreLevel,
 } from "@/features/dashboard/constants";
+import {
+   getAtRiskStudentsFromLiveData,
+   getSuggestedDashboardTasks,
+} from "@/features/dashboard/dashboard-derived";
 import { usePlanningContext } from "@/features/planning";
 import { useDashboardContext } from "@/features/dashboard";
 import { useStudentsContext } from "@/features/students";
+import { useClassroomContext } from "@/features/classroom";
+import { useAssessmentsContext } from "@/features/assessments";
+import { useActivitiesContext } from "@/features/activities";
 
 function statusClasses(level: SemaphoreLevel) {
    if (level === "red") {
@@ -50,6 +54,9 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
    const { classes } = usePlanningContext();
    const { tasks } = useDashboardContext();
    const { getStudentsByInstitution } = useStudentsContext();
+   const { getRecord } = useClassroomContext();
+   const { assessments } = useAssessmentsContext();
+   const { activities } = useActivitiesContext();
    const thresholds = getThresholdsForInstitution(activeInstitution);
    const todayStr = getTodayStr();
 
@@ -62,26 +69,29 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
       (task) => task.institutionId === activeInstitution,
    );
 
-   const atRiskCount = scopedStudents.filter(
-      (student) => student.status === "en-riesgo",
-   ).length;
-   const pendingCount = scopedTasks.filter((task) => !task.done).length;
+   const liveAtRiskStudents = getAtRiskStudentsFromLiveData(
+      scopedStudents,
+      scopedClasses,
+      (classId, studentId) => getRecord(classId).attendance[studentId],
+   );
+   const suggestedTasks = getSuggestedDashboardTasks({
+      todayStr,
+      classes: scopedClasses,
+      assessments: assessments.filter((assessment) =>
+         scopedSubjects.some((subject) => subject.id === assessment.subjectId),
+      ),
+      activities: activities.filter((activity) =>
+         scopedSubjects.some((subject) => subject.id === activity.subjectId),
+      ),
+      atRiskStudents: liveAtRiskStudents,
+   });
+
+   const atRiskCount = liveAtRiskStudents.length;
+   const pendingCount =
+      scopedTasks.filter((task) => !task.done).length + suggestedTasks.length;
    const unplannedCount = scopedClasses.filter(
       (cls) => cls.status === "sin-planificar",
    ).length;
-   const nextClass = [...scopedClasses]
-      .filter((cls) => cls.date >= todayStr)
-      .sort((a, b) =>
-         `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`),
-      )[0];
-   const isNextClassToday = nextClass?.date === todayStr;
-   const nextClassSubject = nextClass
-      ? getSubjectById(nextClass.subjectId)?.name
-      : "Sin clases cargadas";
-   const nextClassCourse = nextClass
-      ? getSubjectById(nextClass.subjectId)?.course
-      : "";
-   const totalSubjects = scopedSubjects.length;
 
    const totalStudents = scopedStudents.length;
    const atRiskPct =
@@ -155,7 +165,7 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
          label: "Pendientes",
          value: pendingCount,
          level: pendingLevel,
-         detail: `${scopedTasks.length} tareas en cartera`,
+         detail: `${scopedTasks.filter((task) => !task.done).length} manuales + ${suggestedTasks.length} sugeridas`,
          rule: `Rojo > ${thresholds.pendingCritical - 1} tareas`,
          actionTo: "/#pending-tasks",
          actionLabel: "Ir a tareas",
@@ -175,92 +185,7 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
    const alerts = metrics.filter((metric) => metric.level !== "green");
 
    return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-         <Card>
-            <CardContent className="p-4">
-               <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                  Proxima clase
-               </p>
-               <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-3 md:gap-4">
-                  <div>
-                     <p className="text-lg font-semibold text-foreground">
-                        {nextClassSubject}
-                     </p>
-                     {nextClassCourse && (
-                        <p className="text-xs text-muted-foreground">{nextClassCourse}</p>
-                     )}
-                     <p className="mt-1 text-xs text-muted-foreground">
-                        {nextClass ? `${nextClass.date} - ${nextClass.time} hs` : "Sin agenda"}
-                     </p>
-                     {nextClass && (
-                        <p className="mt-1 text-[11px] text-muted-foreground">
-                           {isNextClassToday
-                              ? "Sugerencia: inicia la vista de dictado para esta clase."
-                              : "Sugerencia: deja preparada la vista de dictado para la proxima clase."}
-                        </p>
-                     )}
-                     <div className="mt-3 flex flex-wrap gap-1.5">
-                        <Badge className="bg-muted text-muted-foreground border-0 text-[10px]">
-                           {totalSubjects} materias activas
-                        </Badge>
-                        <Badge className="bg-warning/10 text-warning-foreground border-0 text-[10px]">
-                           {unplannedCount} sin planificar
-                        </Badge>
-                        {nextClass && (
-                           <Button asChild size="sm" className="h-6 rounded-md px-2 text-[10px]">
-                              <Link to={`/clase/${nextClass.id}/dictado`}>
-                                 Ir a dictado
-                              </Link>
-                           </Button>
-                        )}
-                     </div>
-                  </div>
-                  <div className="md:border-l md:border-border/70 md:pl-4">
-                     {nextClass?.topic ? (
-                        <>
-                           <p className="text-[11px] font-medium text-foreground">
-                              {nextClass.topic}
-                           </p>
-                           {nextClass.subtopics.length > 0 && (
-                              <div className="mt-2 flex flex-wrap gap-1">
-                                 {nextClass.subtopics
-                                    .slice(0, 3)
-                                    .map((subtopic) => (
-                                       <Badge
-                                          key={subtopic}
-                                          className="bg-background border border-border text-muted-foreground text-[10px] px-1.5"
-                                       >
-                                          {subtopic}
-                                       </Badge>
-                                    ))}
-                              </div>
-                           )}
-                           {nextClass.activities && (
-                              <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground line-clamp-2">
-                                 {nextClass.activities}
-                              </p>
-                           )}
-                           {nextClass.resources &&
-                              nextClass.resources.length > 0 && (
-                                 <div className="mt-2">
-                                    <Badge className="bg-primary/10 text-primary border-0 text-[10px]">
-                                       {nextClass.resources.length} recurso
-                                       {nextClass.resources.length > 1
-                                          ? "s"
-                                          : ""}
-                                    </Badge>
-                                 </div>
-                              )}
-                        </>
-                     ) : (
-                        <p className="text-xs text-muted-foreground">
-                           Sin contenido cargado para esta clase.
-                        </p>
-                     )}
-                  </div>
-               </div>
-            </CardContent>
-         </Card>
+      <div>
          <Card>
             <CardContent className="p-4 space-y-3">
                <div className="flex items-center justify-between gap-2">
@@ -337,7 +262,3 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
       </div>
    );
 }
-
-
-
-
