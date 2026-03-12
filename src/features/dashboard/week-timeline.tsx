@@ -1,4 +1,16 @@
-﻿import { Card, CardContent } from "@/components/ui/card";
+﻿import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+   Dialog,
+   DialogContent,
+   DialogDescription,
+   DialogHeader,
+   DialogTitle,
+} from "@/components/ui/dialog";
+import { ClassStatusBadge } from "@/features/dashboard/class-status-badge";
 import { getInstitutionById, getSubjectById } from "@/lib/edu-repository";
 import {
    getTodayStr,
@@ -10,6 +22,23 @@ export function WeekTimeline({ activeInstitution }: { activeInstitution: string 
    const { classes } = usePlanningContext();
    const todayStr = getTodayStr();
    const weekDays = getWeekDaysFromToday();
+   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+   const selectedDayData = useMemo(
+      () => weekDays.find((day) => day.date === selectedDate) ?? null,
+      [selectedDate, weekDays],
+   );
+   const selectedDayClasses = useMemo(
+      () =>
+         classes
+            .filter(
+               (classSession) =>
+                  classSession.date === selectedDate &&
+                  classSession.institutionId === activeInstitution,
+            )
+            .sort((a, b) => a.time.localeCompare(b.time)),
+      [activeInstitution, classes, selectedDate],
+   );
 
    return (
       <div>
@@ -22,13 +51,13 @@ export function WeekTimeline({ activeInstitution }: { activeInstitution: string 
                   {weekDays.map(({ date, label }) => {
                      const isToday = date === todayStr;
                      const dayClasses = classes.filter(
-                        (c) =>
-                           c.date === date &&
-                           c.institutionId === activeInstitution,
+                        (c) => c.date === date && c.institutionId === activeInstitution,
                      );
                      return (
-                        <div
+                        <button
                            key={date}
+                           type="button"
+                           onClick={() => setSelectedDate(date)}
                            className={`flex-1 rounded-lg p-3 text-center transition-colors ${isToday ? "bg-primary/5 ring-1 ring-primary/20" : "hover:bg-muted/50"}`}
                         >
                            <p
@@ -43,16 +72,13 @@ export function WeekTimeline({ activeInstitution }: { activeInstitution: string 
                            </p>
                            <div className="flex flex-wrap justify-center gap-1">
                               {dayClasses.map((cls) => {
-                                 const inst = getInstitutionById(
-                                    cls.institutionId,
-                                 );
+                                 const inst = getInstitutionById(cls.institutionId);
                                  return (
                                     <div
                                        key={cls.id}
                                        className="size-2 rounded-full"
                                        style={{
-                                          backgroundColor:
-                                             inst?.color || "#4F46E5",
+                                          backgroundColor: inst?.color || "#4F46E5",
                                        }}
                                        title={`${getSubjectById(cls.subjectId)?.name} - ${cls.time}`}
                                     />
@@ -62,14 +88,80 @@ export function WeekTimeline({ activeInstitution }: { activeInstitution: string 
                                  <div className="size-2 rounded-full bg-muted" />
                               )}
                            </div>
-                        </div>
+                        </button>
                      );
                   })}
                </div>
             </CardContent>
          </Card>
+
+         <Dialog
+            open={Boolean(selectedDate)}
+            onOpenChange={(open) => {
+               if (!open) {
+                  setSelectedDate(null);
+               }
+            }}
+         >
+            <DialogContent className="sm:max-w-[560px]">
+               <DialogHeader>
+                  <DialogTitle>Day slot details</DialogTitle>
+                  <DialogDescription>
+                     {selectedDayData
+                        ? `${selectedDayData.label.replace(".", "")} ${selectedDayData.date}`
+                        : "Select a day"}
+                  </DialogDescription>
+               </DialogHeader>
+               {selectedDayClasses.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-2">
+                     No classes scheduled for this day.
+                  </p>
+               ) : (
+                  <div className="max-h-[360px] overflow-y-auto pr-1 space-y-2">
+                     {selectedDayClasses.map((classSession) => {
+                        const subject = getSubjectById(classSession.subjectId);
+                        const institution = getInstitutionById(classSession.institutionId);
+                        return (
+                           <div
+                              key={classSession.id}
+                              className="rounded-lg border border-border/70 p-3"
+                           >
+                              <div className="flex items-start justify-between gap-2">
+                                 <div>
+                                    <p className="text-sm font-semibold text-foreground">
+                                       {subject?.name}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                       {institution?.name} - {classSession.time} hs
+                                    </p>
+                                 </div>
+                                 <ClassStatusBadge status={classSession.status} />
+                              </div>
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                 <Badge variant="secondary" className="text-[10px]">
+                                    {subject?.course}
+                                 </Badge>
+                                 {classSession.topic && (
+                                    <Badge variant="secondary" className="text-[10px]">
+                                       {classSession.topic}
+                                    </Badge>
+                                 )}
+                              </div>
+                              <div className="mt-3 flex items-center gap-2">
+                                 <Button asChild variant="outline" size="sm" className="h-7 text-[11px]">
+                                    <Link to={`/clase/${classSession.id}`}>View details</Link>
+                                 </Button>
+                                 <Button asChild size="sm" className="h-7 text-[11px]">
+                                    <Link to={`/clase/${classSession.id}/dictado`}>Open class</Link>
+                                 </Button>
+                              </div>
+                           </div>
+                        );
+                     })}
+                  </div>
+               )}
+            </DialogContent>
+         </Dialog>
       </div>
    );
 }
-
-
