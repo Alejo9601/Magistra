@@ -1,7 +1,23 @@
 import type { AttendanceStatus, ClassroomRecord } from "@/types";
 import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
+import { attendanceRecords } from "@/lib/edu-repository";
 
 const CLASSROOM_STORAGE_KEY = "aula.classroom.records";
+
+function seedClassroomRecordsFromAttendance() {
+   const recordsByClass: Record<string, ClassroomRecord> = {};
+   attendanceRecords.forEach((entry) => {
+      const current = recordsByClass[entry.classId] ?? {
+         completedSubtopics: [],
+         completedActivities: [],
+         attendance: {},
+         notes: undefined,
+      };
+      current.attendance[entry.studentId] = entry.status as AttendanceStatus;
+      recordsByClass[entry.classId] = current;
+   });
+   return recordsByClass;
+}
 
 function isAttendanceStatus(value: unknown): value is AttendanceStatus {
    return value === "P" || value === "A" || value === "T" || value === "J";
@@ -39,9 +55,10 @@ function sanitizeClassroomRecord(raw: unknown): ClassroomRecord | null {
 }
 
 export function loadClassroomRecords() {
+   const seedRecords = seedClassroomRecordsFromAttendance();
    return readJsonFromStorage<Record<string, ClassroomRecord>>(
       CLASSROOM_STORAGE_KEY,
-      {},
+      seedRecords,
       (raw) => {
          if (!raw || typeof raw !== "object") {
             return null;
@@ -55,7 +72,30 @@ export function loadClassroomRecords() {
                (entry): entry is readonly [string, ClassroomRecord] =>
                   entry !== null,
             );
-         return Object.fromEntries(entries);
+         const persisted = Object.fromEntries(entries);
+         const mergedEntries = Object.entries(seedRecords).map(([classId, seed]) => {
+            const stored = persisted[classId];
+            if (!stored) {
+               return [classId, seed] as const;
+            }
+            return [
+               classId,
+               {
+                  completedSubtopics: stored.completedSubtopics,
+                  completedActivities: stored.completedActivities,
+                  attendance: {
+                     ...seed.attendance,
+                     ...stored.attendance,
+                  },
+                  notes: stored.notes,
+               },
+            ] as const;
+         });
+         const mergedSeed = Object.fromEntries(mergedEntries);
+         return {
+            ...mergedSeed,
+            ...persisted,
+         };
       },
    );
 }

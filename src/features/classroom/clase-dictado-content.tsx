@@ -149,8 +149,9 @@ export function ClaseDictadoContent() {
                size="sm"
                className="text-xs"
                onClick={() => {
+                  setAttendance(cls.id, attendanceWithDefaults);
                   markClassAsTaught(cls.id);
-                  toast.success("Clase marcada como finalizada.");
+                  toast.success("Clase finalizada y asistencia registrada.");
                }}
             >
                <CheckCircle2 className="size-3.5 mr-1.5" />
