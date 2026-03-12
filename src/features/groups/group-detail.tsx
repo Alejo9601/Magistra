@@ -41,6 +41,7 @@ import {
 import { StudentStatusBadge } from "@/features/groups/status-badge";
 import { toast } from "sonner";
 import { useStudentsContext } from "@/features/students";
+import { useClassroomContext } from "@/features/classroom";
 import {
    useAssessmentsContext,
    type AssessmentStatus,
@@ -100,6 +101,7 @@ export function GroupDetail({
    onBack: () => void;
 }) {
    const { getStudentsByAssignment, addStudent } = useStudentsContext();
+   const { getRecord } = useClassroomContext();
    const { getAssessmentsByAssignment, addAssessment, removeAssessment } =
       useAssessmentsContext();
    const { getActivitiesByAssignment, addActivity, removeActivity } =
@@ -154,6 +156,44 @@ export function GroupDetail({
             a.title.localeCompare(b.title),
          ),
       [assignmentId, getActivitiesByAssignment],
+   );
+   const attendanceByStudent = useMemo(() => {
+      const output = new Map<string, number>();
+      groupStudents.forEach((student) => {
+         const statuses = groupClasses
+            .map((classSession) => getRecord(classSession.id).attendance[student.id])
+            .filter((status): status is "P" | "A" | "T" | "J" => Boolean(status));
+
+         if (statuses.length === 0) {
+            output.set(student.id, student.attendance);
+            return;
+         }
+
+         const attendedWeight = statuses.reduce((sum, status) => {
+            if (status === "P" || status === "J") return sum + 1;
+            if (status === "T") return sum + 0.5;
+            return sum;
+         }, 0);
+         output.set(student.id, Math.round((attendedWeight / statuses.length) * 100));
+      });
+      return output;
+   }, [getRecord, groupClasses, groupStudents]);
+   const groupAttendanceAverage = useMemo(() => {
+      if (groupStudents.length === 0) {
+         return 0;
+      }
+      const total = groupStudents.reduce(
+         (sum, student) => sum + (attendanceByStudent.get(student.id) ?? student.attendance),
+         0,
+      );
+      return Math.round(total / groupStudents.length);
+   }, [attendanceByStudent, groupStudents]);
+   const atRiskCount = useMemo(
+      () =>
+         groupStudents.filter(
+            (student) => (attendanceByStudent.get(student.id) ?? student.attendance) < 65,
+         ).length,
+      [attendanceByStudent, groupStudents],
    );
 
    if (!assignment || !subject || !inst) return null;
@@ -287,6 +327,14 @@ export function GroupDetail({
             </TabsList>
 
             <TabsContent value="alumnos">
+               <div className="mt-2 mb-3 flex flex-wrap items-center gap-2">
+                  <Badge variant="secondary" className="text-[10px]">
+                     Asistencia promedio del grupo: {groupAttendanceAverage}%
+                  </Badge>
+                  <Badge variant="secondary" className="text-[10px]">
+                     En riesgo por asistencia: {atRiskCount}
+                  </Badge>
+               </div>
                <div className="flex items-center justify-between mb-4 mt-2">
                   <div className="relative max-w-xs flex-1">
                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
@@ -322,50 +370,55 @@ export function GroupDetail({
                            </TableRow>
                         </TableHeader>
                         <TableBody>
-                           {filteredStudents.map((student) => (
-                              <TableRow
-                                 key={student.id}
-                                 className="hover:bg-muted/30 cursor-pointer"
-                              >
-                                 <TableCell>
+                           {filteredStudents.map((student) => {
+                              const studentAttendance =
+                                 attendanceByStudent.get(student.id) ??
+                                 student.attendance;
+                              return (
+                                 <TableRow
+                                    key={student.id}
+                                    className="hover:bg-muted/30 cursor-pointer"
+                                 >
+                                    <TableCell>
                                     <Link
-                                       to={`/seguimiento/${student.id}`}
+                                       to={`/seguimiento/${student.id}?assignmentId=${assignmentId}`}
                                        className="flex items-center gap-2.5"
                                     >
-                                       <Avatar className="size-7">
-                                          <AvatarFallback className="bg-muted text-muted-foreground text-[10px] font-semibold">
-                                             {student.name[0]}
-                                             {student.lastName[0]}
-                                          </AvatarFallback>
-                                       </Avatar>
-                                       <span className="text-xs font-medium text-foreground">
-                                          {student.lastName}, {student.name}
-                                       </span>
-                                    </Link>
-                                 </TableCell>
-                                 <TableCell>
-                                    <div className="flex items-center gap-2">
-                                       <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
-                                          <div
-                                             className={`h-full rounded-full ${student.attendance >= 80 ? "bg-success" : student.attendance >= 65 ? "bg-warning" : "bg-destructive"}`}
-                                             style={{
-                                                width: `${student.attendance}%`,
-                                             }}
-                                          />
+                                          <Avatar className="size-7">
+                                             <AvatarFallback className="bg-muted text-muted-foreground text-[10px] font-semibold">
+                                                {student.name[0]}
+                                                {student.lastName[0]}
+                                             </AvatarFallback>
+                                          </Avatar>
+                                          <span className="text-xs font-medium text-foreground">
+                                             {student.lastName}, {student.name}
+                                          </span>
+                                       </Link>
+                                    </TableCell>
+                                    <TableCell>
+                                       <div className="flex items-center gap-2">
+                                          <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+                                             <div
+                                                className={`h-full rounded-full ${studentAttendance >= 80 ? "bg-success" : studentAttendance >= 65 ? "bg-warning" : "bg-destructive"}`}
+                                                style={{
+                                                   width: `${studentAttendance}%`,
+                                                }}
+                                             />
+                                          </div>
+                                          <span className="text-xs text-muted-foreground">
+                                             {studentAttendance}%
+                                          </span>
                                        </div>
-                                       <span className="text-xs text-muted-foreground">
-                                          {student.attendance}%
-                                       </span>
-                                    </div>
-                                 </TableCell>
-                                 <TableCell className="text-xs font-medium">
-                                    {student.average.toFixed(1)}
-                                 </TableCell>
-                                 <TableCell>
-                                    <StudentStatusBadge status={student.status} />
-                                 </TableCell>
-                              </TableRow>
-                           ))}
+                                    </TableCell>
+                                    <TableCell className="text-xs font-medium">
+                                       {student.average.toFixed(1)}
+                                    </TableCell>
+                                    <TableCell>
+                                       <StudentStatusBadge status={student.status} />
+                                    </TableCell>
+                                 </TableRow>
+                              );
+                           })}
                            {filteredStudents.length === 0 && (
                               <TableRow>
                                  <TableCell
