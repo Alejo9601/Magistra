@@ -1,12 +1,13 @@
-﻿import { useMemo } from "react";
+﻿import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, ClipboardCheck } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ClipboardCheck, Plus, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
    getAssignmentIdBySubjectId,
@@ -34,11 +35,16 @@ function parseActivityChecklist(activities?: string) {
 export function ClaseDictadoContent() {
    const params = useParams();
    const classId = params.id as string;
-   const { classes, markClassAsTaught } = usePlanningContext();
+   const { classes, markClassAsTaught, updateClass } = usePlanningContext();
    const { getStudentsByAssignment } = useStudentsContext();
    const { getRecord, toggleSubtopic, toggleActivity, setAttendance, setNotes } =
       useClassroomContext();
-   const { getActivitiesByAssignment } = useActivitiesContext();
+   const { getActivitiesByAssignment, addActivity } = useActivitiesContext();
+
+   const [addingSubtopic, setAddingSubtopic] = useState(false);
+   const [newSubtopic, setNewSubtopic] = useState("");
+   const [addingActivity, setAddingActivity] = useState(false);
+   const [newActivity, setNewActivity] = useState("");
 
    const cls = useMemo(
       () => classes.find((classSession) => classSession.id === classId),
@@ -80,6 +86,46 @@ export function ClaseDictadoContent() {
       record.completedActivities.includes(activity),
    ).length;
 
+   const handleAddSubtopic = () => {
+      const value = newSubtopic.trim();
+      if (!value) {
+         toast.error("Escribe un subtema valido.");
+         return;
+      }
+      if (cls.subtopics.some((subtopic) => subtopic.toLowerCase() === value.toLowerCase())) {
+         toast.error("Ese subtema ya existe.");
+         return;
+      }
+      updateClass(cls.id, {
+         subtopics: [...cls.subtopics, value],
+      });
+      setNewSubtopic("");
+      setAddingSubtopic(false);
+      toast.success("Subtema agregado.");
+   };
+
+   const handleAddActivity = () => {
+      const value = newActivity.trim();
+      if (!value) {
+         toast.error("Escribe una actividad valida.");
+         return;
+      }
+      if (activityChecklist.some((activity) => activity.toLowerCase() === value.toLowerCase())) {
+         toast.error("Esa actividad ya existe en la clase.");
+         return;
+      }
+      addActivity({
+         assignmentId,
+         title: value,
+         type: "classwork",
+         status: "planned",
+         linkedClassIds: [cls.id],
+      });
+      setNewActivity("");
+      setAddingActivity(false);
+      toast.success("Actividad agregada y vinculada a la clase.");
+   };
+
    return (
       <div className="p-6 max-w-7xl mx-auto">
          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
@@ -120,12 +166,40 @@ export function ClaseDictadoContent() {
                         <CardTitle className="text-sm font-semibold">
                            Subtemas dictados
                         </CardTitle>
-                        <Badge variant="secondary" className="text-[10px]">
-                           {completedSubtopicsCount}/{cls.subtopics.length}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                           <Badge variant="secondary" className="text-[10px]">
+                              {completedSubtopicsCount}/{cls.subtopics.length}
+                           </Badge>
+                           <Button
+                              variant="outline"
+                              size="icon"
+                              className="size-7"
+                              onClick={() => setAddingSubtopic((prev) => !prev)}
+                              title="Agregar subtema"
+                           >
+                              {addingSubtopic ? (
+                                 <X className="size-3.5" />
+                              ) : (
+                                 <Plus className="size-3.5" />
+                              )}
+                           </Button>
+                        </div>
                      </div>
                   </CardHeader>
                   <CardContent className="pt-0">
+                     {addingSubtopic && (
+                        <div className="mb-3 flex gap-2">
+                           <Input
+                              className="h-8 text-xs"
+                              placeholder="Nuevo subtema..."
+                              value={newSubtopic}
+                              onChange={(event) => setNewSubtopic(event.target.value)}
+                           />
+                           <Button size="sm" className="h-8 text-xs" onClick={handleAddSubtopic}>
+                              Agregar
+                           </Button>
+                        </div>
+                     )}
                      {cls.subtopics.length === 0 ? (
                         <p className="text-xs text-muted-foreground">
                            Esta clase no tiene subtemas cargados.
@@ -159,12 +233,40 @@ export function ClaseDictadoContent() {
                         <CardTitle className="text-sm font-semibold">
                            Actividades de la clase
                         </CardTitle>
-                        <Badge variant="secondary" className="text-[10px]">
-                           {completedActivitiesCount}/{activityChecklist.length}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                           <Badge variant="secondary" className="text-[10px]">
+                              {completedActivitiesCount}/{activityChecklist.length}
+                           </Badge>
+                           <Button
+                              variant="outline"
+                              size="icon"
+                              className="size-7"
+                              onClick={() => setAddingActivity((prev) => !prev)}
+                              title="Agregar actividad"
+                           >
+                              {addingActivity ? (
+                                 <X className="size-3.5" />
+                              ) : (
+                                 <Plus className="size-3.5" />
+                              )}
+                           </Button>
+                        </div>
                      </div>
                   </CardHeader>
                   <CardContent className="pt-0">
+                     {addingActivity && (
+                        <div className="mb-3 flex gap-2">
+                           <Input
+                              className="h-8 text-xs"
+                              placeholder="Nueva actividad..."
+                              value={newActivity}
+                              onChange={(event) => setNewActivity(event.target.value)}
+                           />
+                           <Button size="sm" className="h-8 text-xs" onClick={handleAddActivity}>
+                              Agregar
+                           </Button>
+                        </div>
+                     )}
                      {activityChecklist.length === 0 ? (
                         <p className="text-xs text-muted-foreground">
                            No hay actividades descriptas para esta clase.
