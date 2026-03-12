@@ -3,6 +3,13 @@ import { ChevronLeft, ChevronRight, List, CalendarDays, Plus, Edit3, Eye, Copy, 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+   Dialog,
+   DialogContent,
+   DialogDescription,
+   DialogHeader,
+   DialogTitle,
+} from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getAssignmentById, getSubjectById, getInstitutionById } from "@/lib/edu-repository";
@@ -49,6 +56,7 @@ export function PlanificacionContent() {
    const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
    const [editingClassId, setEditingClassId] = useState<string | null>(null);
    const [prefillDate, setPrefillDate] = useState<string | undefined>(undefined);
+   const [selectedDayDate, setSelectedDayDate] = useState<string | null>(null);
    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
    const scopedClasses = useMemo(
@@ -73,6 +81,15 @@ export function PlanificacionContent() {
    const listClasses = useMemo(
       () => [...filteredClasses].sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)),
       [filteredClasses],
+   );
+   const selectedDayClasses = useMemo(
+      () =>
+         selectedDayDate
+            ? filteredClasses
+                 .filter((classSession) => classSession.date === selectedDayDate)
+                 .sort((a, b) => a.time.localeCompare(b.time))
+            : [],
+      [filteredClasses, selectedDayDate],
    );
 
    const firstDay = new Date(year, month, 1);
@@ -103,6 +120,10 @@ export function PlanificacionContent() {
       setEditingClassId(id);
       setPrefillDate(undefined);
       setModalOpen(true);
+   };
+   const openEditModalFromDayDetails = (id: string) => {
+      setSelectedDayDate(null);
+      openEditModal(id);
    };
 
    const onDuplicate = (id: string) => {
@@ -237,7 +258,15 @@ export function PlanificacionContent() {
                                                 </button>
                                              );
                                           })}
-                                          {dayClasses.length > 3 && <span className="text-[9px] text-muted-foreground px-1">+{dayClasses.length - 3} mas</span>}
+                                          {dayClasses.length > 3 && (
+                                             <button
+                                                type="button"
+                                                onClick={() => setSelectedDayDate(dateStr)}
+                                                className="text-[9px] text-primary px-1 text-left hover:underline"
+                                             >
+                                                +{dayClasses.length - 3} mas
+                                             </button>
+                                          )}
                                        </div>
                                     </>
                                  )}
@@ -318,6 +347,88 @@ export function PlanificacionContent() {
             activeInstitution={activeInstitution}
             onSchedule={(payload) => createRecurringClasses(payload)}
          />
+
+         <Dialog
+            open={Boolean(selectedDayDate)}
+            onOpenChange={(open) => {
+               if (!open) {
+                  setSelectedDayDate(null);
+               }
+            }}
+         >
+            <DialogContent className="sm:max-w-[640px]">
+               <DialogHeader>
+                  <DialogTitle>Clases del dia</DialogTitle>
+                  <DialogDescription>
+                     {selectedDayDate ?? "Selecciona un dia del calendario"}
+                  </DialogDescription>
+               </DialogHeader>
+
+               {selectedDayClasses.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-1">
+                     No hay clases para este dia con los filtros actuales.
+                  </p>
+               ) : (
+                  <div className="max-h-[360px] overflow-y-auto pr-1 space-y-2">
+                     {selectedDayClasses.map((cls) => {
+                        const subject = getSubjectById(cls.subjectId);
+                        const assignment = cls.assignmentId
+                           ? getAssignmentById(cls.assignmentId)
+                           : null;
+                        const inst = getInstitutionById(cls.institutionId);
+                        return (
+                           <div key={cls.id} className="rounded-lg border border-border/70 p-3">
+                              <div className="flex items-start justify-between gap-2">
+                                 <div>
+                                    <p className="text-sm font-semibold text-foreground">
+                                       {subject?.name}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                       {inst?.name} - {assignment?.section ?? subject?.course} - {cls.time} hs
+                                    </p>
+                                 </div>
+                                 <Badge className={`border-0 text-[10px] ${getStatusColor(cls.status)}`}>
+                                    {getStatusLabel(cls.status)}
+                                 </Badge>
+                              </div>
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                 <Badge className={`border-0 text-[10px] ${classTypeColors[cls.type]}`}>
+                                    {classTypeLabels[cls.type]}
+                                 </Badge>
+                                 <Badge variant="secondary" className="text-[10px]">
+                                    {cls.topic}
+                                 </Badge>
+                              </div>
+                              <div className="mt-3 flex items-center gap-1">
+                                 <Button variant="ghost" size="icon" className="size-7" asChild>
+                                    <Link to={`/clase/${cls.id}`}>
+                                       <Eye className="size-3.5" />
+                                    </Link>
+                                 </Button>
+                                 <Button variant="ghost" size="icon" className="size-7" asChild>
+                                    <Link to={`/clase/${cls.id}/dictado`}>
+                                       <ClipboardCheck className="size-3.5" />
+                                    </Link>
+                                 </Button>
+                                 <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-7"
+                                    onClick={() => openEditModalFromDayDetails(cls.id)}
+                                 >
+                                    <Edit3 className="size-3.5" />
+                                 </Button>
+                                 <Button variant="ghost" size="icon" className="size-7" onClick={() => onDuplicate(cls.id)}>
+                                    <Copy className="size-3.5" />
+                                 </Button>
+                              </div>
+                           </div>
+                        );
+                     })}
+                  </div>
+               )}
+            </DialogContent>
+         </Dialog>
       </div>
    );
 }
