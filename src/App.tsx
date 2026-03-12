@@ -15,59 +15,62 @@ import { StudentsProvider } from "@/features/students";
 import { ClassroomProvider } from "@/features/classroom";
 import { AssessmentsProvider } from "@/features/assessments";
 import { ActivitiesProvider } from "@/features/activities";
+import { TeacherProvider } from "@/features/teacher";
 import "@/pages/globals.css";
 import ClaseDictadoPage from "@/pages/clase/[id]/dictado/page";
 
 function App() {
    return (
       <BrowserRouter>
-         <InstitutionProvider>
-            <StudentsProvider>
-               <PlanningProvider>
-                  <ClassroomProvider>
-                     <ActivitiesProvider>
-                        <AssessmentsProvider>
-                           <DashboardProvider>
-                              <Routes>
-                                 <Route path="/" element={<HomePage />} />
-                                 <Route
-                                    path="/planificacion"
-                                    element={<PlanificacionPage />}
-                                 />
-                                 <Route path="/grupos" element={<GruposPage />} />
-                                 <Route
-                                    path="/seguimiento"
-                                    element={<SeguimientoPage />}
-                                 />
-                                 <Route
-                                    path="/seguimiento/:id"
-                                    element={<StudentProfilePage />}
-                                 />
-                                 <Route
-                                    path="/contenidos"
-                                    element={<ContenidosPage />}
-                                 />
-                                 <Route
-                                    path="/configuracion"
-                                    element={<ConfiguracionPage />}
-                                 />
-                                 <Route
-                                    path="/clase/:id"
-                                    element={<ClaseDetailPage />}
-                                 />
-                                 <Route
-                                    path="/clase/:id/dictado"
-                                    element={<ClaseDictadoPage />}
-                                 />
-                                 <Route path="*" element={<Navigate to="/" replace />} />
-                              </Routes>
-                           </DashboardProvider>
-                        </AssessmentsProvider>
-                     </ActivitiesProvider>
-                  </ClassroomProvider>
-               </PlanningProvider>
-            </StudentsProvider>
-         </InstitutionProvider>
+         <TeacherProvider>
+            <InstitutionProvider>
+               <StudentsProvider>
+                  <PlanningProvider>
+                     <ClassroomProvider>
+                        <ActivitiesProvider>
+                           <AssessmentsProvider>
+                              <DashboardProvider>
+                                 <Routes>
+                                    <Route path="/" element={<HomePage />} />
+                                    <Route
+                                       path="/planificacion"
+                                       element={<PlanificacionPage />}
+                                    />
+                                    <Route path="/grupos" element={<GruposPage />} />
+                                    <Route
+                                       path="/seguimiento"
+                                       element={<SeguimientoPage />}
+                                    />
+                                    <Route
+                                       path="/seguimiento/:id"
+                                       element={<StudentProfilePage />}
+                                    />
+                                    <Route
+                                       path="/contenidos"
+                                       element={<ContenidosPage />}
+                                    />
+                                    <Route
+                                       path="/configuracion"
+                                       element={<ConfiguracionPage />}
+                                    />
+                                    <Route
+                                       path="/clase/:id"
+                                       element={<ClaseDetailPage />}
+                                    />
+                                    <Route
+                                       path="/clase/:id/dictado"
+                                       element={<ClaseDictadoPage />}
+                                    />
+                                    <Route path="*" element={<Navigate to="/" replace />} />
+                                 </Routes>
+                              </DashboardProvider>
+                           </AssessmentsProvider>
+                        </ActivitiesProvider>
+                     </ClassroomProvider>
+                  </PlanningProvider>
+               </StudentsProvider>
+            </InstitutionProvider>
+         </TeacherProvider>
          <Toaster position="bottom-right" richColors />
       </BrowserRouter>
    );

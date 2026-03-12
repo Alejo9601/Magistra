@@ -1,13 +1,52 @@
 import { User } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { teacherProfile } from "@/lib/edu-repository";
+import { useTeacherContext } from "@/features/teacher";
 import { toast } from "sonner";
 
+function buildAvatar(name: string, lastName: string) {
+   const first = name.trim().charAt(0).toUpperCase();
+   const last = lastName.trim().charAt(0).toUpperCase();
+   return `${first}${last}`.trim();
+}
+
 export function ProfileSection() {
+   const { teacherProfile, updateTeacherProfile } = useTeacherContext();
+   const [name, setName] = useState(teacherProfile.name);
+   const [lastName, setLastName] = useState(teacherProfile.lastName);
+   const [email, setEmail] = useState(teacherProfile.email);
+   const [avatar, setAvatar] = useState(teacherProfile.avatar);
+
+   useEffect(() => {
+      setName(teacherProfile.name);
+      setLastName(teacherProfile.lastName);
+      setEmail(teacherProfile.email);
+      setAvatar(teacherProfile.avatar);
+   }, [teacherProfile]);
+
+   const handleSave = () => {
+      if (!name.trim() || !lastName.trim() || !email.trim()) {
+         toast.error("Nombre, apellido y email son obligatorios.");
+         return;
+      }
+      if (!email.includes("@")) {
+         toast.error("Ingresa un email valido.");
+         return;
+      }
+
+      updateTeacherProfile({
+         name,
+         lastName,
+         email,
+         avatar: avatar.trim() || buildAvatar(name, lastName),
+      });
+      toast.success("Cuenta docente actualizada.");
+   };
+
    return (
       <Card>
          <CardHeader className="pb-3">
@@ -20,7 +59,7 @@ export function ProfileSection() {
             <div className="flex items-start gap-6">
                <Avatar className="size-16">
                   <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
-                     {teacherProfile.avatar}
+                     {avatar.trim() || buildAvatar(name, lastName)}
                   </AvatarFallback>
                </Avatar>
                <div className="flex-1 flex flex-col gap-4">
@@ -29,14 +68,16 @@ export function ProfileSection() {
                         <Label className="text-xs">Nombre</Label>
                         <Input
                            className="h-9 text-xs"
-                           defaultValue={teacherProfile.name}
+                           value={name}
+                           onChange={(event) => setName(event.target.value)}
                         />
                      </div>
                      <div className="flex flex-col gap-1.5">
                         <Label className="text-xs">Apellido</Label>
                         <Input
                            className="h-9 text-xs"
-                           defaultValue={teacherProfile.lastName}
+                           value={lastName}
+                           onChange={(event) => setLastName(event.target.value)}
                         />
                      </div>
                   </div>
@@ -45,21 +86,23 @@ export function ProfileSection() {
                      <Input
                         className="h-9 text-xs"
                         type="email"
-                        defaultValue={teacherProfile.email}
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
                      />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Contrasenia</Label>
+                     <Label className="text-xs">Avatar (initials)</Label>
                      <Input
                         className="h-9 text-xs"
-                        type="password"
-                        defaultValue="********"
+                        maxLength={2}
+                        value={avatar}
+                        onChange={(event) => setAvatar(event.target.value.toUpperCase())}
                      />
                   </div>
                   <Button
                      size="sm"
                      className="w-fit text-xs"
-                     onClick={() => toast.success("Perfil actualizado")}
+                     onClick={handleSave}
                   >
                      Guardar cambios
                   </Button>

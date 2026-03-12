@@ -24,7 +24,7 @@ import {
    useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { teacherProfile } from "@/lib/edu-repository";
+import { useTeacherContext } from "@/features/teacher";
 
 const navItems = [
    { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -38,6 +38,7 @@ const navItems = [
 export function AppSidebar() {
    const { pathname } = useLocation();
    const { state } = useSidebar();
+   const { teacherProfile } = useTeacherContext();
    const collapsed = state === "collapsed";
 
    return (
