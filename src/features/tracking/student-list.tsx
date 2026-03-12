@@ -1,5 +1,5 @@
 ﻿import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { FilterX, Search, SearchX, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -38,7 +38,8 @@ export function StudentList({
    const { getRecord } = useClassroomContext();
    const [search, setSearch] = useState("");
 
-   const searchedStudents = getStudentsByInstitution(activeInstitution).filter((student) =>
+   const institutionStudents = getStudentsByInstitution(activeInstitution);
+   const searchedStudents = institutionStudents.filter((student) =>
       `${student.name} ${student.lastName}`
          .toLowerCase()
          .includes(search.toLowerCase()),
@@ -107,6 +108,15 @@ export function StudentList({
          }),
       [searchedStudents, statusFilter, studentStats],
    );
+
+   const isInstitutionEmpty = institutionStudents.length === 0;
+   const isSearchEmpty =
+      !isInstitutionEmpty && search.trim().length > 0 && searchedStudents.length === 0;
+   const isFilterEmpty =
+      !isInstitutionEmpty &&
+      !isSearchEmpty &&
+      searchedStudents.length > 0 &&
+      filtered.length === 0;
 
    return (
       <div className="p-6 max-w-7xl mx-auto">
@@ -207,6 +217,41 @@ export function StudentList({
                            </TableRow>
                         );
                      })}
+
+                     {filtered.length === 0 && (
+                        <TableRow>
+                           <TableCell colSpan={5} className="py-10">
+                              <div className="flex flex-col items-center justify-center text-center">
+                                 {isInstitutionEmpty ? (
+                                    <Users className="size-8 text-muted-foreground/35 mb-2" />
+                                 ) : isSearchEmpty ? (
+                                    <SearchX className="size-8 text-muted-foreground/35 mb-2" />
+                                 ) : (
+                                    <FilterX className="size-8 text-muted-foreground/35 mb-2" />
+                                 )}
+
+                                 <p className="text-xs font-medium text-foreground">
+                                    {isInstitutionEmpty
+                                       ? "No students yet for this institution."
+                                       : isSearchEmpty
+                                         ? "No students match your search."
+                                         : isFilterEmpty
+                                           ? "No students match the selected filter."
+                                           : "No students to display."}
+                                 </p>
+                                 <p className="mt-1 text-[11px] text-muted-foreground">
+                                    {isInstitutionEmpty
+                                       ? "Add students from Groups to start tracking."
+                                       : isSearchEmpty
+                                         ? "Try another name or clear the search."
+                                         : isFilterEmpty
+                                           ? "Try another risk/status filter."
+                                           : "Create data to populate this view."}
+                                 </p>
+                              </div>
+                           </TableCell>
+                        </TableRow>
+                     )}
                   </TableBody>
                </Table>
             </CardContent>
