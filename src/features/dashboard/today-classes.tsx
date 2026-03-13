@@ -297,12 +297,12 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
                               )}
                            </p>
                            <div className="mt-3 flex flex-wrap gap-1.5">
-                              <Badge className="bg-muted text-muted-foreground border-0 text-[10px]">
-                                 {totalSubjects} materias activas
-                              </Badge>
-                              <Badge className="bg-muted text-muted-foreground border-0 text-[10px]">
-                                 {getInstitutionById(classCardTarget.institutionId)?.name}
-                              </Badge>
+                                 <Badge className="max-w-full bg-muted text-muted-foreground border-0 text-[10px]">
+                                    {totalSubjects} materias activas
+                                 </Badge>
+                                 <Badge className="max-w-[220px] truncate bg-muted text-muted-foreground border-0 text-[10px]" title={getInstitutionById(classCardTarget.institutionId)?.name}>
+                                    {getInstitutionById(classCardTarget.institutionId)?.name}
+                                 </Badge>
                               <Button asChild size="sm" className="h-6 rounded-md px-2 text-[10px]">
                                  <Link to={`/clase/${classCardTarget.id}/dictado`}>
                                     <PlayCircle className="size-3.5 mr-1.5" />
@@ -379,8 +379,8 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
                      <div className="max-h-[205px] overflow-y-auto pr-1 space-y-2">
                         {displayedUrgentAlerts.map((alert) => (
                            <div key={alert.id} className="rounded-md border border-border/70 p-2">
-                              <p className="text-xs text-foreground">{alert.text}</p>
-                              <div className="mt-1 flex items-center justify-between gap-2">
+                              <p className="break-words text-xs text-foreground">{alert.text}</p>
+                              <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
                                  <Badge
                                     className={`border-0 text-[10px] ${
                                        alert.severity === "high"
@@ -448,10 +448,10 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
                            >
                               <div className="flex items-start justify-between gap-2">
                                  <div>
-                                    <p className="text-sm font-semibold text-foreground">
+                                    <p className="text-sm font-semibold text-foreground break-words">
                                        {subject?.name}
                                     </p>
-                                    <p className="text-xs text-muted-foreground">
+                                    <p className="text-xs text-muted-foreground break-words">
                                        {inst?.name} - {cls.time} hs
                                     </p>
                                  </div>

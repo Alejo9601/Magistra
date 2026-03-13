@@ -45,7 +45,8 @@ export function WeekTimeline({ activeInstitution }: { activeInstitution: string 
          </h2>
          <Card>
             <CardContent className="p-4">
-               <div className="flex gap-1">
+               <div className="-mx-1 overflow-x-auto px-1">
+                  <div className="grid min-w-[620px] grid-cols-7 gap-1">
                   {weekDays.map(({ date, label }) => {
                      const isToday = date === todayStr;
                      const dayClasses = classes.filter(
@@ -56,7 +57,7 @@ export function WeekTimeline({ activeInstitution }: { activeInstitution: string 
                            key={date}
                            type="button"
                            onClick={() => setSelectedDate(date)}
-                           className={`flex-1 rounded-lg p-3 text-center transition-colors ${isToday ? "bg-primary/5 ring-1 ring-primary/20" : "hover:bg-muted/50"}`}
+                           className={`rounded-lg p-3 text-center transition-colors ${isToday ? "bg-primary/5 ring-1 ring-primary/20" : "hover:bg-muted/50"}`}
                         >
                            <p
                               className={`text-[10px] font-medium mb-1 capitalize ${isToday ? "text-primary" : "text-muted-foreground"}`}
@@ -89,6 +90,7 @@ export function WeekTimeline({ activeInstitution }: { activeInstitution: string 
                         </button>
                      );
                   })}
+                  </div>
                </div>
             </CardContent>
          </Card>

@@ -175,12 +175,12 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
       <div>
          <Card>
             <CardContent className="p-4 space-y-3">
-               <div className="flex items-center justify-between gap-2">
+               <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                      Semaforo operativo
                   </p>
                   <Badge
-                     className={`${statusClasses(globalLevel).badge} border-0 text-[10px]`}
+                     className={`${statusClasses(globalLevel).badge} max-w-full border-0 text-[10px]`}
                   >
                      Salud {healthScore}/100 - {levelLabel(globalLevel)}
                   </Badge>
@@ -200,14 +200,14 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
                                     {metric.label}
                                  </p>
                               </div>
-                              <Badge className={`${colors.badge} border-0 text-[9px]`}>
+                              <Badge className={`${colors.badge} max-w-full border-0 text-[9px]`}>
                                  {levelLabel(metric.level)}
                               </Badge>
                            </div>
-                           <p className="mt-1 text-[10px] text-muted-foreground">
+                           <p className="mt-1 break-words text-[10px] text-muted-foreground">
                               {metric.detail}
                            </p>
-                           <p className="text-[10px] text-muted-foreground/80">
+                           <p className="break-words text-[10px] text-muted-foreground/80">
                               {metric.summary}
                            </p>
                            <Button
@@ -249,9 +249,9 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
                               <p className="text-[10px] text-foreground truncate">
                                  {student.lastName}, {student.name}
                               </p>
-                              <Badge className="border-0 bg-destructive/15 text-destructive text-[9px]">
-                                 {student.average < 6 ? `Prom. ${student.average}` : "Asistencia baja"}
-                              </Badge>
+                                 <Badge className="max-w-[45%] border-0 bg-destructive/15 text-destructive text-[9px]">
+                                    {student.average < 6 ? `Prom. ${student.average}` : "Asistencia baja"}
+                                 </Badge>
                            </div>
                         ))}
                      </div>

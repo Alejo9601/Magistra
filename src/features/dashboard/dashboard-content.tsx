@@ -20,7 +20,7 @@ export function DashboardContent() {
    });
 
    return (
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="mx-auto w-full max-w-7xl overflow-x-hidden px-3 py-4 sm:p-6">
          <DashboardHero
             formattedDate={formattedDate}
             teacherName={teacherProfile.name}
@@ -47,3 +47,4 @@ export function DashboardContent() {
       </div>
    );
 }
+
