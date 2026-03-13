@@ -12,7 +12,6 @@ type AppTheme = "dark" | "light";
 type ThemeContextValue = {
    theme: AppTheme;
    setTheme: (theme: AppTheme) => void;
-   toggleTheme: () => void;
 };
 
 const THEME_STORAGE_KEY = "app-theme";
@@ -53,8 +52,6 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       () => ({
          theme,
          setTheme: setThemeState,
-         toggleTheme: () =>
-            setThemeState((prevTheme) => (prevTheme === "dark" ? "light" : "dark")),
       }),
       [theme],
    );
