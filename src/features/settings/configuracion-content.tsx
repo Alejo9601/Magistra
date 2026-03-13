@@ -5,6 +5,7 @@ import { SubjectsSection } from "@/features/settings/sections/subjects-section";
 import { PeriodsSection } from "@/features/settings/sections/periods-section";
 import { NotificationsSection } from "@/features/settings/sections/notifications-section";
 import { OperativeThresholdsSection } from "@/features/settings/sections/operative-thresholds-section";
+import { AppearanceSection } from "@/features/settings/sections/appearance-section";
 
 export function ConfiguracionContent() {
    return (
@@ -34,6 +35,9 @@ export function ConfiguracionContent() {
                <TabsTrigger value="notificaciones" className="text-xs">
                   Notificaciones
                </TabsTrigger>
+               <TabsTrigger value="apariencia" className="text-xs">
+                  Apariencia
+               </TabsTrigger>
                <TabsTrigger value="operativo" className="text-xs">
                   Operativo
                </TabsTrigger>
@@ -54,6 +58,9 @@ export function ConfiguracionContent() {
             </TabsContent>
             <TabsContent value="notificaciones">
                <NotificationsSection />
+            </TabsContent>
+            <TabsContent value="apariencia">
+               <AppearanceSection />
             </TabsContent>
             <TabsContent value="operativo">
                <OperativeThresholdsSection />
