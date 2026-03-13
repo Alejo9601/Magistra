@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useEffect, useMemo, useState } from "react";
+﻿import { createContext, useContext, useEffect, useState } from "react";
 import {
    classSessions,
    getAssignmentById,
@@ -69,8 +69,7 @@ export function PlanningProvider({ children }: { children: React.ReactNode }) {
       savePlanningClasses(classes);
    }, [classes]);
 
-   const value = useMemo<PlanningContextValue>(
-      () => ({
+   const value: PlanningContextValue = {
          classes,
          createClass: (input) => {
             const assignment = input.assignmentId
@@ -252,9 +251,7 @@ export function PlanningProvider({ children }: { children: React.ReactNode }) {
                ),
             );
          },
-      }),
-      [classes],
-   );
+      };
 
    return (
       <PlanningContext.Provider value={value}>{children}</PlanningContext.Provider>
@@ -268,3 +265,5 @@ export function usePlanningContext() {
    }
    return context;
 }
+
+

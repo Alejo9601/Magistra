@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useEffect, useMemo, useState } from "react";
+﻿import { createContext, useContext, useEffect, useState } from "react";
 import {
    createActivityId,
    loadActivities,
@@ -43,96 +43,99 @@ type ActivitiesContextValue = {
 
 const ActivitiesContext = createContext<ActivitiesContextValue | null>(null);
 
-export function ActivitiesProvider({ children }: { children: React.ReactNode }) {
-   const [activities, setActivities] = useState<SubjectActivity[]>(loadActivities);
+export function ActivitiesProvider({
+   children,
+}: {
+   children: React.ReactNode;
+}) {
+   const [activities, setActivities] =
+      useState<SubjectActivity[]>(loadActivities);
 
    useEffect(() => {
       saveActivities(activities);
    }, [activities]);
 
-   const value = useMemo<ActivitiesContextValue>(
-      () => ({
-         activities,
-         getActivitiesBySubject: (subjectId) =>
-            activities.filter((activity) => activity.subjectId === subjectId),
-         getActivitiesByAssignment: (assignmentId) =>
-            activities.filter(
+   const value: ActivitiesContextValue = {
+      activities,
+      getActivitiesBySubject: (subjectId) =>
+         activities.filter((activity) => activity.subjectId === subjectId),
+      getActivitiesByAssignment: (assignmentId) =>
+         activities.filter(
+            (activity) =>
+               (activity.assignmentId ??
+                  getAssignmentIdBySubjectId(activity.subjectId)) ===
+               assignmentId,
+         ),
+      addActivity: (input) => {
+         const assignment = getAssignmentById(input.assignmentId);
+         if (!assignment) {
+            throw new Error("Assignment not found for activity creation.");
+         }
+         const nextActivity: SubjectActivity = {
+            id: createActivityId(),
+            subjectId: assignment.subjectId,
+            assignmentId: assignment.id,
+            title: input.title.trim(),
+            description: input.description?.trim() || undefined,
+            type: input.type ?? "classwork",
+            status: input.status ?? "draft",
+            linkedClassIds: input.linkedClassIds ?? [],
+         };
+         setActivities((prev) => [...prev, nextActivity]);
+         return nextActivity;
+      },
+      updateActivity: (id, patch) => {
+         const assignment = patch.assignmentId
+            ? getAssignmentById(patch.assignmentId)
+            : null;
+         setActivities((prev) =>
+            prev.map((activity) =>
+               activity.id === id
+                  ? {
+                       ...activity,
+                       ...patch,
+                       subjectId: assignment?.subjectId ?? activity.subjectId,
+                       assignmentId: assignment?.id ?? activity.assignmentId,
+                       title: patch.title?.trim() ?? activity.title,
+                       description:
+                          patch.description === undefined
+                             ? activity.description
+                             : patch.description.trim() || undefined,
+                    }
+                  : activity,
+            ),
+         );
+      },
+      removeActivity: (id) => {
+         setActivities((prev) => prev.filter((activity) => activity.id !== id));
+      },
+      removeActivitiesByAssignment: (assignmentId) => {
+         setActivities((prev) =>
+            prev.filter(
                (activity) =>
                   (activity.assignmentId ??
-                     getAssignmentIdBySubjectId(activity.subjectId)) === assignmentId,
+                     getAssignmentIdBySubjectId(activity.subjectId)) !==
+                  assignmentId,
             ),
-         addActivity: (input) => {
-            const assignment = getAssignmentById(input.assignmentId);
-            if (!assignment) {
-               throw new Error("Assignment not found for activity creation.");
-            }
-            const nextActivity: SubjectActivity = {
-               id: createActivityId(),
-               subjectId: assignment.subjectId,
-               assignmentId: assignment.id,
-               title: input.title.trim(),
-               description: input.description?.trim() || undefined,
-               type: input.type ?? "classwork",
-               status: input.status ?? "draft",
-               linkedClassIds: input.linkedClassIds ?? [],
-            };
-            setActivities((prev) => [...prev, nextActivity]);
-            return nextActivity;
-         },
-         updateActivity: (id, patch) => {
-            const assignment = patch.assignmentId
-               ? getAssignmentById(patch.assignmentId)
-               : null;
-            setActivities((prev) =>
-               prev.map((activity) =>
-                  activity.id === id
-                     ? {
-                          ...activity,
-                          ...patch,
-                          subjectId: assignment?.subjectId ?? activity.subjectId,
-                          assignmentId: assignment?.id ?? activity.assignmentId,
-                          title: patch.title?.trim() ?? activity.title,
-                          description:
-                             patch.description === undefined
-                                ? activity.description
-                                : patch.description.trim() || undefined,
-                       }
-                     : activity,
-               ),
-            );
-         },
-         removeActivity: (id) => {
-            setActivities((prev) => prev.filter((activity) => activity.id !== id));
-         },
-         removeActivitiesByAssignment: (assignmentId) => {
-            setActivities((prev) =>
-               prev.filter(
-                  (activity) =>
-                     (activity.assignmentId ??
-                        getAssignmentIdBySubjectId(activity.subjectId)) !==
-                     assignmentId,
-               ),
-            );
-         },
-         toggleActivityLink: (activityId, classId) => {
-            setActivities((prev) =>
-               prev.map((activity) => {
-                  if (activity.id !== activityId) {
-                     return activity;
-                  }
-                  const isLinked = activity.linkedClassIds.includes(classId);
-                  return {
-                     ...activity,
-                     linkedClassIds: isLinked
-                        ? activity.linkedClassIds.filter((id) => id !== classId)
-                        : [...activity.linkedClassIds, classId],
-                  };
-               }),
-            );
-         },
-      }),
-      [activities],
-   );
+         );
+      },
+      toggleActivityLink: (activityId, classId) => {
+         setActivities((prev) =>
+            prev.map((activity) => {
+               if (activity.id !== activityId) {
+                  return activity;
+               }
+               const isLinked = activity.linkedClassIds.includes(classId);
+               return {
+                  ...activity,
+                  linkedClassIds: isLinked
+                     ? activity.linkedClassIds.filter((id) => id !== classId)
+                     : [...activity.linkedClassIds, classId],
+               };
+            }),
+         );
+      },
+   };
 
    return (
       <ActivitiesContext.Provider value={value}>
@@ -144,7 +147,9 @@ export function ActivitiesProvider({ children }: { children: React.ReactNode }) 
 export function useActivitiesContext() {
    const context = useContext(ActivitiesContext);
    if (!context) {
-      throw new Error("useActivitiesContext must be used within ActivitiesProvider.");
+      throw new Error(
+         "useActivitiesContext must be used within ActivitiesProvider.",
+      );
    }
    return context;
 }

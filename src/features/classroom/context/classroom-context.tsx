@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useEffect, useMemo, useState } from "react";
+﻿import { createContext, useContext, useEffect, useState } from "react";
 import type { AttendanceStatus } from "@/features/classroom/constants";
 import {
    createFallbackClassroomRecord,
@@ -30,8 +30,7 @@ export function ClassroomProvider({ children }: { children: React.ReactNode }) {
       saveClassroomRecords(recordsByClass);
    }, [recordsByClass]);
 
-   const value = useMemo<ClassroomContextValue>(
-      () => ({
+   const value: ClassroomContextValue = {
          getRecord: (classId) =>
             recordsByClass[classId] ?? createFallbackClassroomRecord(),
          toggleSubtopic: (classId, subtopic) => {
@@ -92,9 +91,7 @@ export function ClassroomProvider({ children }: { children: React.ReactNode }) {
                ),
             );
          },
-      }),
-      [recordsByClass],
-   );
+      };
 
    return (
       <ClassroomContext.Provider value={value}>{children}</ClassroomContext.Provider>
@@ -108,4 +105,5 @@ export function useClassroomContext() {
    }
    return context;
 }
+
 

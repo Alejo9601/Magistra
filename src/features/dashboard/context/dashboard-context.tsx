@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useEffect, useMemo, useState } from "react";
+﻿import { createContext, useContext, useEffect, useState } from "react";
 import { type DashboardTask } from "@/features/dashboard/constants";
 import {
    loadDashboardTasks,
@@ -19,24 +19,21 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       saveDashboardTasks(tasks);
    }, [tasks]);
 
-   const value = useMemo<DashboardContextValue>(
-      () => ({
-         tasks,
-         toggleTask: (taskId, done) => {
-            setTasks((prev) =>
-               prev.map((task) =>
-                  task.id === taskId
-                     ? {
-                          ...task,
-                          done,
-                       }
-                     : task,
-               ),
-            );
-         },
-      }),
-      [tasks],
-   );
+   const value: DashboardContextValue = {
+      tasks,
+      toggleTask: (taskId, done) => {
+         setTasks((prev) =>
+            prev.map((task) =>
+               task.id === taskId
+                  ? {
+                       ...task,
+                       done,
+                    }
+                  : task,
+            ),
+         );
+      },
+   };
 
    return (
       <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>
@@ -50,4 +47,5 @@ export function useDashboardContext() {
    }
    return context;
 }
+
 

@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useEffect, useMemo, useState } from "react";
+﻿import { createContext, useContext, useEffect, useState } from "react";
 import {
    getAssignmentById,
    students as seedStudents,
@@ -40,64 +40,61 @@ export function StudentsProvider({ children }: { children: React.ReactNode }) {
       saveStudents(students);
    }, [students]);
 
-   const value = useMemo<StudentsContextValue>(
-      () => ({
-         students,
-         getStudentsByInstitution: (institutionId) => {
-            const subjectIdSet = new Set(
-               subjects
-                  .filter((subject) => subject.institutionId === institutionId)
-                  .map((subject) => subject.id),
-            );
-            return students.filter((student) =>
-               student.subjectIds.some((subjectId) => subjectIdSet.has(subjectId)),
-            );
-         },
-         getStudentsBySubject: (subjectId) =>
-            students.filter((student) => student.subjectIds.includes(subjectId)),
-         getStudentsByAssignment: (assignmentId) => {
-            const assignment = getAssignmentById(assignmentId);
-            if (!assignment) {
-               return [];
-            }
-            return students.filter((student) =>
-               student.subjectIds.includes(assignment.subjectId),
-            );
-         },
-         addStudent: (input) => {
-            const assignment = getAssignmentById(input.assignmentId);
-            if (!assignment) {
-               throw new Error("Assignment not found for student creation.");
-            }
+   const value: StudentsContextValue = {
+      students,
+      getStudentsByInstitution: (institutionId) => {
+         const subjectIdSet = new Set(
+            subjects
+               .filter((subject) => subject.institutionId === institutionId)
+               .map((subject) => subject.id),
+         );
+         return students.filter((student) =>
+            student.subjectIds.some((subjectId) => subjectIdSet.has(subjectId)),
+         );
+      },
+      getStudentsBySubject: (subjectId) =>
+         students.filter((student) => student.subjectIds.includes(subjectId)),
+      getStudentsByAssignment: (assignmentId) => {
+         const assignment = getAssignmentById(assignmentId);
+         if (!assignment) {
+            return [];
+         }
+         return students.filter((student) =>
+            student.subjectIds.includes(assignment.subjectId),
+         );
+      },
+      addStudent: (input) => {
+         const assignment = getAssignmentById(input.assignmentId);
+         if (!assignment) {
+            throw new Error("Assignment not found for student creation.");
+         }
 
-            const nextStudent: Student = {
-               id: createStudentId(),
-               name: input.name.trim(),
-               lastName: input.lastName.trim(),
-               dni: input.dni.trim(),
-               email: input.email?.trim() || undefined,
-               subjectIds: [assignment.subjectId],
-               attendance: 100,
-               average: 0,
-               status: "regular",
-               observations: input.observations?.trim() || undefined,
-            };
-            setStudents((prev) => [...prev, nextStudent]);
-            return nextStudent;
-         },
-         unlinkSubjectFromStudents: (subjectId) => {
-            setStudents((prev) =>
-               prev
-                  .map((student) => ({
-                     ...student,
-                     subjectIds: student.subjectIds.filter((id) => id !== subjectId),
-                  }))
-                  .filter((student) => student.subjectIds.length > 0),
-            );
-         },
-      }),
-      [students],
-   );
+         const nextStudent: Student = {
+            id: createStudentId(),
+            name: input.name.trim(),
+            lastName: input.lastName.trim(),
+            dni: input.dni.trim(),
+            email: input.email?.trim() || undefined,
+            subjectIds: [assignment.subjectId],
+            attendance: 100,
+            average: 0,
+            status: "regular",
+            observations: input.observations?.trim() || undefined,
+         };
+         setStudents((prev) => [...prev, nextStudent]);
+         return nextStudent;
+      },
+      unlinkSubjectFromStudents: (subjectId) => {
+         setStudents((prev) =>
+            prev
+               .map((student) => ({
+                  ...student,
+                  subjectIds: student.subjectIds.filter((id) => id !== subjectId),
+               }))
+               .filter((student) => student.subjectIds.length > 0),
+         );
+      },
+   };
 
    return (
       <StudentsContext.Provider value={value}>{children}</StudentsContext.Provider>

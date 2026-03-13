@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import type { TeacherProfile } from "@/types";
 import {
    loadTeacherProfile,
@@ -28,20 +28,17 @@ export function TeacherProvider({ children }: { children: React.ReactNode }) {
       saveTeacherProfile(teacherProfile);
    }, [teacherProfile]);
 
-   const value = useMemo<TeacherContextValue>(
-      () => ({
-         teacherProfile,
-         updateTeacherProfile: (patch) => {
-            setTeacherProfile({
-               name: patch.name.trim(),
-               lastName: patch.lastName.trim(),
-               email: patch.email.trim(),
-               avatar: patch.avatar.trim(),
-            });
-         },
-      }),
-      [teacherProfile],
-   );
+   const value: TeacherContextValue = {
+      teacherProfile,
+      updateTeacherProfile: (patch) => {
+         setTeacherProfile({
+            name: patch.name.trim(),
+            lastName: patch.lastName.trim(),
+            email: patch.email.trim(),
+            avatar: patch.avatar.trim(),
+         });
+      },
+   };
 
    return (
       <TeacherContext.Provider value={value}>{children}</TeacherContext.Provider>

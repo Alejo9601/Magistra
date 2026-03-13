@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useEffect, useMemo, useState } from "react";
+﻿import { createContext, useContext, useEffect, useState } from "react";
 import {
    loadActiveInstitution,
    saveActiveInstitution,
@@ -18,10 +18,7 @@ export function InstitutionProvider({ children }: { children: React.ReactNode })
       saveActiveInstitution(activeInstitution);
    }, [activeInstitution]);
 
-   const value = useMemo(
-      () => ({ activeInstitution, setActiveInstitution }),
-      [activeInstitution],
-   );
+   const value: InstitutionContextValue = { activeInstitution, setActiveInstitution };
 
    return (
       <InstitutionContext.Provider value={value}>
@@ -39,4 +36,5 @@ export function useInstitutionContext() {
    }
    return context;
 }
+
 

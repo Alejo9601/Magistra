@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useEffect, useMemo, useState } from "react";
+﻿import { createContext, useContext, useEffect, useState } from "react";
 import {
    createAssessmentId,
    loadAssessments,
@@ -54,78 +54,75 @@ export function AssessmentsProvider({ children }: { children: React.ReactNode })
       saveAssessments(assessments);
    }, [assessments]);
 
-   const value = useMemo<AssessmentsContextValue>(
-      () => ({
-         assessments,
-         getAssessmentsBySubject: (subjectId) =>
-            assessments.filter((assessment) => assessment.subjectId === subjectId),
-         getAssessmentsByAssignment: (assignmentId) =>
-            assessments.filter(
+   const value: AssessmentsContextValue = {
+      assessments,
+      getAssessmentsBySubject: (subjectId) =>
+         assessments.filter((assessment) => assessment.subjectId === subjectId),
+      getAssessmentsByAssignment: (assignmentId) =>
+         assessments.filter(
+            (assessment) =>
+               (assessment.assignmentId ??
+                  getAssignmentIdBySubjectId(assessment.subjectId)) === assignmentId,
+         ),
+      addAssessment: (input) => {
+         const assignment = getAssignmentById(input.assignmentId);
+         if (!assignment) {
+            throw new Error("Assignment not found for assessment creation.");
+         }
+         const nextAssessment: Assessment = {
+            id: createAssessmentId(),
+            subjectId: assignment.subjectId,
+            assignmentId: assignment.id,
+            title: input.title.trim(),
+            description: input.description?.trim() || undefined,
+            date: input.date,
+            type: input.type,
+            status: input.status ?? "draft",
+            weight: input.weight ?? 1,
+            maxScore: input.maxScore ?? 10,
+            gradesLoaded: 0,
+         };
+         setAssessments((prev) => [...prev, nextAssessment]);
+         return nextAssessment;
+      },
+      updateAssessment: (id, patch) => {
+         const assignment = patch.assignmentId
+            ? getAssignmentById(patch.assignmentId)
+            : null;
+         setAssessments((prev) =>
+            prev.map((assessment) =>
+               assessment.id === id
+                  ? {
+                       ...assessment,
+                       ...patch,
+                       subjectId: assignment?.subjectId ?? assessment.subjectId,
+                       assignmentId: assignment?.id ?? assessment.assignmentId,
+                       title: patch.title?.trim() ?? assessment.title,
+                       description:
+                          patch.description === undefined
+                             ? assessment.description
+                             : patch.description.trim() || undefined,
+                    }
+                  : assessment,
+            ),
+         );
+      },
+      removeAssessment: (id) => {
+         setAssessments((prev) =>
+            prev.filter((assessment) => assessment.id !== id),
+         );
+      },
+      removeAssessmentsByAssignment: (assignmentId) => {
+         setAssessments((prev) =>
+            prev.filter(
                (assessment) =>
                   (assessment.assignmentId ??
-                     getAssignmentIdBySubjectId(assessment.subjectId)) === assignmentId,
+                     getAssignmentIdBySubjectId(assessment.subjectId)) !==
+                  assignmentId,
             ),
-         addAssessment: (input) => {
-            const assignment = getAssignmentById(input.assignmentId);
-            if (!assignment) {
-               throw new Error("Assignment not found for assessment creation.");
-            }
-            const nextAssessment: Assessment = {
-               id: createAssessmentId(),
-               subjectId: assignment.subjectId,
-               assignmentId: assignment.id,
-               title: input.title.trim(),
-               description: input.description?.trim() || undefined,
-               date: input.date,
-               type: input.type,
-               status: input.status ?? "draft",
-               weight: input.weight ?? 1,
-               maxScore: input.maxScore ?? 10,
-               gradesLoaded: 0,
-            };
-            setAssessments((prev) => [...prev, nextAssessment]);
-            return nextAssessment;
-         },
-         updateAssessment: (id, patch) => {
-            const assignment = patch.assignmentId
-               ? getAssignmentById(patch.assignmentId)
-               : null;
-            setAssessments((prev) =>
-               prev.map((assessment) =>
-                  assessment.id === id
-                     ? {
-                          ...assessment,
-                          ...patch,
-                          subjectId: assignment?.subjectId ?? assessment.subjectId,
-                          assignmentId: assignment?.id ?? assessment.assignmentId,
-                          title: patch.title?.trim() ?? assessment.title,
-                          description:
-                             patch.description === undefined
-                                ? assessment.description
-                                : patch.description.trim() || undefined,
-                       }
-                     : assessment,
-               ),
-            );
-         },
-         removeAssessment: (id) => {
-            setAssessments((prev) =>
-               prev.filter((assessment) => assessment.id !== id),
-            );
-         },
-         removeAssessmentsByAssignment: (assignmentId) => {
-            setAssessments((prev) =>
-               prev.filter(
-                  (assessment) =>
-                     (assessment.assignmentId ??
-                        getAssignmentIdBySubjectId(assessment.subjectId)) !==
-                     assignmentId,
-               ),
-            );
-         },
-      }),
-      [assessments],
-   );
+         );
+      },
+   };
 
    return (
       <AssessmentsContext.Provider value={value}>
