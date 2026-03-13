@@ -42,10 +42,14 @@ export function AppSidebar() {
    const collapsed = state === "collapsed";
 
    return (
-      <Sidebar collapsible="icon">
-         <SidebarHeader className="border-b border-sidebar-border pb-3">
+      <Sidebar
+         variant="sidebar"
+         collapsible="icon"
+         className="border-r border-sidebar-border/80"
+      >
+         <SidebarHeader className="border-b border-sidebar-border/80 pb-3">
             <div className="flex items-center gap-2.5 px-1 py-1">
-               <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+               <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm">
                   <GraduationCap className="size-4" />
                </div>
                {!collapsed && (
@@ -90,10 +94,10 @@ export function AppSidebar() {
             </SidebarGroup>
          </SidebarContent>
 
-         <SidebarFooter className="border-t border-sidebar-border">
+         <SidebarFooter className="border-t border-sidebar-border/80">
             <div className="flex items-center gap-2.5 px-1 py-1">
                <Avatar className="size-8 shrink-0">
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                  <AvatarFallback className="bg-primary/12 text-primary text-xs font-semibold">
                      {teacherProfile.avatar}
                   </AvatarFallback>
                </Avatar>

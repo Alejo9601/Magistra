@@ -36,8 +36,8 @@ export function AppShell({
    return (
       <SidebarProvider>
          <AppSidebar />
-         <SidebarInset>
-            <header className="sticky top-0 z-40 flex h-14 w-full max-w-full shrink-0 items-center overflow-hidden border-b border-border/80 bg-background/75 px-3 sm:px-4 backdrop-blur-md">
+         <SidebarInset className="bg-transparent p-2 sm:p-3">
+            <header className="surface-card sticky top-0 z-40 mb-3 flex h-14 w-full max-w-full shrink-0 items-center overflow-hidden rounded-md px-3 sm:px-4">
                <div className="flex min-w-0 flex-1 items-center gap-2">
                   <SidebarTrigger className="-ml-1" />
                   <Separator orientation="vertical" className="mr-2 !h-4" />
@@ -68,7 +68,7 @@ export function AppShell({
                            </span>
                         </div>
                      </SelectTrigger>
-                     <SelectContent>
+                     <SelectContent className="surface-card">
                         {institutions.map((inst) => (
                            <SelectItem key={inst.id} value={inst.id}>
                               <span className="text-xs">{inst.name}</span>
@@ -78,7 +78,7 @@ export function AppShell({
                   </Select>
                </div>
             </header>
-            <div className="relative flex-1 overflow-y-auto overflow-x-hidden page-enter">
+            <div className="surface-card relative flex-1 overflow-y-auto overflow-x-hidden rounded-md page-enter">
                <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-primary/8 blur-3xl" />
                <div className="pointer-events-none absolute bottom-0 left-0 h-56 w-56 rounded-full bg-warning/10 blur-3xl" />
                {children}
