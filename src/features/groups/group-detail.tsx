@@ -1,6 +1,6 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Plus, Search, BookOpen, Trash2, ChevronRight } from "lucide-react";
+import { ArrowLeft, Plus, Search, BookOpen, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,11 +20,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-   Collapsible,
-   CollapsibleContent,
-   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
    Dialog,
    DialogContent,
    DialogDescription,
@@ -40,6 +35,7 @@ import {
    TableHeader,
    TableRow,
 } from "@/components/ui/table";
+import { MonthlyClassesCollapsibleTable } from "@/components/monthly-classes-collapsible-table";
 import {
    Select,
    SelectContent,
@@ -125,9 +121,6 @@ export function GroupDetail({
    const [addAssessmentOpen, setAddAssessmentOpen] = useState(false);
    const [addActivityOpen, setAddActivityOpen] = useState(false);
    const [studentSearch, setStudentSearch] = useState("");
-   const [collapsedMonths, setCollapsedMonths] = useState<Record<string, boolean>>(
-      {},
-   );
    const [newName, setNewName] = useState("");
    const [newLastName, setNewLastName] = useState("");
    const [newDni, setNewDni] = useState("");
@@ -180,48 +173,6 @@ export function GroupDetail({
          ),
       [assignmentId, getActivitiesByAssignment],
    );
-   const classesByMonth = useMemo(() => {
-      const sorted = [...groupClasses].sort((a, b) =>
-         `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`),
-      );
-      const monthMap = new Map<
-         string,
-         { key: string; label: string; classes: typeof sorted }
-      >();
-
-      sorted.forEach((classSession) => {
-         const [year, month] = classSession.date.split("-").slice(0, 2);
-         const key = `${year}-${month}`;
-         if (!monthMap.has(key)) {
-            const date = new Date(`${classSession.date}T12:00:00`);
-            monthMap.set(key, {
-               key,
-               label: date.toLocaleDateString("es-AR", {
-                  month: "long",
-                  year: "numeric",
-               }),
-               classes: [],
-            });
-         }
-         monthMap.get(key)?.classes.push(classSession);
-      });
-
-      return Array.from(monthMap.values());
-   }, [groupClasses]);
-   const monthKeySignature = useMemo(
-      () => classesByMonth.map((monthGroup) => monthGroup.key).join("|"),
-      [classesByMonth],
-   );
-   useEffect(() => {
-      setCollapsedMonths((prev) => {
-         const next: Record<string, boolean> = {};
-         classesByMonth.forEach((monthGroup) => {
-            next[monthGroup.key] = prev[monthGroup.key] ?? true;
-         });
-         return next;
-      });
-   }, [assignmentId, monthKeySignature, classesByMonth]);
-   const isMonthOpen = (monthKey: string) => collapsedMonths[monthKey] ?? true;
    const attendanceByStudent = useMemo(() => {
       const output = new Map<string, number>();
       groupStudents.forEach((student) => {
@@ -505,125 +456,57 @@ export function GroupDetail({
             </TabsContent>
 
             <TabsContent value="planificacion">
-               {classesByMonth.length === 0 ? (
-                  <Card className="mt-2">
-                     <CardContent className="py-8 text-center">
-                        <p className="text-xs text-muted-foreground">
-                           No hay clases planificadas para este grupo.
-                        </p>
-                     </CardContent>
-                  </Card>
-               ) : (
-                  <div className="mt-2 space-y-3">
-                     {classesByMonth.map((monthGroup) => (
-                        <Card
-                           key={monthGroup.key}
-                           className="overflow-hidden border-border/70 py-2 gap-2"
-                        >
-                           <Collapsible
-                              open={isMonthOpen(monthGroup.key)}
-                              onOpenChange={(open) =>
-                                 setCollapsedMonths((prev) => ({
-                                    ...prev,
-                                    [monthGroup.key]: open,
-                                 }))
-                              }
-                           >
-                              <CollapsibleTrigger asChild>
-                                 <button
-                                    type="button"
-                                    className={`group flex w-full items-center justify-between px-3.5 py-2 text-left transition-colors ${
-                                       isMonthOpen(monthGroup.key)
-                                          ? "bg-muted/30 border-b border-border/70"
-                                          : "bg-card hover:bg-muted/20"
-                                    }`}
-                                 >
-                                    <div className="flex items-center gap-2.5">
-                                       <ChevronRight
-                                          className={`size-4 text-muted-foreground transition-transform duration-200 ${
-                                             isMonthOpen(monthGroup.key)
-                                                ? "rotate-90 text-foreground"
-                                                : ""
-                                          }`}
-                                       />
-                                       <p className="text-xs font-semibold text-foreground capitalize tracking-wide">
-                                          {monthGroup.label}
-                                       </p>
-                                    </div>
-                                    <Badge
-                                       variant="secondary"
-                                       className="text-[10px] rounded-full px-2.5 bg-primary/10 text-primary"
-                                    >
-                                       {monthGroup.classes.length} clases
-                                    </Badge>
-                                 </button>
-                              </CollapsibleTrigger>
-                              <CollapsibleContent>
-                                 <CardContent className="p-0.5 bg-background">
-                                    <Table className="min-w-[560px]">
-                                       <TableHeader>
-                                          <TableRow>
-                                             <TableHead className="text-xs">Fecha</TableHead>
-                                             <TableHead className="text-xs">Tema</TableHead>
-                                             <TableHead className="text-xs">Tipo</TableHead>
-                                             <TableHead className="text-xs">Estado</TableHead>
-                                          </TableRow>
-                                       </TableHeader>
-                                       <TableBody>
-                                          {monthGroup.classes.map((cls) => {
-                                             const dateObj = new Date(cls.date + "T12:00:00");
-                                             return (
-                                                <TableRow
-                                                   key={cls.id}
-                                                   className="hover:bg-muted/30"
-                                                >
-                                                   <TableCell className="text-xs">
-                                                      {dateObj.toLocaleDateString("es-AR", {
-                                                         day: "2-digit",
-                                                         month: "short",
-                                                      })}{" "}
-                                                      {cls.time}
-                                                   </TableCell>
-                                                   <TableCell className="text-xs font-medium">
-                                                      {cls.topic}
-                                                   </TableCell>
-                                                   <TableCell>
-                                                      <Badge
-                                                         variant="secondary"
-                                                         className="text-[10px] capitalize"
-                                                      >
-                                                         {cls.type}
-                                                      </Badge>
-                                                   </TableCell>
-                                                   <TableCell>
-                                                      <Badge
-                                                         className={`border-0 text-[10px] ${
-                                                            cls.status === "planificada"
-                                                               ? "bg-primary/10 text-primary"
-                                                               : cls.status === "finalizada"
-                                                                 ? "bg-success/10 text-success"
-                                                                 : "bg-warning/10 text-warning-foreground"
-                                                         }`}
-                                                      >
-                                                         {cls.status === "planificada"
-                                                            ? "Planificada"
-                                                            : cls.status === "finalizada"
-                                                              ? "Finalizada"
-                                                              : "Sin planificar"}
-                                                      </Badge>
-                                                   </TableCell>
-                                                </TableRow>
-                                             );
-                                          })}
-                                       </TableBody>
-                                    </Table>
-                                 </CardContent>
-                              </CollapsibleContent>
-                           </Collapsible>
-                        </Card>
-                     ))}
-                  </div>
-               )}
+               <MonthlyClassesCollapsibleTable
+                  classes={groupClasses}
+                  emptyMessage="No hay clases planificadas para este grupo."
+                  tableClassName="min-w-[560px]"
+                  columns={[
+                     { label: "Fecha", className: "text-xs" },
+                     { label: "Tema", className: "text-xs" },
+                     { label: "Tipo", className: "text-xs" },
+                     { label: "Estado", className: "text-xs" },
+                  ]}
+                  renderCells={(cls) => {
+                     const dateObj = new Date(cls.date + "T12:00:00");
+
+                     return (
+                        <>
+                           <TableCell className="text-xs">
+                              {dateObj.toLocaleDateString("es-AR", {
+                                 day: "2-digit",
+                                 month: "short",
+                              })}{" "}
+                              {cls.time}
+                           </TableCell>
+                           <TableCell className="text-xs font-medium">
+                              {cls.topic}
+                           </TableCell>
+                           <TableCell>
+                              <Badge variant="secondary" className="text-[10px] capitalize">
+                                 {cls.type}
+                              </Badge>
+                           </TableCell>
+                           <TableCell>
+                              <Badge
+                                 className={`border-0 text-[10px] ${
+                                    cls.status === "planificada"
+                                       ? "bg-primary/10 text-primary"
+                                       : cls.status === "finalizada"
+                                         ? "bg-success/10 text-success"
+                                         : "bg-warning/10 text-warning-foreground"
+                                 }`}
+                              >
+                                 {cls.status === "planificada"
+                                    ? "Planificada"
+                                    : cls.status === "finalizada"
+                                      ? "Finalizada"
+                                      : "Sin planificar"}
+                              </Badge>
+                           </TableCell>
+                        </>
+                     );
+                  }}
+               />
             </TabsContent>
 
             <TabsContent value="evaluaciones">
@@ -1219,6 +1102,8 @@ export function GroupDetail({
       </div>
    );
 }
+
+
 
 
 
