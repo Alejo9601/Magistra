@@ -272,7 +272,7 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
             Centro operativo de hoy
          </h2>
          <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
-            <Card className="xl:col-span-2 py-0 overflow-hidden">
+            <Card className="app-panel xl:col-span-2 py-0 overflow-hidden">
                <div className="h-1 bg-primary/70" />
                <CardContent className="p-4">
                   <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
@@ -363,7 +363,7 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
                </CardContent>
             </Card>
 
-            <Card>
+            <Card className="app-panel">
                <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
                      <AlertTriangle className="size-4 text-warning-foreground" />
@@ -382,10 +382,11 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
                               <p className="break-words text-xs text-foreground">{alert.text}</p>
                               <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
                                  <Badge
+                                    variant="outline"
                                     className={`border-0 text-[10px] ${
                                        alert.severity === "high"
-                                          ? "bg-destructive/15 text-destructive"
-                                          : "bg-warning/15 text-warning-foreground"
+                                          ? "alert-high"
+                                          : "alert-medium"
                                     }`}
                                  >
                                   {alert.severity === "high" ? "Alta" : "Media"}
@@ -404,7 +405,7 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
             </Card>
          </div>
 
-         <Card className="mt-3">
+         <Card className="app-panel mt-3">
             <CardHeader className="pb-3">
                <CardTitle className="text-sm font-semibold flex items-center gap-2">
                   <CalendarCheck2 className="size-4 text-primary" />
@@ -475,12 +476,13 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
                                  </Badge>
                                  {attendancePct !== null && (
                                     <Badge
+                                       variant="outline"
                                        className={`border-0 text-[10px] ${
                                           attendancePct >= 80
-                                             ? "bg-success/15 text-success"
+                                             ? "status-ok"
                                              : attendancePct >= 65
-                                               ? "bg-warning/15 text-warning-foreground"
-                                               : "bg-destructive/15 text-destructive"
+                                               ? "status-warning"
+                                               : "status-critical"
                                        }`}
                                     >
                                        Asistencia {attendancePct}%

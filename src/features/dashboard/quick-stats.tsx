@@ -25,22 +25,22 @@ import { useActivitiesContext } from "@/features/activities";
 function statusClasses(level: SemaphoreLevel) {
    if (level === "red") {
       return {
-         tile: "bg-destructive/10",
-         value: "text-destructive",
-         badge: "bg-destructive/15 text-destructive",
+         tile: "bg-destructive/22 ring-1 ring-destructive/45",
+         value: "text-destructive-foreground",
+         badge: "alert-high",
       };
    }
    if (level === "yellow") {
       return {
-         tile: "bg-warning/10",
+         tile: "bg-warning/22 ring-1 ring-warning/45",
          value: "text-warning-foreground",
-         badge: "bg-warning/20 text-warning-foreground",
+         badge: "alert-medium",
       };
    }
    return {
-      tile: "bg-success/10",
-      value: "text-success",
-      badge: "bg-success/20 text-success",
+      tile: "bg-success/22 ring-1 ring-success/45",
+      value: "text-success-foreground",
+      badge: "status-ok",
    };
 }
 
@@ -173,13 +173,14 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
 
    return (
       <div>
-         <Card>
+         <Card className="app-panel">
             <CardContent className="p-4 space-y-3">
                <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                      Semaforo operativo
                   </p>
                   <Badge
+                     variant="outline"
                      className={`${statusClasses(globalLevel).badge} max-w-full border-0 text-[10px]`}
                   >
                      Salud {healthScore}/100 - {levelLabel(globalLevel)}
@@ -200,7 +201,7 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
                                     {metric.label}
                                  </p>
                               </div>
-                              <Badge className={`${colors.badge} max-w-full border-0 text-[9px]`}>
+                              <Badge variant="outline" className={`${colors.badge} max-w-full border-0 text-[9px]`}>
                                  {levelLabel(metric.level)}
                               </Badge>
                            </div>
@@ -249,7 +250,7 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
                               <p className="text-[10px] text-foreground truncate">
                                  {student.lastName}, {student.name}
                               </p>
-                                 <Badge className="max-w-[45%] border-0 bg-destructive/15 text-destructive text-[9px]">
+                                 <Badge variant="outline" className="max-w-[45%] border-0 bg-destructive/15 text-destructive text-[9px]">
                                     {student.average < 6 ? `Prom. ${student.average}` : "Asistencia baja"}
                                  </Badge>
                            </div>
