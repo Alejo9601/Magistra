@@ -11,7 +11,7 @@ import {
    DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TableCell } from "@/components/ui/table";
 import { getAssignmentById, getSubjectById, getInstitutionById } from "@/lib/edu-repository";
 import { useInstitutionContext } from "@/features/institution";
 import { usePlanningContext } from "@/features/planning";
@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ClassEditorModal } from "@/features/planning/class-editor-modal";
 import { ClassScheduleModal } from "@/features/planning/class-schedule-modal";
+import { MonthlyClassesCollapsibleTable } from "@/components/monthly-classes-collapsible-table";
 import {
    classTypeColors,
    classTypeLabels,
@@ -78,6 +79,7 @@ export function PlanificacionContent() {
    const listClasses = [...filteredClasses].sort((a, b) =>
       `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`),
    );
+   const visibleClassesCount = filteredClasses.length;
    const selectedDayClasses = selectedDayDate
       ? filteredClasses
            .filter((classSession) => classSession.date === selectedDayDate)
@@ -207,7 +209,7 @@ export function PlanificacionContent() {
                   </SelectContent>
                </Select>
 
-               <span className="ml-auto w-full text-xs text-muted-foreground sm:w-auto">{filteredClasses.length} clases</span>
+               <span className="ml-auto w-full text-xs text-muted-foreground sm:w-auto">{visibleClassesCount} clases</span>
             </div>
 
             {view === "calendar" && (
@@ -350,58 +352,53 @@ export function PlanificacionContent() {
                   </CardContent>
                </Card>
             ) : (
-               <Card className="h-full">
-                  <CardContent className="h-full overflow-auto p-0">
-                     <Table className="min-w-[860px]">
-                        <TableHeader>
-                           <TableRow>
-                              <TableHead className="text-xs">Fecha</TableHead>
-                              <TableHead className="text-xs">Materia</TableHead>
-                              <TableHead className="text-xs">Institucion</TableHead>
-                              <TableHead className="text-xs">Curso</TableHead>
-                              <TableHead className="text-xs">Tema</TableHead>
-                              <TableHead className="text-xs">Tipo</TableHead>
-                              <TableHead className="text-xs">Estado</TableHead>
-                              <TableHead className="text-xs text-right">Acciones</TableHead>
-                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                           {listClasses.map((cls) => {
-                              const subject = getSubjectById(cls.subjectId);
-                              const assignment = cls.assignmentId
-                                 ? getAssignmentById(cls.assignmentId)
-                                 : null;
-                              const inst = getInstitutionById(cls.institutionId);
-                              const dateObj = new Date(cls.date + "T12:00:00");
-                              return (
-                                 <TableRow key={cls.id} className="hover:bg-muted/30">
-                                    <TableCell className="text-xs whitespace-nowrap">{dateObj.toLocaleDateString("es-AR", { day: "2-digit", month: "short" })} {cls.time}</TableCell>
-                                    <TableCell className="text-xs font-medium">{subject?.name}</TableCell>
-                                    <TableCell className="text-xs text-muted-foreground">{inst?.name}</TableCell>
-                                    <TableCell className="text-xs text-muted-foreground">
-                                       {assignment?.section ?? subject?.course}
-                                    </TableCell>
-                                    <TableCell className="text-xs max-w-[190px] truncate">{cls.topic}</TableCell>
-                                    <TableCell><Badge className={`border-0 text-[10px] ${classTypeColors[cls.type]}`}>{classTypeLabels[cls.type]}</Badge></TableCell>
-                                    <TableCell><Badge className={`border-0 text-[10px] ${getStatusColor(cls.status)}`}>{getStatusLabel(cls.status)}</Badge></TableCell>
-                                    <TableCell>
-                                       <div className="flex items-center justify-end gap-1">
-                                          <Button variant="ghost" size="icon" className="size-7" asChild><Link to={`/clase/${cls.id}`}><Eye className="size-3.5" /></Link></Button>
-                                          <Button variant="ghost" size="icon" className="size-7" asChild><Link to={`/clase/${cls.id}/dictado`}><ClipboardCheck className="size-3.5" /></Link></Button>
-                                          <Button variant="ghost" size="icon" className="size-7" onClick={() => openEditModal(cls.id)}><Edit3 className="size-3.5" /></Button>
-                                          <Button variant="ghost" size="icon" className="size-7" onClick={() => onDuplicate(cls.id)}><Copy className="size-3.5" /></Button>
-                                       </div>
-                                    </TableCell>
-                                 </TableRow>
-                              );
-                           })}
-                           {listClasses.length === 0 && (
-                              <TableRow><TableCell colSpan={8} className="py-8 text-center text-xs text-muted-foreground">No hay clases para los filtros seleccionados.</TableCell></TableRow>
-                           )}
-                        </TableBody>
-                     </Table>
-                  </CardContent>
-               </Card>
+               <div className="h-full overflow-auto">
+                  <MonthlyClassesCollapsibleTable
+                     classes={listClasses}
+                     emptyMessage="No hay clases para los filtros seleccionados."
+                     tableClassName="min-w-[860px]"
+                     columns={[
+                        { label: "Fecha", className: "text-xs" },
+                        { label: "Materia", className: "text-xs" },
+                        { label: "Institucion", className: "text-xs" },
+                        { label: "Curso", className: "text-xs" },
+                        { label: "Tema", className: "text-xs" },
+                        { label: "Tipo", className: "text-xs" },
+                        { label: "Estado", className: "text-xs" },
+                        { label: "Acciones", className: "text-xs text-right" },
+                     ]}
+                     renderCells={(cls) => {
+                        const subject = getSubjectById(cls.subjectId);
+                        const assignment = cls.assignmentId
+                           ? getAssignmentById(cls.assignmentId)
+                           : null;
+                        const inst = getInstitutionById(cls.institutionId);
+                        const dateObj = new Date(cls.date + "T12:00:00");
+
+                        return (
+                           <>
+                              <TableCell className="text-xs whitespace-nowrap">{dateObj.toLocaleDateString("es-AR", { day: "2-digit", month: "short" })} {cls.time}</TableCell>
+                              <TableCell className="text-xs font-medium">{subject?.name}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{inst?.name}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">
+                                 {assignment?.section ?? subject?.course}
+                              </TableCell>
+                              <TableCell className="text-xs max-w-[190px] truncate">{cls.topic}</TableCell>
+                              <TableCell><Badge variant="outline" className={`border-0 text-[10px] ${classTypeColors[cls.type]}`}>{classTypeLabels[cls.type]}</Badge></TableCell>
+                              <TableCell><Badge variant="outline" className={`border-0 text-[10px] ${getStatusColor(cls.status)}`}>{getStatusLabel(cls.status)}</Badge></TableCell>
+                              <TableCell>
+                                 <div className="flex items-center justify-end gap-1">
+                                    <Button variant="ghost" size="icon" className="size-7" asChild><Link to={`/clase/${cls.id}`}><Eye className="size-3.5" /></Link></Button>
+                                    <Button variant="ghost" size="icon" className="size-7" asChild><Link to={`/clase/${cls.id}/dictado`}><ClipboardCheck className="size-3.5" /></Link></Button>
+                                    <Button variant="ghost" size="icon" className="size-7" onClick={() => openEditModal(cls.id)}><Edit3 className="size-3.5" /></Button>
+                                    <Button variant="ghost" size="icon" className="size-7" onClick={() => onDuplicate(cls.id)}><Copy className="size-3.5" /></Button>
+                                 </div>
+                              </TableCell>
+                           </>
+                        );
+                     }}
+                  />
+               </div>
             )}
          </div>
 
