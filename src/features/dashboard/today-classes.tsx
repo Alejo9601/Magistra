@@ -438,9 +438,7 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
                            nowMs,
                            cls.status,
                         );
-                        const planned = cls.status !== "sin-planificar";
                         const attendanceLoaded = attendanceStatuses.length > 0;
-                        const closed = cls.status === "finalizada";
 
                         return (
                            <div
@@ -466,13 +464,7 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
 
                               <div className="mt-2 flex flex-wrap gap-1.5">
                                  <Badge variant="secondary" className="text-[10px]">
-                                    {planned ? "Planificada" : "Sin planificar"}
-                                 </Badge>
-                                 <Badge variant="secondary" className="text-[10px]">
                                     {attendanceLoaded ? "Asistencia cargada" : "Sin asistencia"}
-                                 </Badge>
-                                 <Badge variant="secondary" className="text-[10px]">
-                                    {closed ? "Clase cerrada" : "Clase abierta"}
                                  </Badge>
                                  {attendancePct !== null && (
                                     <Badge
@@ -518,3 +510,4 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
       </div>
    );
 }
+
