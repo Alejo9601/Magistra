@@ -119,7 +119,7 @@ export function StudentList({
       filtered.length === 0;
 
    return (
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:p-6">
          <div className="mb-6">
             <h1 className="text-xl font-bold text-foreground">Seguimiento</h1>
             <p className="text-sm text-muted-foreground">
@@ -139,7 +139,7 @@ export function StudentList({
 
          <Card>
             <CardContent className="p-0">
-               <Table>
+               <Table className="min-w-[720px]">
                   <TableHeader>
                      <TableRow>
                         <TableHead className="text-xs">Alumno</TableHead>
@@ -259,3 +259,4 @@ export function StudentList({
       </div>
    );
 }
+

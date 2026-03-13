@@ -65,7 +65,7 @@ export function ClaseDetailContent() {
 
    if (!cls || !subject || !inst) {
       return (
-         <div className="p-6 max-w-7xl mx-auto">
+         <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:p-6">
             <p className="text-sm text-muted-foreground">Clase no encontrada.</p>
          </div>
       );
@@ -74,7 +74,7 @@ export function ClaseDetailContent() {
    const notes = notesDraftByClassId[cls.id] ?? cls.notes ?? "";
 
    return (
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:p-6">
          <ClassDetailHeader
             topic={cls.topic}
             subjectName={subject.name}
@@ -161,4 +161,5 @@ export function ClaseDetailContent() {
       </div>
    );
 }
+
 

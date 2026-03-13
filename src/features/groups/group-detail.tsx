@@ -355,7 +355,7 @@ export function GroupDetail({
    };
 
    return (
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:p-6">
          <div className="flex items-center gap-3 mb-6">
             <Button
                variant="ghost"
@@ -376,7 +376,8 @@ export function GroupDetail({
          </div>
 
          <Tabs defaultValue="alumnos">
-            <TabsList>
+            <div className="mb-1 overflow-x-auto pb-1">
+               <TabsList className="w-max min-w-full">
                <TabsTrigger value="alumnos" className="text-xs">
                   Alumnos
                </TabsTrigger>
@@ -389,7 +390,8 @@ export function GroupDetail({
                <TabsTrigger value="actividades" className="text-xs">
                   Actividades
                </TabsTrigger>
-            </TabsList>
+               </TabsList>
+            </div>
 
             <TabsContent value="alumnos">
                <div className="mt-2 mb-3 flex flex-wrap items-center gap-2">
@@ -400,8 +402,8 @@ export function GroupDetail({
                      En riesgo por asistencia: {atRiskCount}
                   </Badge>
                </div>
-               <div className="flex items-center justify-between mb-4 mt-2">
-                  <div className="relative max-w-xs flex-1">
+               <div className="mb-4 mt-2 flex flex-wrap items-center gap-2 sm:justify-between">
+                  <div className="relative w-full max-w-xs flex-1">
                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
                      <Input
                         className="h-8 pl-8 text-xs"
@@ -412,7 +414,7 @@ export function GroupDetail({
                   </div>
                   <Button
                      size="sm"
-                     className="text-xs"
+                     className="w-full text-xs sm:w-auto"
                      onClick={() => setAddStudentOpen(true)}
                   >
                      <Plus className="size-3.5 mr-1.5" />
@@ -421,7 +423,7 @@ export function GroupDetail({
                </div>
                <Card>
                   <CardContent className="p-0">
-                     <Table>
+                     <Table className="min-w-[760px]">
                         <TableHeader>
                            <TableRow>
                               <TableHead className="text-xs">Nombre</TableHead>
@@ -558,7 +560,7 @@ export function GroupDetail({
                               </CollapsibleTrigger>
                               <CollapsibleContent>
                                  <CardContent className="p-0.5 bg-background">
-                                    <Table>
+                                    <Table className="min-w-[560px]">
                                        <TableHeader>
                                           <TableRow>
                                              <TableHead className="text-xs">Fecha</TableHead>
@@ -637,7 +639,7 @@ export function GroupDetail({
                </div>
                <Card className="mt-2">
                   <CardContent className="p-0">
-                     <Table>
+                     <Table className="min-w-[860px]">
                         <TableHeader>
                            <TableRow>
                               <TableHead className="text-xs">
@@ -755,7 +757,7 @@ export function GroupDetail({
                </div>
                <Card className="mt-2">
                   <CardContent className="p-0">
-                     <Table>
+                     <Table className="min-w-[760px]">
                         <TableHeader>
                            <TableRow>
                               <TableHead className="text-xs">Actividad</TableHead>
@@ -1217,6 +1219,7 @@ export function GroupDetail({
       </div>
    );
 }
+
 
 
 

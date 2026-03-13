@@ -165,7 +165,7 @@ export function StudentProfile({
       : [];
 
    return (
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:p-6">
          <div className="flex items-center gap-3 mb-6">
             <Button variant="ghost" size="icon" className="size-8" onClick={onBack}>
                <ArrowLeft className="size-4" />
@@ -349,3 +349,4 @@ export function StudentProfile({
       </div>
    );
 }
+

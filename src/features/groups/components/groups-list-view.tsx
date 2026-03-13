@@ -1,4 +1,4 @@
-import { Building2, Users } from "lucide-react";
+﻿import { Building2, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
@@ -20,7 +20,7 @@ export function GroupsListView({
    onSelect: (subjectId: string) => void;
 }) {
    return (
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:p-6">
          <div className="mb-6">
             <h1 className="text-xl font-bold text-foreground">Mis Grupos</h1>
             <p className="text-sm text-muted-foreground">
@@ -80,3 +80,4 @@ export function GroupsListView({
       </div>
    );
 }
+

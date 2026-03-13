@@ -8,7 +8,7 @@ import { OperativeThresholdsSection } from "@/features/settings/sections/operati
 
 export function ConfiguracionContent() {
    return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <div className="mx-auto w-full max-w-4xl px-3 py-4 sm:p-6">
          <div className="mb-6">
             <h1 className="text-xl font-bold text-foreground">Configuracion</h1>
             <p className="text-sm text-muted-foreground">
@@ -17,7 +17,8 @@ export function ConfiguracionContent() {
          </div>
 
          <Tabs defaultValue="perfil">
-            <TabsList className="mb-4">
+            <div className="mb-4 overflow-x-auto pb-1">
+               <TabsList className="w-max min-w-full">
                <TabsTrigger value="perfil" className="text-xs">
                   Mi perfil
                </TabsTrigger>
@@ -36,7 +37,8 @@ export function ConfiguracionContent() {
                <TabsTrigger value="operativo" className="text-xs">
                   Operativo
                </TabsTrigger>
-            </TabsList>
+               </TabsList>
+            </div>
 
             <TabsContent value="perfil">
                <ProfileSection />

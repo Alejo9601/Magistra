@@ -33,7 +33,7 @@ export function ContenidosContent() {
    });
 
    return (
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:p-6">
          <div className="flex items-center justify-between mb-6">
             <div>
                <h1 className="text-xl font-bold text-foreground">Contenidos</h1>
@@ -118,5 +118,6 @@ export function ContenidosContent() {
       </div>
    );
 }
+
 
 
