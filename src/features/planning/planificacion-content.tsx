@@ -17,6 +17,7 @@ import { useInstitutionContext } from "@/features/institution";
 import { usePlanningContext } from "@/features/planning";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { ClassEditorModal } from "@/features/planning/class-editor-modal";
 import { ClassScheduleModal } from "@/features/planning/class-schedule-modal";
 import {
@@ -36,6 +37,7 @@ import type {
 export function PlanificacionContent() {
    const { activeInstitution } = useInstitutionContext();
    const { classes, createClass, createRecurringClasses, updateClass, duplicateClass } = usePlanningContext();
+   const isMobile = useIsMobile();
    const [searchParams] = useSearchParams();
    const today = new Date();
 
@@ -99,6 +101,19 @@ export function PlanificacionContent() {
       while (currentWeek.length < 7) currentWeek.push(null);
       weeks.push(currentWeek);
    }
+   const monthDays = Array.from({ length: daysInMonth }, (_, idx) => {
+      const day = idx + 1;
+      const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const dayClasses = filteredClasses
+         .filter((classSession) => classSession.date === dateStr)
+         .sort((a, b) => a.time.localeCompare(b.time));
+      return {
+         day,
+         dateStr,
+         dayClasses,
+         isPastDate: dateStr < todayStr,
+      };
+   });
 
    const openCreateModal = (date?: string) => {
       setEditingClassId(null);
@@ -141,14 +156,14 @@ export function PlanificacionContent() {
    };
 
    return (
-      <div className="flex h-full min-h-0 w-full flex-col p-6">
-         <div className="sticky top-0 z-20 -mx-6 mb-4 border-b border-border/70 bg-background/95 px-6 pb-3 backdrop-blur">
+      <div className="flex h-full min-h-0 w-full flex-col p-3 sm:p-6">
+         <div className="sticky top-0 z-20 -mx-3 mb-4 border-b border-border/70 bg-background/95 px-3 pb-3 backdrop-blur sm:-mx-6 sm:px-6">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pt-1">
                <div>
                   <h1 className="text-xl font-bold text-foreground">Planificacion</h1>
                   <p className="text-sm text-muted-foreground">Organiza, edita y publica tus clases por institucion.</p>
                </div>
-               <div className="flex items-center gap-2">
+               <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                   <div className="flex items-center rounded-lg bg-muted p-0.5">
                      <button onClick={() => setView("calendar")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${view === "calendar" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
                         <CalendarDays className="size-3.5" /> Mensual
@@ -157,13 +172,13 @@ export function PlanificacionContent() {
                         <List className="size-3.5" /> Lista
                      </button>
                   </div>
-                  <Button size="sm" className="text-xs" onClick={() => openCreateModal()}>
+                  <Button size="sm" className="text-xs w-full sm:w-auto" onClick={() => openCreateModal()}>
                      <Plus className="size-3.5 mr-1.5" /> Nueva clase
                   </Button>
                   <Button
                      variant="outline"
                      size="sm"
-                     className="text-xs"
+                     className="text-xs w-full sm:w-auto"
                      onClick={() => setScheduleModalOpen(true)}
                   >
                      Configurar cursada
@@ -173,7 +188,7 @@ export function PlanificacionContent() {
 
             <div className="mb-4 flex flex-wrap items-center gap-2">
                <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
-                  <SelectTrigger className="h-8 w-[170px] text-xs"><SelectValue placeholder="Estado" /></SelectTrigger>
+                  <SelectTrigger className="h-8 w-full text-xs sm:w-[170px]"><SelectValue placeholder="Estado" /></SelectTrigger>
                   <SelectContent>
                      <SelectItem value="all">Todos los estados</SelectItem>
                      <SelectItem value="planificada">Planificada</SelectItem>
@@ -183,7 +198,7 @@ export function PlanificacionContent() {
                </Select>
 
                <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value as TypeFilter)}>
-                  <SelectTrigger className="h-8 w-[170px] text-xs"><SelectValue placeholder="Tipo" /></SelectTrigger>
+                  <SelectTrigger className="h-8 w-full text-xs sm:w-[170px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
                   <SelectContent>
                      <SelectItem value="all">Todos los tipos</SelectItem>
                      {Object.entries(classTypeLabels).map(([value, label]) => (
@@ -192,7 +207,7 @@ export function PlanificacionContent() {
                   </SelectContent>
                </Select>
 
-               <span className="text-xs text-muted-foreground ml-auto">{filteredClasses.length} clases</span>
+               <span className="ml-auto w-full text-xs text-muted-foreground sm:w-auto">{filteredClasses.length} clases</span>
             </div>
 
             {view === "calendar" && (
@@ -210,66 +225,134 @@ export function PlanificacionContent() {
             {view === "calendar" ? (
                <Card className="h-full w-full">
                   <CardContent className="h-full overflow-auto p-0">
-                     <div className="grid grid-cols-7">
-                        {["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"].map((day) => (
-                           <div key={day} className="border-b border-r border-border last:border-r-0 p-2 text-center">
-                              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{day}</span>
+                     {isMobile ? (
+                        <div className="p-1.5">
+                           <div className="mb-1 grid grid-cols-7 gap-1">
+                              {["L", "M", "X", "J", "V", "S", "D"].map((day) => (
+                                 <div key={day} className="py-1 text-center text-[10px] font-semibold text-muted-foreground">
+                                    {day}
+                                 </div>
+                              ))}
                            </div>
-                        ))}
-                        {weeks.flat().map((day, idx) => {
-                           const dateStr = day ? `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}` : "";
-                           const dayClasses = day ? filteredClasses.filter((classSession) => classSession.date === dateStr) : [];
-                           const isPastDate = Boolean(day && dateStr < todayStr);
-                           return (
-                              <div key={idx} className={`min-h-[92px] border-b border-r border-border last:border-r-0 p-1.5 ${day ? isPastDate ? "bg-muted/55 ring-1 ring-inset ring-border/70" : "hover:bg-muted/30" : "bg-muted/10"}`}>
-                                 {day && (
-                                    <>
-                                       <div className="flex items-center justify-between gap-1">
-                                          <span className={`text-xs font-medium ${isPastDate ? "text-foreground/75" : "text-foreground"}`}>{day}</span>
-                                          <button
-                                             onClick={() => {
-                                                if (isPastDate) return;
-                                                openCreateModal(dateStr);
-                                             }}
-                                             disabled={isPastDate}
-                                             className={`size-5 inline-flex items-center justify-center rounded ${isPastDate ? "bg-muted/70 text-muted-foreground/70 cursor-not-allowed" : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"}`}
-                                             title={isPastDate ? "No se pueden crear clases en fechas pasadas" : "Nueva clase"}
-                                          >
-                                             <Plus className="size-3" />
-                                          </button>
-                                       </div>
-                                       <div className="mt-1 flex flex-col gap-0.5">
+                           <div className="grid grid-cols-7 gap-1">
+                              {Array.from({ length: startDayOfWeek }).map((_, idx) => (
+                                 <div key={`mobile-empty-${idx}`} className="aspect-square rounded-md bg-muted/10" />
+                              ))}
+                              {monthDays.map(({ day, dateStr, dayClasses, isPastDate }) => {
+                                 const hasClasses = dayClasses.length > 0;
+                                 return (
+                                    <button
+                                       key={dateStr}
+                                       type="button"
+                                       onClick={() => {
+                                          if (hasClasses) {
+                                             setSelectedDayDate(dateStr);
+                                             return;
+                                          }
+                                          if (!isPastDate) {
+                                             openCreateModal(dateStr);
+                                          }
+                                       }}
+                                       className={`aspect-square rounded-md border p-1 text-left transition-colors ${
+                                          isPastDate
+                                             ? "border-border/60 bg-muted/45"
+                                             : "border-border/70 bg-card hover:bg-muted/40"
+                                       }`}
+                                       title={
+                                          hasClasses
+                                             ? "Ver clases del dia"
+                                             : isPastDate
+                                               ? "Fecha pasada"
+                                               : "Nueva clase"
+                                       }
+                                    >
+                                       <p className={`text-[11px] font-semibold ${isPastDate ? "text-foreground/70" : "text-foreground"}`}>
+                                          {day}
+                                       </p>
+                                       <div className="mt-1 flex flex-wrap gap-0.5">
                                           {dayClasses.slice(0, 3).map((cls) => {
                                              const inst = getInstitutionById(cls.institutionId);
-                                             const subject = getSubjectById(cls.subjectId);
                                              return (
-                                                <button key={cls.id} onClick={() => openEditModal(cls.id)} className={`w-full cursor-pointer text-left rounded px-1 py-0.5 text-[10px] font-medium truncate ${isPastDate ? "opacity-85" : ""}`} style={{ backgroundColor: (inst?.color ?? "#4F46E5") + "15", color: inst?.color ?? "#4F46E5" }}>
-                                                   {subject?.name}
-                                                </button>
+                                                <span
+                                                   key={cls.id}
+                                                   className="size-1.5 rounded-full"
+                                                   style={{ backgroundColor: inst?.color ?? "#4F46E5" }}
+                                                />
                                              );
                                           })}
                                           {dayClasses.length > 3 && (
-                                             <button
-                                                type="button"
-                                                onClick={() => setSelectedDayDate(dateStr)}
-                                                className="text-[9px] text-primary px-1 text-left hover:underline"
-                                             >
-                                                +{dayClasses.length - 3} mas
-                                             </button>
+                                             <span className="text-[9px] leading-none text-primary">
+                                                +{dayClasses.length - 3}
+                                             </span>
                                           )}
                                        </div>
-                                    </>
-                                 )}
+                                    </button>
+                                 );
+                              })}
+                           </div>
+                        </div>
+                     ) : (
+                        <div className="grid grid-cols-7">
+                           {["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"].map((day) => (
+                              <div key={day} className="border-b border-r border-border last:border-r-0 p-2 text-center">
+                                 <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{day}</span>
                               </div>
-                           );
-                        })}
-                     </div>
+                           ))}
+                           {weeks.flat().map((day, idx) => {
+                              const dateStr = day ? `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}` : "";
+                              const dayClasses = day ? filteredClasses.filter((classSession) => classSession.date === dateStr) : [];
+                              const isPastDate = Boolean(day && dateStr < todayStr);
+                              return (
+                                 <div key={idx} className={`min-h-[92px] border-b border-r border-border last:border-r-0 p-1.5 ${day ? isPastDate ? "bg-muted/55 ring-1 ring-inset ring-border/70" : "hover:bg-muted/30" : "bg-muted/10"}`}>
+                                    {day && (
+                                       <>
+                                          <div className="flex items-center justify-between gap-1">
+                                             <span className={`text-xs font-medium ${isPastDate ? "text-foreground/75" : "text-foreground"}`}>{day}</span>
+                                             <button
+                                                onClick={() => {
+                                                   if (isPastDate) return;
+                                                   openCreateModal(dateStr);
+                                                }}
+                                                disabled={isPastDate}
+                                                className={`size-5 inline-flex items-center justify-center rounded ${isPastDate ? "bg-muted/70 text-muted-foreground/70 cursor-not-allowed" : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"}`}
+                                                title={isPastDate ? "No se pueden crear clases en fechas pasadas" : "Nueva clase"}
+                                             >
+                                                <Plus className="size-3" />
+                                             </button>
+                                          </div>
+                                          <div className="mt-1 flex flex-col gap-0.5">
+                                             {dayClasses.slice(0, 3).map((cls) => {
+                                                const inst = getInstitutionById(cls.institutionId);
+                                                const subject = getSubjectById(cls.subjectId);
+                                                return (
+                                                   <button key={cls.id} onClick={() => openEditModal(cls.id)} className={`w-full cursor-pointer text-left rounded px-1 py-0.5 text-[10px] font-medium truncate ${isPastDate ? "opacity-85" : ""}`} style={{ backgroundColor: (inst?.color ?? "#4F46E5") + "15", color: inst?.color ?? "#4F46E5" }}>
+                                                      {subject?.name}
+                                                   </button>
+                                                );
+                                             })}
+                                             {dayClasses.length > 3 && (
+                                                <button
+                                                   type="button"
+                                                   onClick={() => setSelectedDayDate(dateStr)}
+                                                   className="text-[9px] text-primary px-1 text-left hover:underline"
+                                                >
+                                                   +{dayClasses.length - 3} mas
+                                                </button>
+                                             )}
+                                          </div>
+                                       </>
+                                    )}
+                                 </div>
+                              );
+                           })}
+                        </div>
+                     )}
                   </CardContent>
                </Card>
             ) : (
                <Card className="h-full">
                   <CardContent className="h-full overflow-auto p-0">
-                     <Table>
+                     <Table className="min-w-[860px]">
                         <TableHeader>
                            <TableRow>
                               <TableHead className="text-xs">Fecha</TableHead>
