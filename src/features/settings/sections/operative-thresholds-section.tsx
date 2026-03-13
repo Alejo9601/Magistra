@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { AlertOctagon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -107,15 +107,12 @@ function RangeField({
 export function OperativeThresholdsSection() {
    const { activeInstitution } = useInstitutionContext();
    const activeInstitutionName = getInstitutionById(activeInstitution)?.name;
-   const defaults = useMemo(
-      () => getThresholdsForInstitution(activeInstitution),
-      [activeInstitution],
-   );
+   const defaults = getThresholdsForInstitution(activeInstitution);
    const [form, setForm] = useState<ThresholdForm>(toFormValues(defaults));
 
    useEffect(() => {
       setForm(toFormValues(defaults));
-   }, [defaults]);
+   }, [activeInstitution]);
 
    const onReset = () => {
       setForm(toFormValues(DEFAULT_THRESHOLDS));
@@ -252,3 +249,4 @@ export function OperativeThresholdsSection() {
       </Card>
    );
 }
+

@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useState } from "react";
 import { Building2, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -63,7 +63,6 @@ export function InstitutionsSection() {
    const { removeAssessmentsByAssignment } = useAssessmentsContext();
    const { removeActivitiesByAssignment } = useActivitiesContext();
 
-   const [revision, setRevision] = useState(0);
    const [addOpen, setAddOpen] = useState(false);
    const [selectedColor, setSelectedColor] = useState(colorOptions[0]);
    const [name, setName] = useState("");
@@ -73,7 +72,7 @@ export function InstitutionsSection() {
       string | null
    >(null);
 
-   const institutionList = useMemo(() => institutions, [revision]);
+   const institutionList = institutions;
 
    const resetForm = () => {
       setName("");
@@ -95,7 +94,6 @@ export function InstitutionsSection() {
          color: selectedColor,
       });
 
-      setRevision((prev) => prev + 1);
       setAddOpen(false);
       resetForm();
       toast.success("Institucion creada correctamente.");
@@ -131,7 +129,6 @@ export function InstitutionsSection() {
          setActiveInstitution(institutions[0].id);
       }
 
-      setRevision((prev) => prev + 1);
       toast.success("Institucion eliminada con sus datos relacionados.");
    };
 
@@ -314,3 +311,4 @@ export function InstitutionsSection() {
       </>
    );
 }
+

@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useState } from "react";
 import { BookOpen, CalendarDays, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -52,7 +52,6 @@ export function SubjectsSection() {
    const { removeAssessmentsByAssignment } = useAssessmentsContext();
    const { removeActivitiesByAssignment } = useActivitiesContext();
 
-   const [revision, setRevision] = useState(0);
    const [addOpen, setAddOpen] = useState(false);
    const [institutionId, setInstitutionId] = useState(institutions[0]?.id ?? "");
    const [subjectName, setSubjectName] = useState("");
@@ -64,14 +63,10 @@ export function SubjectsSection() {
       string | null
    >(null);
 
-   const groupedSubjects = useMemo(
-      () =>
-         institutions.map((inst) => ({
-            institution: inst,
-            subjects: subjects.filter((s) => s.institutionId === inst.id),
-         })),
-      [revision],
-   );
+   const groupedSubjects = institutions.map((inst) => ({
+      institution: inst,
+      subjects: subjects.filter((s) => s.institutionId === inst.id),
+   }));
 
    const resetForm = () => {
       setInstitutionId(institutions[0]?.id ?? "");
@@ -91,7 +86,6 @@ export function SubjectsSection() {
          course,
       });
 
-      setRevision((prev) => prev + 1);
       setAddOpen(false);
       resetForm();
       toast.success("Materia creada correctamente.");
@@ -107,7 +101,6 @@ export function SubjectsSection() {
       unlinkSubjectFromStudents(subjectId);
       deleteSubject(subjectId);
 
-      setRevision((prev) => prev + 1);
       toast.success("Materia eliminada con sus datos relacionados.");
    };
 
@@ -317,3 +310,4 @@ export function SubjectsSection() {
       </>
    );
 }
+
