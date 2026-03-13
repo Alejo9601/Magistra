@@ -367,7 +367,7 @@ export function PlanificacionContent() {
 
          <div className="flex-1 min-h-0">
             {view === "calendar" ? (
-               <Card className="h-full w-full">
+               <Card className="w-full">
                   <CardContent className="overflow-x-auto p-0">
                      {isMobile ? (
                         <div className="p-1.5">
