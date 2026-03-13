@@ -29,10 +29,7 @@ export function ClaseDetailContent() {
    const { getRecord, setAttendance: saveAttendance } = useClassroomContext();
    const { getActivitiesByAssignment, toggleActivityLink } = useActivitiesContext();
 
-   const cls = useMemo(
-      () => classes.find((classSession) => classSession.id === classId),
-      [classes, classId],
-   );
+   const cls = classes.find((classSession) => classSession.id === classId);
 
    const assignmentId = cls
       ? cls.assignmentId ?? getAssignmentIdBySubjectId(cls.subjectId)
@@ -40,15 +37,11 @@ export function ClaseDetailContent() {
    const subject = cls ? getSubjectById(cls.subjectId) : null;
    const inst = cls ? getInstitutionById(cls.institutionId) : null;
    const classStudents = assignmentId ? getStudentsByAssignment(assignmentId) : [];
-   const subjectActivities = useMemo(
-      () =>
-         assignmentId
-            ? [...getActivitiesByAssignment(assignmentId)].sort((a, b) =>
-                 a.title.localeCompare(b.title),
-              )
-            : [],
-      [assignmentId, getActivitiesByAssignment],
-   );
+   const subjectActivities = assignmentId
+      ? [...getActivitiesByAssignment(assignmentId)].sort((a, b) =>
+           a.title.localeCompare(b.title),
+        )
+      : [];
 
    const attendanceFromRecord = useMemo<Record<string, AttendanceStatus>>(() => {
       const record = getRecord(classId);
@@ -168,3 +161,4 @@ export function ClaseDetailContent() {
       </div>
    );
 }
+

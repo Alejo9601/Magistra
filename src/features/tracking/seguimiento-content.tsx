@@ -1,5 +1,4 @@
-﻿import { useMemo } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+﻿import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useInstitutionContext } from "@/features/institution";
 import { StudentList } from "@/features/tracking/student-list";
 import { StudentProfile } from "@/features/tracking/student-profile";
@@ -14,9 +13,8 @@ export function SeguimientoContent() {
    const statusParam = searchParams.get("status");
    const assignmentIdParam = searchParams.get("assignmentId") ?? undefined;
    const selectedStudent = id ?? null;
-   const institutionStudentIdSet = useMemo(
-      () => new Set(getStudentsByInstitution(activeInstitution).map((s) => s.id)),
-      [activeInstitution],
+   const institutionStudentIdSet = new Set(
+      getStudentsByInstitution(activeInstitution).map((s) => s.id),
    );
    const statusFilter =
       statusParam === "en-riesgo" ||
@@ -52,5 +50,6 @@ export function SeguimientoContent() {
       />
    );
 }
+
 
 

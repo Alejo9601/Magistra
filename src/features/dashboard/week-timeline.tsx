@@ -24,10 +24,8 @@ export function WeekTimeline({ activeInstitution }: { activeInstitution: string 
    const weekDays = getWeekDaysFromToday();
    const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-   const selectedDayData = useMemo(
-      () => weekDays.find((day) => day.date === selectedDate) ?? null,
-      [selectedDate, weekDays],
-   );
+   const selectedDayData =
+      weekDays.find((day) => day.date === selectedDate) ?? null;
    const selectedDayClasses = useMemo(
       () =>
          classes

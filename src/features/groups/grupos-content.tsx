@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useState } from "react";
 import { getAssignmentsByInstitution } from "@/lib/edu-repository";
 import { useInstitutionContext } from "@/features/institution";
 import { GroupsList } from "@/features/groups/containers/groups-list";
@@ -7,9 +7,8 @@ import { GroupDetail } from "@/features/groups/group-detail";
 export function GruposContent() {
    const { activeInstitution } = useInstitutionContext();
    const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-   const validAssignmentIds = useMemo(
-      () => new Set(getAssignmentsByInstitution(activeInstitution).map((a) => a.id)),
-      [activeInstitution],
+   const validAssignmentIds = new Set(
+      getAssignmentsByInstitution(activeInstitution).map((a) => a.id),
    );
 
    const effectiveSelectedGroup =
@@ -33,3 +32,4 @@ export function GruposContent() {
       />
    );
 }
+

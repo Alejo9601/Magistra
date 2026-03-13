@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, ClipboardCheck, Plus, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,10 +46,7 @@ export function ClaseDictadoContent() {
    const [addingActivity, setAddingActivity] = useState(false);
    const [newActivity, setNewActivity] = useState("");
 
-   const cls = useMemo(
-      () => classes.find((classSession) => classSession.id === classId),
-      [classes, classId],
-   );
+   const cls = classes.find((classSession) => classSession.id === classId);
    const assignmentId = cls
       ? cls.assignmentId ?? getAssignmentIdBySubjectId(cls.subjectId)
       : "";
@@ -325,3 +322,4 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
+
