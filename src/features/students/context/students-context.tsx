@@ -26,6 +26,9 @@ type StudentsContextValue = {
    getStudentsBySubject: (subjectId: string) => Student[];
    getStudentsByAssignment: (assignmentId: string) => Student[];
    addStudent: (input: NewStudentInput) => Student;
+   importSectionStudentsToAssignment: (
+      assignmentId: string,
+   ) => { linked: number; alreadyInGroup: number; noSourceStudents: boolean };
    unlinkSubjectFromStudents: (subjectId: string) => void;
 };
 
@@ -69,11 +72,46 @@ export function StudentsProvider({ children }: { children: React.ReactNode }) {
             throw new Error("Assignment not found for student creation.");
          }
 
+         const normalizedDni = input.dni.trim();
+         const existingByDni = students.find(
+            (student) => student.dni.trim() === normalizedDni,
+         );
+
+         if (existingByDni) {
+            const existingInstitutionId = subjects.find((subject) =>
+               existingByDni.subjectIds.includes(subject.id),
+            )?.institutionId;
+
+            if (
+               existingInstitutionId &&
+               existingInstitutionId !== assignment.institutionId
+            ) {
+               throw new Error(
+                  "El alumno ya existe en otra institucion. Solo puede pertenecer a una institucion.",
+               );
+            }
+
+            if (!existingByDni.subjectIds.includes(assignment.subjectId)) {
+               const updated: Student = {
+                  ...existingByDni,
+                  subjectIds: [...existingByDni.subjectIds, assignment.subjectId],
+               };
+               setStudents((prev) =>
+                  prev.map((student) =>
+                     student.id === existingByDni.id ? updated : student,
+                  ),
+               );
+               return updated;
+            }
+
+            return existingByDni;
+         }
+
          const nextStudent: Student = {
             id: createStudentId(),
             name: input.name.trim(),
             lastName: input.lastName.trim(),
-            dni: input.dni.trim(),
+            dni: normalizedDni,
             email: input.email?.trim() || undefined,
             subjectIds: [assignment.subjectId],
             attendance: 100,
@@ -81,8 +119,59 @@ export function StudentsProvider({ children }: { children: React.ReactNode }) {
             status: "regular",
             observations: input.observations?.trim() || undefined,
          };
+
          setStudents((prev) => [...prev, nextStudent]);
          return nextStudent;
+      },
+      importSectionStudentsToAssignment: (assignmentId) => {
+         const targetAssignment = getAssignmentById(assignmentId);
+         if (!targetAssignment) {
+            throw new Error("Assignment not found for section import.");
+         }
+
+         const sameSectionSubjectIds = subjects
+            .filter(
+               (subject) =>
+                  subject.institutionId === targetAssignment.institutionId &&
+                  subject.course === targetAssignment.section &&
+                  subject.id !== targetAssignment.subjectId,
+            )
+            .map((subject) => subject.id);
+
+         const sourceStudents = students.filter((student) =>
+            student.subjectIds.some((subjectId) =>
+               sameSectionSubjectIds.includes(subjectId),
+            ),
+         );
+
+         if (sourceStudents.length === 0) {
+            return { linked: 0, alreadyInGroup: 0, noSourceStudents: true };
+         }
+
+         let linked = 0;
+         let alreadyInGroup = 0;
+
+         setStudents((prev) =>
+            prev.map((student) => {
+               const isSource = sourceStudents.some((item) => item.id === student.id);
+               if (!isSource) {
+                  return student;
+               }
+
+               if (student.subjectIds.includes(targetAssignment.subjectId)) {
+                  alreadyInGroup += 1;
+                  return student;
+               }
+
+               linked += 1;
+               return {
+                  ...student,
+                  subjectIds: [...student.subjectIds, targetAssignment.subjectId],
+               };
+            }),
+         );
+
+         return { linked, alreadyInGroup, noSourceStudents: false };
       },
       unlinkSubjectFromStudents: (subjectId) => {
          setStudents((prev) =>
@@ -108,3 +197,4 @@ export function useStudentsContext() {
    }
    return context;
 }
+

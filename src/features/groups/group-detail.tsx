@@ -243,17 +243,34 @@ export function GroupDetail({
          return;
       }
 
-      addStudent({
-         assignmentId,
-         name: newName,
-         lastName: newLastName,
-         dni: newDni,
-         email: newEmail,
-         observations: newObservations,
-      });
-      setAddStudentOpen(false);
-      resetStudentForm();
-      toast.success("Alumno agregado correctamente");
+      const normalizedDni = newDni.trim();
+      const alreadyInGroup = groupStudents.some(
+         (student) => student.dni.trim() === normalizedDni,
+      );
+      if (alreadyInGroup) {
+         toast.error("Ese alumno ya esta vinculado a este grupo.");
+         return;
+      }
+
+      try {
+         addStudent({
+            assignmentId,
+            name: newName,
+            lastName: newLastName,
+            dni: normalizedDni,
+            email: newEmail,
+            observations: newObservations,
+         });
+         setAddStudentOpen(false);
+         resetStudentForm();
+         toast.success("Alumno agregado correctamente");
+      } catch (error) {
+         const message =
+            error instanceof Error
+               ? error.message
+               : "No se pudo agregar el alumno.";
+         toast.error(message);
+      }
    };
 
    const submitAssessment = () => {
@@ -1102,11 +1119,4 @@ export function GroupDetail({
       </div>
    );
 }
-
-
-
-
-
-
-
 

@@ -3,6 +3,7 @@ import { BookOpen, CalendarDays, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -48,7 +49,7 @@ import { toast } from "sonner";
 export function SubjectsSection() {
    const { createRecurringClasses, removeClassesByAssignment } = usePlanningContext();
    const { removeRecordsByClassIds } = useClassroomContext();
-   const { unlinkSubjectFromStudents } = useStudentsContext();
+   const { unlinkSubjectFromStudents, importSectionStudentsToAssignment } = useStudentsContext();
    const { removeAssessmentsByAssignment } = useAssessmentsContext();
    const { removeActivitiesByAssignment } = useActivitiesContext();
 
@@ -56,6 +57,7 @@ export function SubjectsSection() {
    const [institutionId, setInstitutionId] = useState(institutions[0]?.id ?? "");
    const [subjectName, setSubjectName] = useState("");
    const [course, setCourse] = useState("");
+   const [copySectionStudents, setCopySectionStudents] = useState(false);
    const [scheduleOpen, setScheduleOpen] = useState(false);
    const [scheduleInstitutionId, setScheduleInstitutionId] = useState("");
    const [scheduleAssignmentId, setScheduleAssignmentId] = useState("");
@@ -72,6 +74,7 @@ export function SubjectsSection() {
       setInstitutionId(institutions[0]?.id ?? "");
       setSubjectName("");
       setCourse("");
+      setCopySectionStudents(false);
    };
 
    const handleCreate = () => {
@@ -80,15 +83,31 @@ export function SubjectsSection() {
          return;
       }
 
-      createSubject({
+      const createdSubject = createSubject({
          institutionId,
          name: subjectName,
          course,
       });
 
+      if (copySectionStudents) {
+         const importResult = importSectionStudentsToAssignment(
+            getAssignmentIdBySubjectId(createdSubject.id),
+         );
+         if (importResult.noSourceStudents) {
+            toast.success("Materia creada. No habia alumnos en otras materias de la misma seccion.");
+         } else if (importResult.linked > 0) {
+            toast.success(
+               `Materia creada. Se vincularon ${importResult.linked} alumno(s) de la misma seccion.`,
+            );
+         } else {
+            toast.success("Materia creada. Los alumnos de la misma seccion ya estaban vinculados.");
+         }
+      } else {
+         toast.success("Materia creada correctamente.");
+      }
+
       setAddOpen(false);
       resetForm();
-      toast.success("Materia creada correctamente.");
    };
 
    const handleDelete = (subjectId: string) => {
@@ -250,6 +269,18 @@ export function SubjectsSection() {
                         placeholder="Ej: 1A"
                      />
                   </div>
+
+                  <label className="flex items-start gap-2 cursor-pointer">
+                     <Checkbox
+                        checked={copySectionStudents}
+                        onCheckedChange={(checked) => setCopySectionStudents(Boolean(checked))}
+                        className="mt-0.5"
+                     />
+                     <span className="text-xs text-muted-foreground leading-relaxed">
+                        Incluir alumnos de otras materias con la misma seccion/division
+                        (misma institucion).
+                     </span>
+                  </label>
                </div>
 
                <DialogFooter>
