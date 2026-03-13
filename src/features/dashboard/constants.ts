@@ -103,14 +103,9 @@ export function addDays(dateStr: string, days: number) {
 
 export function getWeekDaysFromToday() {
    const today = new Date();
-   const day = today.getDay();
-   const mondayOffset = day === 0 ? -6 : 1 - day;
-   const monday = new Date(today);
-   monday.setDate(today.getDate() + mondayOffset);
-
-   return Array.from({ length: 5 }, (_, index) => {
-      const date = new Date(monday);
-      date.setDate(monday.getDate() + index);
+   return Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(today);
+      date.setDate(today.getDate() + index);
       return {
          date: toIsoDate(date),
          label: date.toLocaleDateString("es-AR", { weekday: "short" }),
@@ -144,3 +139,4 @@ export function semaphoreScore(level: SemaphoreLevel) {
    if (level === "yellow") return 60;
    return 25;
 }
+
