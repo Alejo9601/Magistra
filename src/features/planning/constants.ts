@@ -9,11 +9,11 @@ export const classTypeLabels: Record<ClassSession["type"], string> = {
 };
 
 export const classTypeColors: Record<ClassSession["type"], string> = {
-   teorica: "bg-primary/10 text-primary",
-   practica: "bg-success/10 text-success",
-   evaluacion: "bg-destructive/10 text-destructive",
-   repaso: "bg-warning/10 text-warning-foreground",
-   recuperatorio: "bg-info/10 text-info",
+   teorica: "bg-info/20 text-info-foreground border border-info/45",
+   practica: "status-ok",
+   evaluacion: "status-critical",
+   repaso: "status-warning",
+   recuperatorio: "bg-info/20 text-info-foreground border border-info/45",
 };
 
 export const monthNames = [
@@ -38,7 +38,7 @@ export function getStatusLabel(status: ClassSession["status"]) {
 }
 
 export function getStatusColor(status: ClassSession["status"]) {
-   if (status === "planificada") return "bg-primary/10 text-primary";
-   if (status === "sin-planificar") return "bg-warning/10 text-warning-foreground";
-   return "bg-success/10 text-success";
+   if (status === "planificada") return "status-ok";
+   if (status === "sin-planificar") return "status-warning";
+   return "status-ok";
 }

@@ -52,7 +52,7 @@ export function PendingTasks({ activeInstitution }: { activeInstitution: string 
    });
 
    return (
-      <Card id="pending-tasks">
+      <Card id="pending-tasks" className="app-panel">
          <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                <CheckSquare className="size-4 text-primary" />

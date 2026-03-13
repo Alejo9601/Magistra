@@ -43,7 +43,7 @@ export function WeekTimeline({ activeInstitution }: { activeInstitution: string 
          <h2 className="text-sm font-semibold text-foreground mb-3">
             Agenda proxima (7 dias)
          </h2>
-         <Card>
+         <Card className="app-panel">
             <CardContent className="p-4">
                <div className="-mx-1 overflow-x-auto px-1">
                   <div className="grid min-w-[620px] grid-cols-7 gap-1">
