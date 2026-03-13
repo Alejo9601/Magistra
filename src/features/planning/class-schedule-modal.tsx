@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -119,10 +119,7 @@ export function ClassScheduleModal({
       createSlot(3, "08:00"),
    ]);
 
-   const availableAssignments = useMemo(
-      () => getAssignmentsByInstitution(institutionId),
-      [institutionId],
-   );
+   const availableAssignments = getAssignmentsByInstitution(institutionId);
 
    const reset = () => {
       setAssignmentId(

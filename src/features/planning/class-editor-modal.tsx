@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
    Dialog,
@@ -63,10 +63,7 @@ export function ClassEditorModal({
    const [notes, setNotes] = useState("");
    const [resourcesText, setResourcesText] = useState("");
 
-   const availableAssignments = useMemo(
-      () => getAssignmentsByInstitution(institutionId),
-      [institutionId],
-   );
+   const availableAssignments = getAssignmentsByInstitution(institutionId);
 
    const reset = () => {
       const nextInstitution = activeInstitution;
@@ -312,3 +309,4 @@ export function ClassEditorModal({
       </Dialog>
    );
 }
+

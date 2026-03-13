@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useState } from "react";
 import { ChevronLeft, ChevronRight, List, CalendarDays, Plus, Edit3, Eye, Copy, ClipboardCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,38 +59,28 @@ export function PlanificacionContent() {
    const [selectedDayDate, setSelectedDayDate] = useState<string | null>(null);
    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-   const scopedClasses = useMemo(
-      () => classes.filter((classSession) => classSession.institutionId === activeInstitution),
-      [classes, activeInstitution],
+   const scopedClasses = classes.filter(
+      (classSession) => classSession.institutionId === activeInstitution,
    );
 
-   const filteredClasses = useMemo(
-      () => scopedClasses.filter((classSession) => {
-         const statusMatches = statusFilter === "all" || classSession.status === statusFilter;
-         const typeMatches = typeFilter === "all" || classSession.type === typeFilter;
-         return statusMatches && typeMatches;
-      }),
-      [scopedClasses, statusFilter, typeFilter],
-   );
+   const filteredClasses = scopedClasses.filter((classSession) => {
+      const statusMatches = statusFilter === "all" || classSession.status === statusFilter;
+      const typeMatches = typeFilter === "all" || classSession.type === typeFilter;
+      return statusMatches && typeMatches;
+   });
 
-   const editingClass = useMemo(
-      () => editingClassId ? classes.find((classSession) => classSession.id === editingClassId) ?? null : null,
-      [classes, editingClassId],
-   );
+   const editingClass = editingClassId
+      ? classes.find((classSession) => classSession.id === editingClassId) ?? null
+      : null;
 
-   const listClasses = useMemo(
-      () => [...filteredClasses].sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)),
-      [filteredClasses],
+   const listClasses = [...filteredClasses].sort((a, b) =>
+      `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`),
    );
-   const selectedDayClasses = useMemo(
-      () =>
-         selectedDayDate
-            ? filteredClasses
-                 .filter((classSession) => classSession.date === selectedDayDate)
-                 .sort((a, b) => a.time.localeCompare(b.time))
-            : [],
-      [filteredClasses, selectedDayDate],
-   );
+   const selectedDayClasses = selectedDayDate
+      ? filteredClasses
+           .filter((classSession) => classSession.date === selectedDayDate)
+           .sort((a, b) => a.time.localeCompare(b.time))
+      : [];
 
    const firstDay = new Date(year, month, 1);
    const lastDay = new Date(year, month + 1, 0);
@@ -432,6 +422,7 @@ export function PlanificacionContent() {
       </div>
    );
 }
+
 
 
 
