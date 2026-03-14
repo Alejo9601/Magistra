@@ -36,11 +36,6 @@ import { useStudentsContext } from "@/features/students";
 import { useAssessmentsContext } from "@/features/assessments";
 import { useActivitiesContext } from "@/features/activities";
 import { useInstitutionContext } from "@/features/institution";
-import {
-   DEFAULT_THRESHOLDS,
-   type OperativeThresholds,
-} from "@/features/dashboard/constants";
-import { saveInstitutionOperativeThresholds } from "@/features/dashboard/services/operative-thresholds-service";
 import { toast } from "sonner";
 
 const colorOptions = [
@@ -60,48 +55,6 @@ const levelOptions = [
    "Otro",
 ] as const;
 
-type SetupTemplateId = "balanced" | "strict" | "flexible";
-
-type SetupTemplate = {
-   label: string;
-   description: string;
-   thresholds: Partial<OperativeThresholds>;
-};
-
-const setupTemplates: Record<SetupTemplateId, SetupTemplate> = {
-   balanced: {
-      label: "Balanceado",
-      description: "Equilibrio entre alertas tempranas y ruido operativo.",
-      thresholds: {
-         ...DEFAULT_THRESHOLDS,
-      },
-   },
-   strict: {
-      label: "Exigente",
-      description: "Detecta desorden antes para un seguimiento mas intenso.",
-      thresholds: {
-         ...DEFAULT_THRESHOLDS,
-         pendingWarning: 4,
-         pendingCritical: 8,
-         unplannedPctWarning: 15,
-         unplannedPctCritical: 28,
-         unplannedClassCriticalHours: 12,
-      },
-   },
-   flexible: {
-      label: "Flexible",
-      description: "Tolera mayor variacion en contextos con alta complejidad.",
-      thresholds: {
-         ...DEFAULT_THRESHOLDS,
-         pendingWarning: 8,
-         pendingCritical: 14,
-         unplannedPctWarning: 26,
-         unplannedPctCritical: 42,
-         unplannedClassCriticalHours: 36,
-      },
-   },
-};
-
 export function InstitutionsSection() {
    const { activeInstitution, setActiveInstitution } = useInstitutionContext();
    const { removeClassesByAssignment } = usePlanningContext();
@@ -115,7 +68,6 @@ export function InstitutionsSection() {
    const [name, setName] = useState("");
    const [address, setAddress] = useState("");
    const [level, setLevel] = useState<(typeof levelOptions)[number]>("Secundaria");
-   const [setupTemplate, setSetupTemplate] = useState<SetupTemplateId>("balanced");
    const [pendingDeleteInstitutionId, setPendingDeleteInstitutionId] = useState<
       string | null
    >(null);
@@ -127,7 +79,6 @@ export function InstitutionsSection() {
       setAddress("");
       setLevel("Secundaria");
       setSelectedColor(colorOptions[0]);
-      setSetupTemplate("balanced");
    };
 
    const handleCreate = () => {
@@ -136,24 +87,16 @@ export function InstitutionsSection() {
          return;
       }
 
-      const createdInstitution = createInstitution({
+      createInstitution({
          name,
          address,
          level,
          color: selectedColor,
       });
 
-      saveInstitutionOperativeThresholds(
-         createdInstitution.id,
-         setupTemplates[setupTemplate].thresholds,
-      );
-      setActiveInstitution(createdInstitution.id);
-
       setAddOpen(false);
       resetForm();
-      toast.success(
-         `Institucion creada con perfil ${setupTemplates[setupTemplate].label}.`,
-      );
+      toast.success("Institucion creada correctamente.");
    };
 
    const handleDelete = (institutionId: string) => {
@@ -306,25 +249,6 @@ export function InstitutionsSection() {
                      </div>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Perfil operativo inicial</Label>
-                     <div className="flex flex-wrap gap-2">
-                        {(Object.keys(setupTemplates) as SetupTemplateId[]).map((templateId) => (
-                           <button
-                              key={templateId}
-                              onClick={() => setSetupTemplate(templateId)}
-                              className="px-3 py-1.5 rounded-md text-xs font-medium bg-muted text-muted-foreground hover:bg-muted/80 transition-colors data-[active=true]:bg-primary data-[active=true]:text-primary-foreground"
-                              data-active={setupTemplate === templateId}
-                           >
-                              {setupTemplates[templateId].label}
-                           </button>
-                        ))}
-                     </div>
-                     <p className="text-[11px] text-muted-foreground leading-relaxed">
-                        {setupTemplates[setupTemplate].description} Puedes ajustarlo luego en
-                        Reglas Operativas.
-                     </p>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
                      <Label className="text-xs">Color identificador</Label>
                      <div className="flex gap-2">
                         {colorOptions.map((color) => (
@@ -387,3 +311,4 @@ export function InstitutionsSection() {
       </>
    );
 }
+
