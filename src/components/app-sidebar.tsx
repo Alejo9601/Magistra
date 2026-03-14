@@ -35,11 +35,22 @@ const navItems = [
    { title: "Configuracion", url: "/configuracion", icon: Settings },
 ];
 
+function buildAvatar(name: string, lastName: string) {
+   const first = name.trim().charAt(0).toUpperCase();
+   const last = lastName.trim().charAt(0).toUpperCase();
+   return `${first}${last}`.trim();
+}
+
 export function AppSidebar() {
    const { pathname } = useLocation();
    const { state } = useSidebar();
    const { teacherProfile } = useTeacherContext();
    const collapsed = state === "collapsed";
+
+   const fallbackAvatar =
+      teacherProfile.avatar ||
+      buildAvatar(teacherProfile.name, teacherProfile.lastName) ||
+      "--";
 
    return (
       <Sidebar
@@ -98,7 +109,7 @@ export function AppSidebar() {
             <div className="flex items-center gap-2.5 px-1 py-1">
                <Avatar className="size-8 shrink-0">
                   <AvatarFallback className="bg-primary/12 text-primary text-xs font-semibold">
-                     {teacherProfile.avatar}
+                     {fallbackAvatar}
                   </AvatarFallback>
                </Avatar>
                {!collapsed && (
@@ -118,4 +129,3 @@ export function AppSidebar() {
       </Sidebar>
    );
 }
-

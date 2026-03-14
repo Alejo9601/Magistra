@@ -1,9 +1,10 @@
-import { createContext, useContext, useEffect, useState } from "react";
+﻿import { createContext, useContext, useEffect, useState } from "react";
 import type { TeacherProfile } from "@/types";
 import {
    loadTeacherProfile,
    saveTeacherProfile,
 } from "@/features/teacher/services/teacher-service";
+import { storageKeys } from "@/services/app-data-bootstrap-service";
 
 type TeacherProfileInput = {
    name: string;
@@ -19,23 +20,49 @@ type TeacherContextValue = {
 
 const TeacherContext = createContext<TeacherContextValue | null>(null);
 
+function buildAvatar(name: string, lastName: string) {
+   const first = name.trim().charAt(0).toUpperCase();
+   const last = lastName.trim().charAt(0).toUpperCase();
+   return `${first}${last}`.trim();
+}
+
 export function TeacherProvider({ children }: { children: React.ReactNode }) {
    const [teacherProfile, setTeacherProfile] = useState<TeacherProfile>(
       loadTeacherProfile,
    );
 
    useEffect(() => {
+      // Rehydrate from storage on mount to avoid stale sidebar/profile data.
+      setTeacherProfile(loadTeacherProfile());
+   }, []);
+
+   useEffect(() => {
       saveTeacherProfile(teacherProfile);
    }, [teacherProfile]);
+
+   useEffect(() => {
+      const onStorage = (event: StorageEvent) => {
+         if (event.key === storageKeys.teacherProfile) {
+            setTeacherProfile(loadTeacherProfile());
+         }
+      };
+      window.addEventListener("storage", onStorage);
+      return () => window.removeEventListener("storage", onStorage);
+   }, []);
 
    const value: TeacherContextValue = {
       teacherProfile,
       updateTeacherProfile: (patch) => {
+         const name = patch.name.trim();
+         const lastName = patch.lastName.trim();
+         const email = patch.email.trim();
+         const avatar = patch.avatar.trim() || buildAvatar(name, lastName);
+
          setTeacherProfile({
-            name: patch.name.trim(),
-            lastName: patch.lastName.trim(),
-            email: patch.email.trim(),
-            avatar: patch.avatar.trim(),
+            name,
+            lastName,
+            email,
+            avatar,
          });
       },
    };
