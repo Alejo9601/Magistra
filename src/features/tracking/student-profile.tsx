@@ -1,4 +1,4 @@
-﻿import { useMemo } from "react";
+import { useMemo } from "react";
 import { Calendar, Star, ShieldAlert, ArrowLeft, MessageSquare } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -148,12 +148,18 @@ export function StudentProfile({
    const absentCount = attendanceEntries.filter((entry) => entry.status === "A").length;
    const lateCount = attendanceEntries.filter((entry) => entry.status === "T").length;
 
+   const hasGrades = student.average > 0;
+   const hasEnoughAttendanceEvidence = attendanceEntries.length >= 2;
    const riskLevel =
-      attendancePct < 65 || student.average < 6
+      student.status === "en-riesgo"
          ? "alto"
-         : attendancePct < 80 || student.average < 7
-           ? "medio"
-           : "bajo";
+         : !hasGrades && !hasEnoughAttendanceEvidence
+           ? "sin-datos"
+           : attendancePct < 65 || (hasGrades && student.average < 6)
+             ? "alto"
+             : attendancePct < 80 || (hasGrades && student.average < 7)
+               ? "medio"
+               : "bajo";
 
    const observations = student.observations
       ? [
@@ -216,7 +222,7 @@ export function StudentProfile({
                         Promedio
                      </p>
                      <p className="text-2xl font-bold text-foreground">
-                        {student.average.toFixed(1)}
+                        {student.average > 0 ? student.average.toFixed(1) : "Sin datos"}
                      </p>
                   </div>
                </CardContent>
@@ -231,9 +237,9 @@ export function StudentProfile({
                         Riesgo academico
                      </p>
                      <Badge
-                        className={`border-0 text-[10px] capitalize ${riskLevel === "alto" ? "bg-destructive/15 text-destructive" : riskLevel === "medio" ? "bg-warning/15 text-warning-foreground" : "bg-success/15 text-success"}`}
+                        className={`border-0 text-[10px] capitalize ${riskLevel === "alto" ? "bg-destructive/15 text-destructive" : riskLevel === "medio" ? "bg-warning/15 text-warning-foreground" : riskLevel === "bajo" ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}`}
                      >
-                        {riskLevel}
+                        {riskLevel === "sin-datos" ? "sin datos" : riskLevel}
                      </Badge>
                   </div>
                </CardContent>
@@ -349,4 +355,3 @@ export function StudentProfile({
       </div>
    );
 }
-

@@ -15,7 +15,7 @@ function addDays(dateStr: string, days: number) {
    return `${yyyy}-${mm}-${dd}`;
 }
 
-function computeStudentAttendancePct(
+function computeStudentAttendanceStats(
    student: Student,
    institutionClasses: ClassSession[],
    getAttendanceByClassId: (
@@ -32,7 +32,10 @@ function computeStudentAttendancePct(
       .filter((status): status is "P" | "A" | "T" | "J" => Boolean(status));
 
    if (statuses.length === 0) {
-      return student.attendance;
+      return {
+         attendancePct: student.attendance,
+         attendanceSamples: 0,
+      };
    }
 
    const attendedWeight = statuses.reduce((sum, status) => {
@@ -41,7 +44,10 @@ function computeStudentAttendancePct(
       return sum;
    }, 0);
 
-   return Math.round((attendedWeight / statuses.length) * 100);
+   return {
+      attendancePct: Math.round((attendedWeight / statuses.length) * 100),
+      attendanceSamples: statuses.length,
+   };
 }
 
 export function getAtRiskStudentsFromLiveData(
@@ -53,12 +59,23 @@ export function getAtRiskStudentsFromLiveData(
    ) => "P" | "A" | "T" | "J" | undefined,
 ) {
    return students.filter((student) => {
-      const attendancePct = computeStudentAttendancePct(
+      if (student.status === "en-riesgo") {
+         return true;
+      }
+
+      const { attendancePct, attendanceSamples } = computeStudentAttendanceStats(
          student,
          institutionClasses,
          getAttendanceByClassId,
       );
-      return attendancePct < 65 || student.average < 6 || student.status === "en-riesgo";
+
+      const hasGrades = student.average > 0;
+      const hasEnoughAttendanceEvidence = attendanceSamples >= 2;
+      if (!hasGrades && !hasEnoughAttendanceEvidence) {
+         return false;
+      }
+
+      return attendancePct < 65 || (hasGrades && student.average < 6);
    });
 }
 

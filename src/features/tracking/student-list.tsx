@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { FilterX, Search, SearchX, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,11 +16,26 @@ import { useStudentsContext } from "@/features/students";
 import { usePlanningContext } from "@/features/planning";
 import { useClassroomContext } from "@/features/classroom";
 
-type RiskLevel = "high" | "medium" | "low";
+type RiskLevel = "high" | "medium" | "low" | "no-data";
 
-function getRiskLevel(attendance: number, average: number): RiskLevel {
-   if (attendance < 65 || average < 6) return "high";
-   if (attendance < 80 || average < 7) return "medium";
+function getRiskLevel(params: {
+   attendance: number;
+   average: number;
+   attendanceSamples: number;
+   manualStatus: "regular" | "en-riesgo" | "destacado";
+}): RiskLevel {
+   const { attendance, average, attendanceSamples, manualStatus } = params;
+   if (manualStatus === "en-riesgo") return "high";
+
+   const hasGrades = average > 0;
+   const hasEnoughAttendanceEvidence = attendanceSamples >= 2;
+
+   if (!hasGrades && !hasEnoughAttendanceEvidence) {
+      return "no-data";
+   }
+
+   if (attendance < 65 || (hasGrades && average < 6)) return "high";
+   if (attendance < 80 || (hasGrades && average < 7)) return "medium";
    return "low";
 }
 
@@ -51,7 +66,13 @@ export function StudentList({
       );
       const output = new Map<
          string,
-         { attendance: number; absences: number; lateness: number; risk: RiskLevel }
+         {
+            attendance: number;
+            attendanceSamples: number;
+            absences: number;
+            lateness: number;
+            risk: RiskLevel;
+         }
       >();
 
       searchedStudents.forEach((student) => {
@@ -67,11 +88,18 @@ export function StudentList({
          const lateness = statuses.filter((status) => status === "T").length;
 
          if (statuses.length === 0) {
+            const attendance = student.attendance;
             output.set(student.id, {
-               attendance: student.attendance,
+               attendance,
+               attendanceSamples: 0,
                absences: 0,
                lateness: 0,
-               risk: getRiskLevel(student.attendance, student.average),
+               risk: getRiskLevel({
+                  attendance,
+                  average: student.average,
+                  attendanceSamples: 0,
+                  manualStatus: student.status,
+               }),
             });
             return;
          }
@@ -85,9 +113,15 @@ export function StudentList({
 
          output.set(student.id, {
             attendance,
+            attendanceSamples: statuses.length,
             absences,
             lateness,
-            risk: getRiskLevel(attendance, student.average),
+            risk: getRiskLevel({
+               attendance,
+               average: student.average,
+               attendanceSamples: statuses.length,
+               manualStatus: student.status,
+            }),
          });
       });
 
@@ -155,9 +189,15 @@ export function StudentList({
                            studentStats.get(student.id) ??
                            {
                               attendance: student.attendance,
+                              attendanceSamples: 0,
                               absences: 0,
                               lateness: 0,
-                              risk: getRiskLevel(student.attendance, student.average),
+                              risk: getRiskLevel({
+                                 attendance: student.attendance,
+                                 average: student.average,
+                                 attendanceSamples: 0,
+                                 manualStatus: student.status,
+                              }),
                            };
                         return (
                            <TableRow
@@ -185,7 +225,7 @@ export function StudentList({
                               </TableCell>
                               <TableCell className="text-xs">{stats.attendance}%</TableCell>
                               <TableCell className="text-xs font-medium">
-                                 {student.average.toFixed(1)}
+                                 {student.average > 0 ? student.average.toFixed(1) : "Sin datos"}
                               </TableCell>
                               <TableCell>
                                  <div className="flex gap-1">
@@ -204,14 +244,18 @@ export function StudentList({
                                           ? "bg-destructive/15 text-destructive"
                                           : stats.risk === "medium"
                                             ? "bg-warning/15 text-warning-foreground"
-                                            : "bg-success/15 text-success"
+                                            : stats.risk === "low"
+                                              ? "bg-success/15 text-success"
+                                              : "bg-muted text-muted-foreground"
                                     }`}
                                  >
                                     {stats.risk === "high"
                                        ? "alto"
                                        : stats.risk === "medium"
                                          ? "medio"
-                                         : "bajo"}
+                                         : stats.risk === "low"
+                                           ? "bajo"
+                                           : "sin datos"}
                                  </Badge>
                               </TableCell>
                            </TableRow>
@@ -259,4 +303,5 @@ export function StudentList({
       </div>
    );
 }
+
 
