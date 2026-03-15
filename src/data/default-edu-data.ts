@@ -5,11 +5,11 @@ export const defaultEduData = {
       { id: "inst-3", name: "Universidad Nacional del Sur", address: "Av. Colon 80, Bahia Blanca", level: "Universidad", color: "#059669" },
    ],
    subjects: [
-      { id: "sub-1", name: "Matematica", institutionId: "inst-1", course: "3ro A", studentCount: 28, planProgress: 72 },
-      { id: "sub-2", name: "Fisica", institutionId: "inst-1", course: "5to B", studentCount: 24, planProgress: 65 },
-      { id: "sub-3", name: "Matematica", institutionId: "inst-2", course: "4to C", studentCount: 30, planProgress: 80 },
-      { id: "sub-4", name: "Algebra Lineal", institutionId: "inst-3", course: "2do Anio", studentCount: 45, planProgress: 55 },
-      { id: "sub-5", name: "Calculo II", institutionId: "inst-3", course: "3er Anio", studentCount: 38, planProgress: 40 },
+      { id: "sub-1", name: "Matematica", institutionId: "inst-1", course: "3ro A", periodFormat: "trimestral", studentCount: 28, planProgress: 72 },
+      { id: "sub-2", name: "Fisica", institutionId: "inst-1", course: "5to B", periodFormat: "cuatrimestral", studentCount: 24, planProgress: 65 },
+      { id: "sub-3", name: "Matematica", institutionId: "inst-2", course: "4to C", periodFormat: "trimestral", studentCount: 30, planProgress: 80 },
+      { id: "sub-4", name: "Algebra Lineal", institutionId: "inst-3", course: "2do Anio", periodFormat: "cuatrimestral", studentCount: 45, planProgress: 55 },
+      { id: "sub-5", name: "Calculo II", institutionId: "inst-3", course: "3er Anio", periodFormat: "cuatrimestral", studentCount: 38, planProgress: 40 },
    ],
    students: [
       { id: "stu-1", name: "Lucia", lastName: "Fernandez", dni: "45123678", email: "lucia.f@email.com", subjectIds: ["sub-1", "sub-2"], attendance: 92, average: 8.5, status: "destacado" },

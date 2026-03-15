@@ -1,4 +1,4 @@
-﻿import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
+import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
 import { defaultEduData } from "@/data/default-edu-data";
 import { storageKeys } from "@/services/app-data-bootstrap-service";
 import type {
@@ -83,6 +83,10 @@ function sanitizeInstitution(raw: unknown): Institution | null {
    };
 }
 
+function isAcademicPeriodFormat(value: unknown): value is Subject["periodFormat"] {
+   return value === "trimestral" || value === "cuatrimestral";
+}
+
 function sanitizeSubject(raw: unknown): Subject | null {
    if (!raw || typeof raw !== "object") {
       return null;
@@ -103,6 +107,9 @@ function sanitizeSubject(raw: unknown): Subject | null {
       name: input.name,
       institutionId: input.institutionId,
       course: input.course,
+      periodFormat: isAcademicPeriodFormat(input.periodFormat)
+         ? input.periodFormat
+         : "trimestral",
       studentCount: input.studentCount,
       planProgress: input.planProgress,
    };
@@ -243,12 +250,14 @@ export function createSubject(input: {
    institutionId: string;
    name: string;
    course: string;
+   periodFormat: Subject["periodFormat"];
 }) {
    const next: Subject = {
       id: `sub-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
       institutionId: input.institutionId,
       name: input.name.trim(),
       course: input.course.trim(),
+      periodFormat: input.periodFormat,
       studentCount: 0,
       planProgress: 0,
    };
@@ -415,7 +424,3 @@ export function getInstitutionRepository(institutionId: string) {
 }
 
 export type InstitutionRepository = ReturnType<typeof getInstitutionRepository>;
-
-
-
-

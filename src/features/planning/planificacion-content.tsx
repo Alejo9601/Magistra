@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState, type TouchEvent } from "react";
 import {
    ChevronLeft,
    ChevronRight,
@@ -67,6 +67,7 @@ export function PlanificacionContent() {
    const isMobile = useIsMobile();
    const [searchParams] = useSearchParams();
    const today = new Date();
+   const swipeStartXRef = useRef<number | null>(null);
 
    const [view, setView] = useState<ViewMode>("calendar");
    const [month, setMonth] = useState(today.getMonth());
@@ -154,6 +155,41 @@ export function PlanificacionContent() {
          isPastDate: dateStr < todayStr,
       };
    });
+
+   const goToAdjacentMonth = (delta: -1 | 1) => {
+      setMonth((currentMonth) => {
+         if (delta === -1 && currentMonth === 0) {
+            setYear((currentYear) => currentYear - 1);
+            return 11;
+         }
+         if (delta === 1 && currentMonth === 11) {
+            setYear((currentYear) => currentYear + 1);
+            return 0;
+         }
+         return currentMonth + delta;
+      });
+   };
+
+   const handleCalendarTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+      swipeStartXRef.current = event.touches[0]?.clientX ?? null;
+   };
+
+   const handleCalendarTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+      const startX = swipeStartXRef.current;
+      swipeStartXRef.current = null;
+      if (startX === null) {
+         return;
+      }
+      const endX = event.changedTouches[0]?.clientX;
+      if (typeof endX !== "number") {
+         return;
+      }
+      const deltaX = endX - startX;
+      if (Math.abs(deltaX) < 40) {
+         return;
+      }
+      goToAdjacentMonth(deltaX > 0 ? -1 : 1);
+   };
 
    const openCreateModal = (date?: string) => {
       setEditingClassId(null);
@@ -292,35 +328,32 @@ export function PlanificacionContent() {
 
             <div className="mb-4 flex flex-wrap items-center gap-2">
                {view === "calendar" && (
-                  <div className="flex shrink-0 items-center gap-2">
-                     <Button
-                        variant="outline"
-                        size="icon"
-                        className="size-8"
-                        onClick={() =>
-                           month === 0
-                              ? (setMonth(11), setYear((y) => y - 1))
-                              : setMonth((m) => m - 1)
-                        }
-                     >
-                        <ChevronLeft className="size-4" />
-                     </Button>
-                     <h2 className="min-w-[170px] px-2 text-center text-sm font-semibold text-foreground">
+                  <>
+                     <h2 className="text-sm font-semibold text-foreground sm:hidden">
                         {monthNames[month]} {year}
                      </h2>
-                     <Button
-                        variant="outline"
-                        size="icon"
-                        className="size-8"
-                        onClick={() =>
-                           month === 11
-                              ? (setMonth(0), setYear((y) => y + 1))
-                              : setMonth((m) => m + 1)
-                        }
-                     >
-                        <ChevronRight className="size-4" />
-                     </Button>
-                  </div>
+                     <div className="hidden shrink-0 items-center gap-2 sm:flex">
+                        <Button
+                           variant="outline"
+                           size="icon"
+                           className="size-8"
+                           onClick={() => goToAdjacentMonth(-1)}
+                        >
+                           <ChevronLeft className="size-4" />
+                        </Button>
+                        <h2 className="min-w-[170px] px-2 text-center text-sm font-semibold text-foreground">
+                           {monthNames[month]} {year}
+                        </h2>
+                        <Button
+                           variant="outline"
+                           size="icon"
+                           className="size-8"
+                           onClick={() => goToAdjacentMonth(1)}
+                        >
+                           <ChevronRight className="size-4" />
+                        </Button>
+                     </div>
+                  </>
                )}
 
                <Select
@@ -370,7 +403,7 @@ export function PlanificacionContent() {
                <Card className="w-full">
                   <CardContent className="overflow-x-auto p-0">
                      {isMobile ? (
-                        <div className="p-1.5">
+                        <div className="p-1.5" onTouchStart={handleCalendarTouchStart} onTouchEnd={handleCalendarTouchEnd}>
                            <div className="mb-1 grid grid-cols-7 gap-1">
                               {["L", "M", "X", "J", "V", "S", "D"].map(
                                  (day) => (
@@ -974,3 +1007,6 @@ export function PlanificacionContent() {
       </div>
    );
 }
+
+
+

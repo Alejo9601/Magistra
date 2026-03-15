@@ -2,7 +2,6 @@
 import { ProfileSection } from "@/features/settings/sections/profile-section";
 import { InstitutionsSection } from "@/features/settings/sections/institutions-section";
 import { SubjectsSection } from "@/features/settings/sections/subjects-section";
-import { PeriodsSection } from "@/features/settings/sections/periods-section";
 import { NotificationsSection } from "@/features/settings/sections/notifications-section";
 import { OperativeThresholdsSection } from "@/features/settings/sections/operative-thresholds-section";
 import { AppearanceSection } from "@/features/settings/sections/appearance-section";
@@ -29,9 +28,6 @@ export function ConfiguracionContent() {
                <TabsTrigger value="materias" className="text-xs">
                   Materias
                </TabsTrigger>
-               <TabsTrigger value="periodos" className="text-xs">
-                  Periodos
-               </TabsTrigger>
                <TabsTrigger value="notificaciones" className="text-xs">
                   Notificaciones
                </TabsTrigger>
@@ -53,9 +49,6 @@ export function ConfiguracionContent() {
             <TabsContent value="materias">
                <SubjectsSection />
             </TabsContent>
-            <TabsContent value="periodos">
-               <PeriodsSection />
-            </TabsContent>
             <TabsContent value="notificaciones">
                <NotificationsSection />
             </TabsContent>
@@ -69,4 +62,5 @@ export function ConfiguracionContent() {
       </div>
    );
 }
+
 

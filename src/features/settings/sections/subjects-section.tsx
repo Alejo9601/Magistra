@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { BookOpen, CalendarDays, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -46,6 +46,15 @@ import { useAssessmentsContext } from "@/features/assessments";
 import { useActivitiesContext } from "@/features/activities";
 import { toast } from "sonner";
 
+const periodFormatOptions = [
+   { value: "trimestral", label: "Trimestral" },
+   { value: "cuatrimestral", label: "Cuatrimestral" },
+] as const;
+
+function periodFormatLabel(value: (typeof periodFormatOptions)[number]["value"]) {
+   return periodFormatOptions.find((option) => option.value === value)?.label ?? "Trimestral";
+}
+
 export function SubjectsSection() {
    const { createRecurringClasses, removeClassesByAssignment } = usePlanningContext();
    const { removeRecordsByClassIds } = useClassroomContext();
@@ -57,6 +66,7 @@ export function SubjectsSection() {
    const [institutionId, setInstitutionId] = useState(institutions[0]?.id ?? "");
    const [subjectName, setSubjectName] = useState("");
    const [course, setCourse] = useState("");
+   const [periodFormat, setPeriodFormat] = useState<(typeof periodFormatOptions)[number]["value"]>("trimestral");
    const [copySectionStudents, setCopySectionStudents] = useState(false);
    const [scheduleOpen, setScheduleOpen] = useState(false);
    const [scheduleInstitutionId, setScheduleInstitutionId] = useState("");
@@ -74,6 +84,7 @@ export function SubjectsSection() {
       setInstitutionId(institutions[0]?.id ?? "");
       setSubjectName("");
       setCourse("");
+      setPeriodFormat("trimestral");
       setCopySectionStudents(false);
    };
 
@@ -87,6 +98,7 @@ export function SubjectsSection() {
          institutionId,
          name: subjectName,
          course,
+         periodFormat,
       });
 
       if (copySectionStudents) {
@@ -172,7 +184,7 @@ export function SubjectsSection() {
                                     {sub.name}
                                  </span>
                                  <span className="text-xs text-muted-foreground ml-2">
-                                    {sub.course}
+                                    {sub.course} - {periodFormatLabel(sub.periodFormat)}
                                  </span>
                               </div>
                               <div className="flex items-center gap-1">
@@ -270,6 +282,29 @@ export function SubjectsSection() {
                      />
                   </div>
 
+
+
+                  <div className="flex flex-col gap-1.5">
+                     <Label className="text-xs">Formato de periodo</Label>
+                     <Select
+                        value={periodFormat}
+                        onValueChange={(value) =>
+                           setPeriodFormat(value as (typeof periodFormatOptions)[number]["value"])
+                        }
+                     >
+                        <SelectTrigger className="h-9 text-xs">
+                           <SelectValue placeholder="Seleccionar..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                           {periodFormatOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                 {option.label}
+                              </SelectItem>
+                           ))}
+                        </SelectContent>
+                     </Select>
+                  </div>
+
                   <label className="flex items-start gap-2 cursor-pointer">
                      <Checkbox
                         checked={copySectionStudents}
@@ -341,4 +376,3 @@ export function SubjectsSection() {
       </>
    );
 }
-

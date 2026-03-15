@@ -11,9 +11,12 @@ export type Subject = {
    name: string;
    institutionId: string;
    course: string;
+   periodFormat: AcademicPeriodFormat;
    studentCount: number;
    planProgress: number;
 };
+
+export type AcademicPeriodFormat = "trimestral" | "cuatrimestral";
 
 export type TeachingAssignment = {
    id: string;
