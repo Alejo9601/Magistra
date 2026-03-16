@@ -1,6 +1,6 @@
 ﻿import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Plus, Search, BookOpen, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Search, BookOpen, Trash2, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -64,24 +64,31 @@ import {
    type ActivityType,
 } from "@/features/activities";
 
+const evaluativeClassTypeLabel: Record<string, string> = {
+   oral: "Oral",
+   escrito: "Escrito",
+   "actividad-practica": "Actividad Practica",
+   otro: "Otro",
+   "exposicion-oral": "Oral",
+   "examen-escrito": "Escrito",
+   "examen-oral": "Oral",
+   "trabajo-practico-evaluativo": "Actividad Practica",
+};
+
 const assessmentTypeLabel: Record<AssessmentType, string> = {
    exam: "Examen",
    practice_work: "Trabajo practico",
 };
 
-const assessmentStatusLabel: Record<AssessmentStatus, string> = {
-   draft: "Borrador",
-   scheduled: "Programada",
-   published: "Publicada",
-   graded: "Corregida",
-};
 
-const assessmentStatusBadgeClass: Record<AssessmentStatus, string> = {
-   draft: "bg-muted text-muted-foreground",
-   scheduled: "bg-primary/10 text-primary",
-   published: "bg-info/10 text-info",
-   graded: "bg-success/10 text-success",
-};
+function inferEvaluativeTypeFromTitle(title: string) {
+   const normalized = title.trim().toLowerCase();
+   if (normalized.startsWith("oral:")) return "Oral";
+   if (normalized.startsWith("escrito:")) return "Escrito";
+   if (normalized.startsWith("actividad practica:")) return "Actividad Practica";
+   if (normalized.startsWith("otro:")) return "Otro";
+   return null;
+}
 
 const activityTypeLabel: Record<ActivityType, string> = {
    classwork: "En clase",
@@ -526,7 +533,7 @@ export function GroupDetail({
                />
             </TabsContent>
 
-            <TabsContent value="evaluaciones">
+                        <TabsContent value="evaluaciones">
                <div className="mt-2 mb-3 flex items-center justify-end">
                   <Button
                      size="sm"
@@ -539,89 +546,107 @@ export function GroupDetail({
                </div>
                <Card className="mt-2">
                   <CardContent className="p-0">
-                     <Table className="min-w-[860px]">
+                     <Table className="min-w-[980px]">
                         <TableHeader>
                            <TableRow>
-                              <TableHead className="text-xs">
-                                 Evaluacion
-                              </TableHead>
-                              <TableHead className="text-xs">Fecha</TableHead>
+                              <TableHead className="text-xs">Nombre de la evaluacion</TableHead>
+                              <TableHead className="text-xs">Fecha clase relacionada</TableHead>
                               <TableHead className="text-xs">Tipo</TableHead>
                               <TableHead className="text-xs">Estado</TableHead>
-                              <TableHead className="text-xs">
-                                 Notas cargadas
-                              </TableHead>
-                              <TableHead className="text-xs text-right">
-                                 Acciones
-                              </TableHead>
+                              <TableHead className="text-xs">Notas cargadas</TableHead>
+                              <TableHead className="text-xs text-right">Acciones</TableHead>
                            </TableRow>
                         </TableHeader>
                         <TableBody>
                            {groupAssessments.map((assessment) => {
-                              const dateObj = new Date(
-                                 assessment.date + "T12:00:00",
-                              );
+                              const linkedClass = assessment.linkedClassId
+                                 ? groupClasses.find((classSession) => classSession.id === assessment.linkedClassId) ?? null
+                                 : null;
+                              const linkedClassDate = linkedClass
+                                 ? new Date(linkedClass.date + "T12:00:00").toLocaleDateString("es-AR", {
+                                      day: "2-digit",
+                                      month: "short",
+                                   })
+                                 : "Sin clase";
+                              const inferredAssessmentType = inferEvaluativeTypeFromTitle(assessment.title);
+                              const linkedClassType = linkedClass?.evaluativeFormat
+                                 ? evaluativeClassTypeLabel[linkedClass.evaluativeFormat] ?? inferredAssessmentType ?? assessmentTypeLabel[assessment.type]
+                                 : inferredAssessmentType ?? assessmentTypeLabel[assessment.type];
+                              const derivedStatus = linkedClass
+                                 ? linkedClass.status === "finalizada"
+                                    ? "Finalizado"
+                                    : "Pendiente"
+                                 : assessment.status === "graded"
+                                    ? "Finalizado"
+                                    : "Pendiente";
+                              const derivedStatusClass =
+                                 derivedStatus === "Finalizado"
+                                    ? "bg-success/10 text-success"
+                                    : "bg-warning/10 text-warning-foreground";
                               return (
-                                 <TableRow
-                                    key={assessment.id}
-                                    className="hover:bg-muted/30"
-                                 >
+                                 <TableRow key={assessment.id} className="hover:bg-muted/30">
                                     <TableCell className="text-xs font-medium">
                                        {assessment.title}
                                     </TableCell>
-                                    <TableCell className="text-xs">
-                                       {dateObj.toLocaleDateString("es-AR", {
-                                          day: "2-digit",
-                                          month: "short",
-                                       })}
+                                    <TableCell className="text-xs text-muted-foreground">
+                                       {linkedClassDate}
                                     </TableCell>
                                     <TableCell>
-                                       <Badge
-                                          variant="secondary"
-                                          className="text-[10px] capitalize"
-                                       >
-                                          {assessmentTypeLabel[assessment.type]}
+                                       <Badge variant="secondary" className="text-[10px] capitalize">
+                                          {linkedClassType}
                                        </Badge>
                                     </TableCell>
                                     <TableCell>
                                        <Badge
-                                          className={`border-0 text-[10px] ${assessmentStatusBadgeClass[assessment.status]}`}
+                                          className={`border-0 text-[10px] ${derivedStatusClass}`}
                                        >
-                                          {assessmentStatusLabel[assessment.status]}
+                                          {derivedStatus}
                                        </Badge>
                                     </TableCell>
                                     <TableCell>
                                        <span className="text-xs text-muted-foreground">
-                                          {assessment.gradesLoaded} /{" "}
-                                          {groupStudents.length}
+                                          {assessment.gradesLoaded} / {groupStudents.length}
                                        </span>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                       <Button
-                                          type="button"
-                                          variant="ghost"
-                                          size="icon"
-                                          className="size-7"
-                                          onClick={() =>
-                                             setPendingDelete({
-                                                kind: "assessment",
-                                                id: assessment.id,
-                                                title: assessment.title,
-                                             })
-                                          }
-                                       >
-                                          <Trash2 className="size-3.5 text-muted-foreground" />
-                                       </Button>
+                                       <div className="inline-flex items-center gap-1">
+                                          {assessment.linkedClassId ? (
+                                             <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-7 px-2 text-xs"
+                                                asChild
+                                             >
+                                                <Link to={`/clase/${assessment.linkedClassId}/dictado`}>
+                                                   <Eye className="size-3.5 mr-1" />
+                                                   Ver notas
+                                                </Link>
+                                             </Button>
+                                          ) : null}
+                                          <Button
+                                             type="button"
+                                             variant="ghost"
+                                             size="icon"
+                                             className="size-7"
+                                             onClick={() =>
+                                                setPendingDelete({
+                                                   kind: "assessment",
+                                                   id: assessment.id,
+                                                   title: assessment.title,
+                                                })
+                                             }
+                                          >
+                                             <Trash2 className="size-3.5 text-muted-foreground" />
+                                          </Button>
+                                       </div>
                                     </TableCell>
                                  </TableRow>
                               );
                            })}
                            {groupAssessments.length === 0 && (
                               <TableRow>
-                                 <TableCell
-                                    colSpan={6}
-                                    className="text-center py-8"
-                                 >
+                                 <TableCell colSpan={7} className="text-center py-8">
                                     <BookOpen className="size-8 text-muted-foreground/30 mx-auto mb-2" />
                                     <p className="text-xs text-muted-foreground">
                                        No hay evaluaciones registradas
@@ -662,6 +687,7 @@ export function GroupDetail({
                            <TableRow>
                               <TableHead className="text-xs">Actividad</TableHead>
                               <TableHead className="text-xs">Tipo</TableHead>
+                              <TableHead className="text-xs">Clase relacionada</TableHead>
                               <TableHead className="text-xs">Estado</TableHead>
                               <TableHead className="text-xs">
                                  Clases vinculadas
@@ -1119,4 +1145,7 @@ export function GroupDetail({
       </div>
    );
 }
+
+
+
 
