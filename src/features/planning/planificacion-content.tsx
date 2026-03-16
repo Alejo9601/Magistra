@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type TouchEvent } from "react";
+﻿import { useEffect, useMemo, useRef, useState, type TouchEvent } from "react";
 import {
    ChevronLeft,
    ChevronRight,
@@ -403,10 +403,7 @@ export function PlanificacionContent() {
       <div className="flex h-full min-h-0 max-h-full w-full flex-col overflow-hidden p-3 sm:p-6">
          <div className="-mx-3 mb-4 border-b border-border/70 bg-background/95 px-3 pb-3 sm:-mx-6 sm:px-6">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pt-1">
-               <div>
-                  <h1 className="text-xl font-bold text-foreground">
-                     Planificacion
-                  </h1>
+               <div>
                   <p className="text-sm text-muted-foreground">
                      Organiza, edita y publica tus clases por institucion.
                   </p>
@@ -1125,6 +1122,7 @@ export function PlanificacionContent() {
       </div>
    );
 }
+
 
 
 

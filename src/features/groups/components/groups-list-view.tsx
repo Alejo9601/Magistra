@@ -22,7 +22,6 @@ export function GroupsListView({
    return (
       <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:p-6">
          <div className="mb-6">
-            <h1 className="text-xl font-bold text-foreground">Mis Grupos</h1>
             <p className="text-sm text-muted-foreground">
                Todos tus grupos activos
             </p>
@@ -80,4 +79,5 @@ export function GroupsListView({
       </div>
    );
 }
+
 

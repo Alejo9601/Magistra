@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { FilterX, Search, SearchX, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -155,7 +155,6 @@ export function StudentList({
    return (
       <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:p-6">
          <div className="mb-6">
-            <h1 className="text-xl font-bold text-foreground">Seguimiento</h1>
             <p className="text-sm text-muted-foreground">
                Vista longitudinal por alumno: riesgo, alertas y evolucion
             </p>
@@ -303,5 +302,6 @@ export function StudentList({
       </div>
    );
 }
+
 
 

@@ -9,8 +9,7 @@ import { AppearanceSection } from "@/features/settings/sections/appearance-secti
 export function ConfiguracionContent() {
    return (
       <div className="mx-auto w-full max-w-4xl px-3 py-4 sm:p-6">
-         <div className="mb-6">
-            <h1 className="text-xl font-bold text-foreground">Configuracion</h1>
+         <div className="mb-6">
             <p className="text-sm text-muted-foreground">
                Gestiona tu perfil, instituciones y preferencias
             </p>
@@ -62,5 +61,6 @@ export function ConfiguracionContent() {
       </div>
    );
 }
+
 
 
