@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, ClipboardCheck, Plus, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -188,6 +188,7 @@ export function ClaseDictadoContent() {
    const completedSubtopicsCount = cls.subtopics.filter((subtopic) =>
       record.completedSubtopics.includes(subtopic),
    ).length;
+   const isFinalized = cls.status === "finalizada";
 
    const syncAssessmentGradesLoaded = (
       entries: ClassroomPerformanceEntry[],
@@ -364,25 +365,41 @@ export function ClaseDictadoContent() {
                <div>
                   <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
                      <ClipboardCheck className="size-5 text-primary" />
-                     Vista de Dictado
+                     Vista de Dictado {isFinalized ? "(Finalizada)" : ""}
                   </h1>
                   <p className="text-sm text-muted-foreground">
                      {subject.name} - {subject.course} - {cls.date} {cls.time} hs
                   </p>
                </div>
             </div>
-            <Button
-               size="sm"
-               className="text-xs"
-               onClick={() => {
-                  setAttendance(cls.id, attendanceWithDefaults);
-                  markClassAsTaught(cls.id);
-                  toast.success("Clase finalizada y asistencia registrada.");
-               }}
-            >
-               <CheckCircle2 className="size-3.5 mr-1.5" />
-               Cerrar clase de hoy
-            </Button>
+            {isFinalized ? (
+               <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs"
+                  onClick={() => {
+                     updateClass(cls.id, {
+                        status: cls.topic.trim().length > 0 ? "planificada" : "sin-planificar",
+                     });
+                     toast.success("Clase reabierta. Ya puedes editar y volver a cerrarla.");
+                  }}
+               >
+                  Reabrir clase
+               </Button>
+            ) : (
+               <Button
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => {
+                     setAttendance(cls.id, attendanceWithDefaults);
+                     markClassAsTaught(cls.id);
+                     toast.success("Clase finalizada y asistencia registrada.");
+                  }}
+               >
+                  <CheckCircle2 className="size-3.5 mr-1.5" />
+                  Cerrar clase de hoy
+               </Button>
+            )}
          </div>
 
          <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
@@ -441,6 +458,7 @@ export function ClaseDictadoContent() {
                               size="icon"
                               className="size-7"
                               onClick={() => setAddingSubtopic((prev) => !prev)}
+                              disabled={isFinalized}
                               title="Agregar subtema"
                            >
                               {addingSubtopic ? (
@@ -460,8 +478,9 @@ export function ClaseDictadoContent() {
                               placeholder="Nuevo subtema..."
                               value={newSubtopic}
                               onChange={(event) => setNewSubtopic(event.target.value)}
+                              disabled={isFinalized}
                            />
-                           <Button size="sm" className="h-8 text-xs" onClick={handleAddSubtopic}>
+                           <Button size="sm" className="h-8 text-xs" onClick={handleAddSubtopic} disabled={isFinalized}>
                               Agregar
                            </Button>
                         </div>
@@ -480,8 +499,9 @@ export function ClaseDictadoContent() {
                                  <Checkbox
                                     checked={record.completedSubtopics.includes(subtopic)}
                                     onCheckedChange={() =>
-                                       toggleSubtopic(cls.id, subtopic)
+                                       !isFinalized && toggleSubtopic(cls.id, subtopic)
                                     }
+                                    disabled={isFinalized}
                                  />
                                  <span className="text-xs text-foreground">
                                     {subtopic}
@@ -513,6 +533,7 @@ export function ClaseDictadoContent() {
                                     className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground"
                                     value={performanceStudentId}
                                     onChange={(event) => setPerformanceStudentId(event.target.value)}
+                                    disabled={isFinalized}
                                  >
                                     {classStudents.map((student) => (
                                        <option key={student.id} value={student.id}>
@@ -527,6 +548,7 @@ export function ClaseDictadoContent() {
                                     className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground"
                                     value={performanceReferenceLabel}
                                     onChange={(event) => setPerformanceReferenceLabel(event.target.value)}
+                                    disabled={isFinalized}
                                  >
                                     {displayedReferenceOptions.length === 0 ? (
                                        <option value="" disabled>
@@ -549,6 +571,7 @@ export function ClaseDictadoContent() {
                                     placeholder="Ej: 8.5 o Aprobado"
                                     value={performanceScore}
                                     onChange={(event) => setPerformanceScore(event.target.value)}
+                                    disabled={isFinalized}
                                  />
                               </div>
                               <div className="flex flex-col gap-1">
@@ -558,12 +581,13 @@ export function ClaseDictadoContent() {
                                     placeholder="Comentario opcional"
                                     value={performanceNote}
                                     onChange={(event) => setPerformanceNote(event.target.value)}
+                                    disabled={isFinalized}
                                  />
                               </div>
                            </div>
 
                            <div className="flex items-center gap-2">
-                              <Button size="sm" className="text-xs" onClick={handleSavePerformance}>
+                              <Button size="sm" className="text-xs" onClick={handleSavePerformance} disabled={isFinalized}>
                                  {editingPerformanceKey ? "Actualizar registro" : "Agregar registro"}
                               </Button>
                               {editingPerformanceKey && (
@@ -611,6 +635,7 @@ export function ClaseDictadoContent() {
                                           size="sm"
                                           className="h-7 px-2 text-xs"
                                           onClick={() => handleEditPerformance(entry)}
+                                          disabled={isFinalized}
                                        >
                                           Editar
                                        </Button>
@@ -620,6 +645,7 @@ export function ClaseDictadoContent() {
                                           size="sm"
                                           className="h-7 px-2 text-xs text-destructive"
                                           onClick={() => handleDeletePerformance(entry)}
+                                          disabled={isFinalized}
                                        >
                                           Eliminar
                                        </Button>
@@ -645,6 +671,7 @@ export function ClaseDictadoContent() {
                         placeholder="Que salio bien, que ajustar para la proxima clase, incidencias..."
                         value={record.notes ?? ""}
                         onChange={(event) => setNotes(cls.id, event.target.value)}
+                        disabled={isFinalized}
                      />
                   </CardContent>
                </Card>
@@ -662,4 +689,6 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
+
+
 

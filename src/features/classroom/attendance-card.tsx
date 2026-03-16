@@ -9,11 +9,13 @@ export function AttendanceCard({
    attendance,
    setAttendance,
    onSave,
+   disabled = false,
 }: {
    classStudents: Student[];
    attendance: Record<string, AttendanceStatus>;
    setAttendance: (next: Record<string, AttendanceStatus>) => void;
    onSave: () => void;
+   disabled?: boolean;
 }) {
    return (
       <Card>
@@ -49,13 +51,17 @@ export function AttendanceCard({
                               return (
                                  <button
                                     key={status}
-                                    onClick={() =>
+                                    onClick={() => {
+                                       if (disabled) {
+                                          return;
+                                       }
                                        setAttendance({
                                           ...attendance,
                                           [student.id]: status,
-                                       })
-                                    }
-                                    className={`flex items-center justify-center size-7 rounded-md text-[10px] font-bold border transition-all ${isSelected ? `${config.bg} ${config.color} border-current` : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"}`}
+                                       });
+                                    }}
+                                    disabled={disabled}
+                                    className={`flex items-center justify-center size-7 rounded-md text-[10px] font-bold border transition-all disabled:cursor-not-allowed disabled:opacity-60 ${isSelected ? `${config.bg} ${config.color} border-current` : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"}`}
                                  >
                                     {config.label}
                                  </button>
@@ -66,11 +72,12 @@ export function AttendanceCard({
                   </div>
                ))}
             </div>
-            <Button size="sm" className="w-full mt-4 text-xs" onClick={onSave}>
+            <Button size="sm" className="w-full mt-4 text-xs" onClick={onSave} disabled={disabled}>
                Guardar asistencia
             </Button>
          </CardContent>
       </Card>
    );
 }
+
 
