@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, ClipboardCheck, Plus, X } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Plus, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -190,6 +190,11 @@ export function ClaseDictadoContent() {
       record.completedSubtopics.includes(subtopic),
    ).length;
    const isFinalized = cls.status === "finalizada";
+   const classDateLabel = new Date(`${cls.date}T12:00:00`).toLocaleDateString("es-AR", {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+   });
 
    const syncAssessmentGradesLoaded = (
       entries: ClassroomPerformanceEntry[],
@@ -370,14 +375,24 @@ export function ClaseDictadoContent() {
                <Button variant="ghost" size="icon" className="size-8" onClick={handleBack}>
                   <ArrowLeft className="size-4" />
                </Button>
-               <div>
-                  <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-                     <ClipboardCheck className="size-5 text-primary" />
-                     Vista de Dictado {isFinalized ? "(Finalizada)" : ""}
-                  </h1>
-                  <p className="text-sm text-muted-foreground">
-                     {subject.name} - {subject.course} - {cls.date} {cls.time} hs
+               <div className="space-y-1">
+                  {isFinalized ? (
+                     <Badge variant="secondary" className="w-fit border-0 bg-success/10 text-success">
+                        Finalizada
+                     </Badge>
+                  ) : null}
+                  <p className="text-base sm:text-lg font-semibold text-foreground tracking-tight">
+                     {subject.name}
                   </p>
+                  <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+                     <Badge variant="secondary" className="border-0 bg-primary/10 text-primary">
+                        {classDateLabel}
+                     </Badge>
+                     <Badge variant="secondary" className="border-0 bg-muted text-foreground">
+                        {cls.time} hs
+                     </Badge>
+                     <span className="text-muted-foreground">{subject.course}</span>
+                  </div>
                </div>
             </div>
             {isFinalized ? (
@@ -697,6 +712,8 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
+
+
 
 
 
