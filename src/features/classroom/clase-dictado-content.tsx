@@ -65,6 +65,27 @@ function performanceEntryKey(entry: Pick<ClassroomPerformanceEntry, "studentId" 
    return `${entry.studentId}::${entry.kind}`;
 }
 
+function normalizeText(value: string) {
+   return value.trim().replace(/\s+/g, " ");
+}
+
+function normalizeExamReference(value: string) {
+   const normalized = normalizeText(value);
+   const lowered = normalized.toLowerCase();
+   const prefixes = ["oral:", "escrito:", "actividad practica:", "otro:"];
+   const prefix = prefixes.find((candidate) => lowered.startsWith(candidate));
+   if (!prefix) {
+      return normalized;
+   }
+   return normalizeText(normalized.slice(prefix.length));
+}
+
+function normalizeReferenceForKind(value: string, kind: ClassroomPerformanceKind) {
+   const normalized = kind === "exam" ? normalizeExamReference(value) : normalizeText(value);
+   return normalized.toLowerCase();
+}
+
+
 export function ClaseDictadoContent() {
    const params = useParams();
    const navigate = useNavigate();
@@ -115,13 +136,16 @@ export function ClaseDictadoContent() {
            .filter((assessment) => assessment.linkedClassId === cls.id)
            .map((assessment) => assessment.title)
       : [];
-   const examReferenceOptions = Array.from(
-      new Set([
-         cls?.evaluationName?.trim() ?? "",
-         ...linkedAssessmentTitles,
-         ...subjectAssessments.map((assessment) => assessment.title),
-      ]),
-   ).filter((entry) => entry.length > 0);
+   const examReferenceCandidates = [
+      cls?.evaluationName?.trim() ?? "",
+      ...linkedAssessmentTitles,
+   ]
+      .map((entry) => normalizeExamReference(entry))
+      .filter((entry) => entry.length > 0);
+   const examReferenceOptions = examReferenceCandidates.filter((entry, index, arr) => {
+      const normalized = entry.toLowerCase();
+      return arr.findIndex((item) => item.toLowerCase() === normalized) === index;
+   });
    const activityReferenceOptions = Array.from(
       new Set([
          cls?.practiceActivityName?.trim() ?? "",
@@ -215,10 +239,12 @@ export function ClaseDictadoContent() {
          return;
       }
 
-      const normalizedReference = referenceLabel?.trim().toLowerCase() ?? "";
+      const normalizedReference = referenceLabel
+         ? normalizeReferenceForKind(referenceLabel, kind)
+         : "";
       const targetAssessment =
          linkedAssessments.find((assessment) => {
-            const title = assessment.title.trim().toLowerCase();
+            const title = normalizeReferenceForKind(assessment.title, kind);
             return (
                normalizedReference.length > 0 &&
                (normalizedReference === title ||
@@ -227,14 +253,19 @@ export function ClaseDictadoContent() {
             );
          }) ?? linkedAssessments[0];
 
-      const normalizedAssessmentTitle = targetAssessment.title.trim().toLowerCase();
+      const normalizedAssessmentTitle = normalizeReferenceForKind(
+         targetAssessment.title,
+         kind,
+      );
       const filteredEntries = entries
          .filter((entry) => entry.kind === kind)
          .filter((entry) => {
             if (linkedAssessments.length === 1) {
                return true;
             }
-            const entryReference = entry.referenceLabel?.trim().toLowerCase() ?? "";
+            const entryReference = entry.referenceLabel
+               ? normalizeReferenceForKind(entry.referenceLabel, kind)
+               : "";
             if (!entryReference) {
                return true;
             }
@@ -310,7 +341,9 @@ export function ClaseDictadoContent() {
          score: normalizedScore,
          referenceLabel:
             performanceReferenceLabel.trim().length > 0
-               ? performanceReferenceLabel.trim()
+               ? performanceKind === "exam"
+                  ? normalizeExamReference(performanceReferenceLabel)
+                  : performanceReferenceLabel.trim()
                : undefined,
          note: performanceNote.trim().length > 0 ? performanceNote.trim() : undefined,
       };
@@ -566,7 +599,7 @@ export function ClaseDictadoContent() {
                                  </select>
                               </div>
                               <div className="flex flex-col gap-1">
-                                 <Label className="text-xs">Nombre relacionado</Label>
+                                 <Label className="text-xs">Examen / Actividad relacionada</Label>
                                  <select
                                     className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground"
                                     value={performanceReferenceLabel}
@@ -712,6 +745,9 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
+
+
+
 
 
 
