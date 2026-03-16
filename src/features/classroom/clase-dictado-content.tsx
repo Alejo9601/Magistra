@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, ClipboardCheck, Plus, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -67,6 +67,7 @@ function performanceEntryKey(entry: Pick<ClassroomPerformanceEntry, "studentId" 
 
 export function ClaseDictadoContent() {
    const params = useParams();
+   const navigate = useNavigate();
    const classId = params.id as string;
    const { classes, markClassAsTaught, updateClass } = usePlanningContext();
    const { getStudentsByAssignment } = useStudentsContext();
@@ -353,14 +354,21 @@ export function ClaseDictadoContent() {
       return `${student.lastName}, ${student.name}`;
    };
 
+   const handleBack = () => {
+      if (window.history.length > 1) {
+         navigate(-1);
+         return;
+      }
+      navigate("/planificacion");
+   };
+
+
    return (
       <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:p-6">
          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
             <div className="flex items-center gap-3">
-               <Button variant="ghost" size="icon" className="size-8" asChild>
-                  <Link to={`/clase/${cls.id}`}>
-                     <ArrowLeft className="size-4" />
-                  </Link>
+               <Button variant="ghost" size="icon" className="size-8" onClick={handleBack}>
+                  <ArrowLeft className="size-4" />
                </Button>
                <div>
                   <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
@@ -689,6 +697,8 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
+
+
 
 
 
