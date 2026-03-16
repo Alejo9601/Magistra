@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, ClipboardCheck, Plus, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,7 +78,7 @@ export function ClaseDictadoContent() {
       setPerformanceEntries,
    } = useClassroomContext();
    const { getActivitiesByAssignment } = useActivitiesContext();
-   const { getAssessmentsByAssignment } = useAssessmentsContext();
+   const { getAssessmentsByAssignment, updateAssessment } = useAssessmentsContext();
 
    const [addingSubtopic, setAddingSubtopic] = useState(false);
    const [newSubtopic, setNewSubtopic] = useState("");
@@ -189,6 +189,62 @@ export function ClaseDictadoContent() {
       record.completedSubtopics.includes(subtopic),
    ).length;
 
+   const syncAssessmentGradesLoaded = (
+      entries: ClassroomPerformanceEntry[],
+      kind: ClassroomPerformanceKind,
+      referenceLabel?: string,
+   ) => {
+      const assessmentType =
+         kind === "practice_work" ? "practice_work" : kind === "exam" ? "exam" : null;
+      if (!assessmentType) {
+         return;
+      }
+
+      const linkedAssessments = subjectAssessments.filter(
+         (assessment) =>
+            assessment.linkedClassId === cls.id && assessment.type === assessmentType,
+      );
+      if (linkedAssessments.length === 0) {
+         return;
+      }
+
+      const normalizedReference = referenceLabel?.trim().toLowerCase() ?? "";
+      const targetAssessment =
+         linkedAssessments.find((assessment) => {
+            const title = assessment.title.trim().toLowerCase();
+            return (
+               normalizedReference.length > 0 &&
+               (normalizedReference === title ||
+                  normalizedReference.includes(title) ||
+                  title.includes(normalizedReference))
+            );
+         }) ?? linkedAssessments[0];
+
+      const normalizedAssessmentTitle = targetAssessment.title.trim().toLowerCase();
+      const filteredEntries = entries
+         .filter((entry) => entry.kind === kind)
+         .filter((entry) => {
+            if (linkedAssessments.length === 1) {
+               return true;
+            }
+            const entryReference = entry.referenceLabel?.trim().toLowerCase() ?? "";
+            if (!entryReference) {
+               return true;
+            }
+            return (
+               entryReference === normalizedAssessmentTitle ||
+               entryReference.includes(normalizedAssessmentTitle) ||
+               normalizedAssessmentTitle.includes(entryReference)
+            );
+         });
+
+      const uniqueStudents = new Set(filteredEntries.map((entry) => entry.studentId));
+      updateAssessment(targetAssessment.id, {
+         gradesLoaded: uniqueStudents.size,
+      });
+   };
+
+
    const handleAddSubtopic = () => {
       const value = newSubtopic.trim();
       if (!value) {
@@ -260,6 +316,7 @@ export function ClaseDictadoContent() {
       ];
 
       setPerformanceEntries(cls.id, nextEntries);
+      syncAssessmentGradesLoaded(nextEntries, performanceKind, nextEntry.referenceLabel);
       toast.success(
          editingPerformanceKey ? "Registro actualizado." : "Registro agregado.",
       );
@@ -280,6 +337,7 @@ export function ClaseDictadoContent() {
          (current) => performanceEntryKey(current) !== performanceEntryKey(entry),
       );
       setPerformanceEntries(cls.id, nextEntries);
+      syncAssessmentGradesLoaded(nextEntries, entry.kind, entry.referenceLabel);
       if (editingPerformanceKey === performanceEntryKey(entry)) {
          resetPerformanceForm();
       }
