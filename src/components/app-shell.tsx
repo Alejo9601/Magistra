@@ -42,7 +42,7 @@ export function AppShell({
                   <SidebarTrigger className="-ml-1" />
                   <Separator orientation="vertical" className="mr-2 !h-4" />
                   {title && (
-                     <h1 className="hidden truncate text-sm font-semibold tracking-tight text-foreground sm:block">
+                     <h1 className="hidden truncate text-base font-semibold tracking-tight text-foreground sm:block">
                         {title}
                      </h1>
                   )}
@@ -87,5 +87,4 @@ export function AppShell({
       </SidebarProvider>
    );
 }
-
 
