@@ -6,6 +6,7 @@ import {
    CalendarDays,
    Plus,
    Edit3,
+   RotateCcw,
    Eye,
    Copy,
    ClipboardCheck,
@@ -227,7 +228,16 @@ export function PlanificacionContent() {
       setModalOpen(true);
    };
 
-   const openEditModal = (id: string) => {
+   const openEditModal = (id: string, options?: { allowPlanned?: boolean }) => {
+      const targetClass = classes.find((classSession) => classSession.id === id);
+      if (!targetClass) {
+         toast.error("No se encontro la clase seleccionada.");
+         return;
+      }
+      if (targetClass.status === "planificada" && !options?.allowPlanned) {
+         toast.info("Clase planificada bloqueada. Usa Replanificar para editar.");
+         return;
+      }
       setEditingClassId(id);
       setPrefillDate(undefined);
       setModalOpen(true);
@@ -235,6 +245,24 @@ export function PlanificacionContent() {
    const openEditModalFromDayDetails = (id: string) => {
       setSelectedDayDate(null);
       openEditModal(id);
+   };
+
+   const replanClass = (id: string, options?: { fromDayDetails?: boolean }) => {
+      const targetClass = classes.find((classSession) => classSession.id === id);
+      if (!targetClass) {
+         toast.error("No se encontro la clase seleccionada.");
+         return;
+      }
+      if (targetClass.status !== "planificada") {
+         openEditModal(id, { allowPlanned: true });
+         return;
+      }
+      updateClass(id, { status: "sin-planificar" });
+      if (options?.fromDayDetails) {
+         setSelectedDayDate(null);
+      }
+      toast.success("Clase replanificada. Ya puedes editarla y volver a publicarla.");
+      openEditModal(id, { allowPlanned: true });
    };
 
    const onDuplicate = (id: string) => {
@@ -683,11 +711,13 @@ export function PlanificacionContent() {
                                                    return (
                                                       <button
                                                          key={cls.id}
-                                                         onClick={() =>
-                                                            openEditModal(
-                                                               cls.id,
-                                                            )
-                                                         }
+                                                         onClick={() => {
+                                                            if (cls.status === "planificada") {
+                                                               setSelectedDayDate(dateStr);
+                                                               return;
+                                                            }
+                                                            openEditModal(cls.id);
+                                                         }}
                                                          className={`w-full cursor-pointer text-left rounded px-1 py-0.5 text-[10px] font-medium truncate ${isPastDate ? "opacity-85" : ""}`}
                                                          style={{
                                                             backgroundColor:
@@ -864,10 +894,22 @@ export function PlanificacionContent() {
                                     variant="ghost"
                                     size="icon"
                                     className="size-7"
-                                    title="Editar clase"
-                                    onClick={() => openEditModal(cls.id)}
+                                    title={
+                                       cls.status === "planificada"
+                                          ? "Replanificar clase"
+                                          : "Editar clase"
+                                    }
+                                    onClick={() =>
+                                       cls.status === "planificada"
+                                          ? replanClass(cls.id)
+                                          : openEditModal(cls.id)
+                                    }
                                  >
-                                    <Edit3 className="size-3.5" />
+                                    {cls.status === "planificada" ? (
+                                       <RotateCcw className="size-3.5" />
+                                    ) : (
+                                       <Edit3 className="size-3.5" />
+                                    )}
                                  </Button>
                                  <Button
                                     variant="ghost"
@@ -966,14 +1008,26 @@ export function PlanificacionContent() {
                                        </Link>
                                     </Button>
                                     <Button
-                                       variant="ghost"
-                                       size="icon"
-                                       className="size-7"
-                                       title="Editar clase"
-                                       onClick={() => openEditModal(cls.id)}
-                                    >
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-7"
+                                    title={
+                                       cls.status === "planificada"
+                                          ? "Replanificar clase"
+                                          : "Editar clase"
+                                    }
+                                    onClick={() =>
+                                       cls.status === "planificada"
+                                          ? replanClass(cls.id)
+                                          : openEditModal(cls.id)
+                                    }
+                                 >
+                                    {cls.status === "planificada" ? (
+                                       <RotateCcw className="size-3.5" />
+                                    ) : (
                                        <Edit3 className="size-3.5" />
-                                    </Button>
+                                    )}
+                                 </Button>
                                     <Button
                                        variant="ghost"
                                        size="icon"
@@ -1097,11 +1151,22 @@ export function PlanificacionContent() {
                                     variant="ghost"
                                     size="icon"
                                     className="size-7"
+                                    title={
+                                       cls.status === "planificada"
+                                          ? "Replanificar clase"
+                                          : "Editar clase"
+                                    }
                                     onClick={() =>
-                                       openEditModalFromDayDetails(cls.id)
+                                       cls.status === "planificada"
+                                          ? replanClass(cls.id, { fromDayDetails: true })
+                                          : openEditModalFromDayDetails(cls.id)
                                     }
                                  >
-                                    <Edit3 className="size-3.5" />
+                                    {cls.status === "planificada" ? (
+                                       <RotateCcw className="size-3.5" />
+                                    ) : (
+                                       <Edit3 className="size-3.5" />
+                                    )}
                                  </Button>
                                  <Button
                                     variant="ghost"
@@ -1122,6 +1187,11 @@ export function PlanificacionContent() {
       </div>
    );
 }
+
+
+
+
+
 
 
 
