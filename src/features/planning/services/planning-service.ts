@@ -15,9 +15,25 @@ function isClassType(value: unknown): value is ClassSession["type"] {
    return (
       value === "teorica" ||
       value === "practica" ||
+      value === "teorico-practica" ||
       value === "evaluacion" ||
       value === "repaso" ||
       value === "recuperatorio"
+   );
+}
+
+function isEvaluativeFormat(
+   value: unknown,
+): value is NonNullable<ClassSession["evaluativeFormat"]> {
+   return (
+      value === "oral" ||
+      value === "escrito" ||
+      value === "actividad-practica" ||
+      value === "otro" ||
+      value === "exposicion-oral" ||
+      value === "examen-escrito" ||
+      value === "examen-oral" ||
+      value === "trabajo-practico-evaluativo"
    );
 }
 
@@ -26,7 +42,10 @@ function sanitizeClassSession(raw: unknown): ClassSession | null {
       return null;
    }
 
-   const input = raw as Partial<ClassSession>;
+   const input = raw as Partial<ClassSession> & { type?: string };
+   const rawType = input.type;
+   const normalizedType = rawType === "oral" ? "evaluacion" : rawType;
+
    if (
       typeof input.id !== "string" ||
       typeof input.subjectId !== "string" ||
@@ -35,7 +54,7 @@ function sanitizeClassSession(raw: unknown): ClassSession | null {
       typeof input.time !== "string" ||
       typeof input.topic !== "string" ||
       !Array.isArray(input.subtopics) ||
-      !isClassType(input.type) ||
+      !isClassType(normalizedType) ||
       !isClassStatus(input.status)
    ) {
       return null;
@@ -57,8 +76,36 @@ function sanitizeClassSession(raw: unknown): ClassSession | null {
       subtopics: input.subtopics.filter(
          (subtopic): subtopic is string => typeof subtopic === "string",
       ),
-      type: input.type,
+      type: normalizedType,
       status: input.status,
+      evaluativeFormat:
+         normalizedType === "evaluacion"
+            ? isEvaluativeFormat(input.evaluativeFormat)
+               ? input.evaluativeFormat
+               : rawType === "oral"
+                  ? "oral"
+                  : undefined
+            : undefined,
+      practiceActivityName:
+         typeof input.practiceActivityName === "string" &&
+         input.practiceActivityName.trim().length > 0
+            ? input.practiceActivityName.trim()
+            : undefined,
+      practiceActivityDescription:
+         typeof input.practiceActivityDescription === "string" &&
+         input.practiceActivityDescription.trim().length > 0
+            ? input.practiceActivityDescription.trim()
+            : undefined,
+      evaluationName:
+         typeof input.evaluationName === "string" &&
+         input.evaluationName.trim().length > 0
+            ? input.evaluationName.trim()
+            : undefined,
+      evaluationDescription:
+         typeof input.evaluationDescription === "string" &&
+         input.evaluationDescription.trim().length > 0
+            ? input.evaluationDescription.trim()
+            : undefined,
       activities:
          typeof input.activities === "string" && input.activities.trim().length > 0
             ? input.activities

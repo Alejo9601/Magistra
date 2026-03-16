@@ -1,11 +1,11 @@
-﻿import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import type { AttendanceStatus } from "@/features/classroom/constants";
 import {
    createFallbackClassroomRecord,
    loadClassroomRecords,
    saveClassroomRecords,
 } from "@/features/classroom/services/classroom-service";
-import type { ClassroomRecord } from "@/types";
+import type { ClassroomPerformanceEntry, ClassroomRecord } from "@/types";
 
 type ClassroomContextValue = {
    getRecord: (classId: string) => ClassroomRecord;
@@ -16,6 +16,10 @@ type ClassroomContextValue = {
       attendance: Record<string, AttendanceStatus>,
    ) => void;
    setNotes: (classId: string, notes: string) => void;
+   setPerformanceEntries: (
+      classId: string,
+      entries: ClassroomPerformanceEntry[],
+   ) => void;
    removeRecordsByClassIds: (classIds: string[]) => void;
 };
 
@@ -31,67 +35,76 @@ export function ClassroomProvider({ children }: { children: React.ReactNode }) {
    }, [recordsByClass]);
 
    const value: ClassroomContextValue = {
-         getRecord: (classId) =>
-            recordsByClass[classId] ?? createFallbackClassroomRecord(),
-         toggleSubtopic: (classId, subtopic) => {
-            setRecordsByClass((prev) => {
-               const current = prev[classId] ?? createFallbackClassroomRecord();
-               const hasItem = current.completedSubtopics.includes(subtopic);
-               const completedSubtopics = hasItem
-                  ? current.completedSubtopics.filter((item) => item !== subtopic)
-                  : [...current.completedSubtopics, subtopic];
-               return {
-                  ...prev,
-                  [classId]: { ...current, completedSubtopics },
-               };
-            });
-         },
-         toggleActivity: (classId, activity) => {
-            setRecordsByClass((prev) => {
-               const current = prev[classId] ?? createFallbackClassroomRecord();
-               const hasItem = current.completedActivities.includes(activity);
-               const completedActivities = hasItem
-                  ? current.completedActivities.filter((item) => item !== activity)
-                  : [...current.completedActivities, activity];
-               return {
-                  ...prev,
-                  [classId]: { ...current, completedActivities },
-               };
-            });
-         },
-         setAttendance: (classId, attendance) => {
-            setRecordsByClass((prev) => {
-               const current = prev[classId] ?? createFallbackClassroomRecord();
-               return {
-                  ...prev,
-                  [classId]: { ...current, attendance },
-               };
-            });
-         },
-         setNotes: (classId, notes) => {
-            setRecordsByClass((prev) => {
-               const current = prev[classId] ?? createFallbackClassroomRecord();
-               return {
-                  ...prev,
-                  [classId]: {
-                     ...current,
-                     notes: notes.trim().length > 0 ? notes : undefined,
-                  },
-               };
-            });
-         },
-         removeRecordsByClassIds: (classIds) => {
-            if (classIds.length === 0) {
-               return;
-            }
-            const classIdSet = new Set(classIds);
-            setRecordsByClass((prev) =>
-               Object.fromEntries(
-                  Object.entries(prev).filter(([classId]) => !classIdSet.has(classId)),
-               ),
-            );
-         },
-      };
+      getRecord: (classId) =>
+         recordsByClass[classId] ?? createFallbackClassroomRecord(),
+      toggleSubtopic: (classId, subtopic) => {
+         setRecordsByClass((prev) => {
+            const current = prev[classId] ?? createFallbackClassroomRecord();
+            const hasItem = current.completedSubtopics.includes(subtopic);
+            const completedSubtopics = hasItem
+               ? current.completedSubtopics.filter((item) => item !== subtopic)
+               : [...current.completedSubtopics, subtopic];
+            return {
+               ...prev,
+               [classId]: { ...current, completedSubtopics },
+            };
+         });
+      },
+      toggleActivity: (classId, activity) => {
+         setRecordsByClass((prev) => {
+            const current = prev[classId] ?? createFallbackClassroomRecord();
+            const hasItem = current.completedActivities.includes(activity);
+            const completedActivities = hasItem
+               ? current.completedActivities.filter((item) => item !== activity)
+               : [...current.completedActivities, activity];
+            return {
+               ...prev,
+               [classId]: { ...current, completedActivities },
+            };
+         });
+      },
+      setAttendance: (classId, attendance) => {
+         setRecordsByClass((prev) => {
+            const current = prev[classId] ?? createFallbackClassroomRecord();
+            return {
+               ...prev,
+               [classId]: { ...current, attendance },
+            };
+         });
+      },
+      setNotes: (classId, notes) => {
+         setRecordsByClass((prev) => {
+            const current = prev[classId] ?? createFallbackClassroomRecord();
+            return {
+               ...prev,
+               [classId]: {
+                  ...current,
+                  notes: notes.trim().length > 0 ? notes : undefined,
+               },
+            };
+         });
+      },
+      setPerformanceEntries: (classId, entries) => {
+         setRecordsByClass((prev) => {
+            const current = prev[classId] ?? createFallbackClassroomRecord();
+            return {
+               ...prev,
+               [classId]: { ...current, performanceEntries: entries },
+            };
+         });
+      },
+      removeRecordsByClassIds: (classIds) => {
+         if (classIds.length === 0) {
+            return;
+         }
+         const classIdSet = new Set(classIds);
+         setRecordsByClass((prev) =>
+            Object.fromEntries(
+               Object.entries(prev).filter(([classId]) => !classIdSet.has(classId)),
+            ),
+         );
+      },
+   };
 
    return (
       <ClassroomContext.Provider value={value}>{children}</ClassroomContext.Provider>
@@ -105,5 +118,3 @@ export function useClassroomContext() {
    }
    return context;
 }
-
-

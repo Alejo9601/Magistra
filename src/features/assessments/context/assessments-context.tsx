@@ -14,6 +14,7 @@ export type { Assessment, AssessmentStatus, AssessmentType };
 
 type NewAssessmentInput = {
    assignmentId: string;
+   linkedClassId?: string;
    title: string;
    description?: string;
    date: string;
@@ -25,6 +26,7 @@ type NewAssessmentInput = {
 
 type UpdateAssessmentInput = {
    assignmentId?: string;
+   linkedClassId?: string;
    title?: string;
    description?: string;
    date?: string;
@@ -74,6 +76,7 @@ export function AssessmentsProvider({ children }: { children: React.ReactNode })
             subjectId: assignment.subjectId,
             assignmentId: assignment.id,
             title: input.title.trim(),
+            linkedClassId: input.linkedClassId,
             description: input.description?.trim() || undefined,
             date: input.date,
             type: input.type,

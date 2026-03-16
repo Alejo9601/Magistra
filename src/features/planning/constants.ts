@@ -3,7 +3,9 @@ import type { ClassSession } from "@/lib/edu-repository";
 export const classTypeLabels: Record<ClassSession["type"], string> = {
    teorica: "Teorica",
    practica: "Practica",
-   evaluacion: "Evaluacion",
+   oral: "Oral",
+   "teorico-practica": "Teorica/Practica",
+   evaluacion: "Evaluativa",
    repaso: "Repaso",
    recuperatorio: "Recuperatorio",
 };
@@ -11,6 +13,8 @@ export const classTypeLabels: Record<ClassSession["type"], string> = {
 export const classTypeColors: Record<ClassSession["type"], string> = {
    teorica: "bg-info/20 text-info-foreground border border-info/45",
    practica: "status-ok",
+   oral: "bg-info/20 text-info-foreground border border-info/45",
+   "teorico-practica": "status-warning",
    evaluacion: "status-critical",
    repaso: "status-warning",
    recuperatorio: "bg-info/20 text-info-foreground border border-info/45",

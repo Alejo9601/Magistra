@@ -1,4 +1,9 @@
-import type { AttendanceStatus, ClassroomRecord } from "@/types";
+﻿import type {
+   AttendanceStatus,
+   ClassroomPerformanceEntry,
+   ClassroomPerformanceKind,
+   ClassroomRecord,
+} from "@/types";
 import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
 import { attendanceRecords } from "@/lib/edu-repository";
 
@@ -12,6 +17,7 @@ function seedClassroomRecordsFromAttendance() {
          completedActivities: [],
          attendance: {},
          notes: undefined,
+         performanceEntries: [],
       };
       current.attendance[entry.studentId] = entry.status as AttendanceStatus;
       recordsByClass[entry.classId] = current;
@@ -21,6 +27,33 @@ function seedClassroomRecordsFromAttendance() {
 
 function isAttendanceStatus(value: unknown): value is AttendanceStatus {
    return value === "P" || value === "A" || value === "T" || value === "J";
+}
+
+function isClassroomPerformanceKind(value: unknown): value is ClassroomPerformanceKind {
+   return value === "activity" || value === "practice_work" || value === "exam";
+}
+
+function sanitizePerformanceEntry(raw: unknown): ClassroomPerformanceEntry | null {
+   if (!raw || typeof raw !== "object") {
+      return null;
+   }
+   const input = raw as Partial<ClassroomPerformanceEntry>;
+   if (
+      typeof input.studentId !== "string" ||
+      !isClassroomPerformanceKind(input.kind) ||
+      (typeof input.score !== "number" && typeof input.score !== "string")
+   ) {
+      return null;
+   }
+
+   return {
+      studentId: input.studentId,
+      kind: input.kind,
+      score: input.score,
+      referenceLabel:
+         typeof input.referenceLabel === "string" ? input.referenceLabel : undefined,
+      note: typeof input.note === "string" ? input.note : undefined,
+   };
 }
 
 function sanitizeClassroomRecord(raw: unknown): ClassroomRecord | null {
@@ -51,6 +84,11 @@ function sanitizeClassroomRecord(raw: unknown): ClassroomRecord | null {
       ),
       attendance: Object.fromEntries(attendanceEntries),
       notes: typeof input.notes === "string" ? input.notes : undefined,
+      performanceEntries: Array.isArray(input.performanceEntries)
+         ? input.performanceEntries
+              .map((entry) => sanitizePerformanceEntry(entry))
+              .filter((entry): entry is ClassroomPerformanceEntry => entry !== null)
+         : [],
    };
 }
 
@@ -88,6 +126,7 @@ export function loadClassroomRecords() {
                      ...stored.attendance,
                   },
                   notes: stored.notes,
+                  performanceEntries: stored.performanceEntries,
                },
             ] as const;
          });
@@ -110,5 +149,10 @@ export function createFallbackClassroomRecord(): ClassroomRecord {
       completedActivities: [],
       attendance: {},
       notes: undefined,
+      performanceEntries: [],
    };
 }
+
+
+
+

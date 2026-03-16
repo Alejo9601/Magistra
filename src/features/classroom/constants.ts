@@ -1,4 +1,4 @@
-﻿import type { AttendanceStatus } from "@/types";
+import type { AttendanceStatus } from "@/types";
 export type { AttendanceStatus };
 
 export const attendanceConfig: Record<
@@ -30,7 +30,9 @@ export const attendanceConfig: Record<
 export const classTypeLabels: Record<string, string> = {
    teorica: "Teorica",
    practica: "Practica",
-   evaluacion: "Evaluacion",
+   oral: "Oral",
+   "teorico-practica": "Teorica/Practica",
+   evaluacion: "Evaluativa",
    repaso: "Repaso",
    recuperatorio: "Recuperatorio",
 };

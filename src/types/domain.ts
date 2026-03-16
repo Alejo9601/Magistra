@@ -51,11 +51,23 @@ export type Student = {
 export type ClassType =
    | "teorica"
    | "practica"
+   | "oral"
+   | "teorico-practica"
    | "evaluacion"
    | "repaso"
    | "recuperatorio";
 
 export type ClassStatus = "planificada" | "sin-planificar" | "finalizada";
+
+export type EvaluativeFormat =
+   | "oral"
+   | "escrito"
+   | "actividad-practica"
+   | "otro"
+   | "exposicion-oral"
+   | "examen-escrito"
+   | "examen-oral"
+   | "trabajo-practico-evaluativo";
 
 export type ClassSession = {
    id: string;
@@ -69,6 +81,11 @@ export type ClassSession = {
    subtopics: string[];
    type: ClassType;
    status: ClassStatus;
+   evaluativeFormat?: EvaluativeFormat;
+   practiceActivityName?: string;
+   practiceActivityDescription?: string;
+   evaluationName?: string;
+   evaluationDescription?: string;
    activities?: string;
    notes?: string;
    resources?: string[];
@@ -136,6 +153,7 @@ export type Assessment = {
    id: string;
    subjectId: string;
    assignmentId?: string;
+   linkedClassId?: string;
    title: string;
    description?: string;
    date: string;
@@ -160,9 +178,24 @@ export type SubjectActivity = {
    linkedClassIds: string[];
 };
 
+export type ClassroomPerformanceKind = "activity" | "practice_work" | "exam";
+
+export type ClassroomPerformanceEntry = {
+   studentId: string;
+   kind: ClassroomPerformanceKind;
+   score: number | string;
+   referenceLabel?: string;
+   note?: string;
+};
+
 export type ClassroomRecord = {
    completedSubtopics: string[];
    completedActivities: string[];
    attendance: Record<string, AttendanceStatus>;
    notes?: string;
+   performanceEntries: ClassroomPerformanceEntry[];
 };
+
+
+
+

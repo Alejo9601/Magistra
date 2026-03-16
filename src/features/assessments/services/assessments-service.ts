@@ -68,6 +68,8 @@ function sanitizeAssessment(raw: unknown): Assessment | null {
       subjectId: resolvedSubjectId,
       assignmentId: resolvedAssignmentId,
       title: input.title,
+      linkedClassId:
+         typeof input.linkedClassId === "string" ? input.linkedClassId : undefined,
       description:
          typeof input.description === "string" ? input.description : undefined,
       date: input.date,
@@ -85,6 +87,7 @@ function seedAssessments(): Assessment[] {
       subjectId: evaluation.subjectId,
       assignmentId: getAssignmentIdBySubjectId(evaluation.subjectId),
       title: evaluation.name,
+      linkedClassId: undefined,
       date: evaluation.date,
       description: undefined,
       type: evaluation.type === "tp" ? "practice_work" : "exam",

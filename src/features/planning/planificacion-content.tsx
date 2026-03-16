@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState, type TouchEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type TouchEvent } from "react";
 import {
    ChevronLeft,
    ChevronRight,
@@ -30,9 +30,12 @@ import {
 import { TableCell } from "@/components/ui/table";
 import {
    getAssignmentById,
+   getAssignmentIdBySubjectId,
    getSubjectById,
    getInstitutionById,
 } from "@/lib/edu-repository";
+import { useAssessmentsContext, type AssessmentType } from "@/features/assessments";
+import { useActivitiesContext } from "@/features/activities";
 import { useInstitutionContext } from "@/features/institution";
 import { usePlanningContext } from "@/features/planning";
 import { Link, useSearchParams } from "react-router-dom";
@@ -54,6 +57,29 @@ import type {
    TypeFilter,
    ViewMode,
 } from "@/features/planning/types";
+import type { ClassSession, ClassStatus, EvaluativeFormat } from "@/types";
+
+
+const evaluativeFormatLabelMap: Record<EvaluativeFormat, string> = {
+   oral: "Oral",
+   escrito: "Escrito",
+   "actividad-practica": "Actividad Practica",
+   otro: "Otro",
+   "exposicion-oral": "Oral",
+   "examen-escrito": "Escrito",
+   "examen-oral": "Oral",
+   "trabajo-practico-evaluativo": "Actividad Practica",
+};
+
+function mapClassStatusToAssessmentStatus(status: ClassStatus) {
+   if (status === "finalizada") {
+      return "graded" as const;
+   }
+   if (status === "planificada") {
+      return "scheduled" as const;
+   }
+   return "draft" as const;
+}
 
 export function PlanificacionContent() {
    const { activeInstitution } = useInstitutionContext();
@@ -64,6 +90,10 @@ export function PlanificacionContent() {
       updateClass,
       duplicateClass,
    } = usePlanningContext();
+   const { getAssessmentsByAssignment, addAssessment, updateAssessment } =
+      useAssessmentsContext();
+   const { getActivitiesByAssignment, addActivity, updateActivity } =
+      useActivitiesContext();
    const isMobile = useIsMobile();
    const [searchParams] = useSearchParams();
    const today = new Date();
@@ -222,21 +252,109 @@ export function PlanificacionContent() {
    };
 
    const onSave = (payload: ClassFormInput, mode: "draft" | "publish") => {
+      const savedClass = editingClass
+         ? ({ ...editingClass, ...payload } as ClassSession)
+         : createClass(payload);
+
       if (editingClass) {
          updateClass(editingClass.id, payload);
-         toast.success(
-            mode === "publish"
-               ? "Clase actualizada y publicada."
-               : "Clase actualizada como borrador.",
-         );
-      } else {
-         createClass(payload);
-         toast.success(
-            mode === "publish"
-               ? "Clase creada y publicada."
-               : "Clase guardada como borrador.",
-         );
       }
+
+      const effectiveClassId = editingClass?.id ?? savedClass.id;
+      const effectiveAssignmentId =
+         payload.assignmentId ??
+         savedClass.assignmentId ??
+         getAssignmentIdBySubjectId(savedClass.subjectId);
+
+      if (
+         payload.type === "evaluacion" &&
+         payload.evaluativeFormat &&
+         effectiveAssignmentId
+      ) {
+         const isPracticalEvaluation =
+            payload.evaluativeFormat === "actividad-practica" ||
+            payload.evaluativeFormat === "trabajo-practico-evaluativo";
+         const assessmentType: AssessmentType = isPracticalEvaluation
+            ? "practice_work"
+            : "exam";
+         const assessmentBaseName = payload.evaluationName?.trim() || payload.topic;
+         const assessmentTitle = `${evaluativeFormatLabelMap[payload.evaluativeFormat]}: ${assessmentBaseName}`;
+
+         const existingAssessment = getAssessmentsByAssignment(
+            effectiveAssignmentId,
+         ).find((assessment) => assessment.linkedClassId === effectiveClassId);
+
+         if (existingAssessment) {
+            updateAssessment(existingAssessment.id, {
+               assignmentId: effectiveAssignmentId,
+               title: assessmentTitle,
+               date: payload.date,
+               type: assessmentType,
+               status: mapClassStatusToAssessmentStatus(payload.status),
+            });
+         } else {
+            addAssessment({
+               assignmentId: effectiveAssignmentId,
+               linkedClassId: effectiveClassId,
+               title: assessmentTitle,
+               date: payload.date,
+               type: assessmentType,
+               status: mapClassStatusToAssessmentStatus(payload.status),
+               weight: 1,
+               maxScore: 10,
+            });
+         }
+
+         if (isPracticalEvaluation) {
+            const tpActivityTitle = payload.evaluationName?.trim() || `Actividad practica evaluativa: ${payload.topic}`;
+            const existingActivity = getActivitiesByAssignment(
+               effectiveAssignmentId,
+            ).find((activity) => activity.linkedClassIds.includes(effectiveClassId));
+
+            if (existingActivity) {
+               updateActivity(existingActivity.id, {
+                  assignmentId: effectiveAssignmentId,
+                  title: tpActivityTitle,
+                  type: "classwork",
+                  status:
+                     payload.status === "finalizada"
+                        ? "completed"
+                        : payload.status === "planificada"
+                           ? "assigned"
+                           : "planned",
+                  linkedClassIds: Array.from(
+                     new Set([
+                        ...existingActivity.linkedClassIds,
+                        effectiveClassId,
+                     ]),
+                  ),
+               });
+            } else {
+               addActivity({
+                  assignmentId: effectiveAssignmentId,
+                  title: tpActivityTitle,
+                  type: "classwork",
+                  status:
+                     payload.status === "finalizada"
+                        ? "completed"
+                        : payload.status === "planificada"
+                           ? "assigned"
+                           : "planned",
+                  linkedClassIds: [effectiveClassId],
+               });
+            }
+         }
+      }
+
+      toast.success(
+         mode === "publish"
+            ? editingClass
+               ? "Clase actualizada y publicada."
+               : "Clase creada y publicada."
+            : editingClass
+               ? "Clase actualizada como borrador."
+               : "Clase guardada como borrador.",
+      );
    };
 
    useEffect(() => {

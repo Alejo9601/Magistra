@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
    Dialog,
@@ -25,11 +25,54 @@ import {
    getSubjectById,
    institutions,
 } from "@/lib/edu-repository";
-import { classTypeLabels } from "@/features/planning/constants";
 import { resolveAssignmentIdForInstitution } from "@/features/planning/institution-context-guards";
 import type { ClassFormInput } from "@/features/planning/types";
 import { toast } from "sonner";
 import type { ClassSession } from "@/types";
+
+const classCharacterOptions: Array<{
+   value: ClassSession["type"];
+   label: string;
+}> = [
+   { value: "teorica", label: "Teorica" },
+   { value: "practica", label: "Practica" },
+   { value: "teorico-practica", label: "Teorica/Practica" },
+   { value: "evaluacion", label: "Evaluativa" },
+];
+
+const evaluativeFormatOptions: Array<{
+   value: NonNullable<ClassSession["evaluativeFormat"]>;
+   label: string;
+}> = [
+   { value: "oral", label: "Oral" },
+   { value: "escrito", label: "Escrito" },
+   { value: "actividad-practica", label: "Actividad Practica" },
+   { value: "otro", label: "Otro" },
+];
+
+function normalizeClassType(
+   value: ClassSession["type"] | "oral" | "",
+): ClassSession["type"] | "" {
+   if (value === "oral") {
+      return "evaluacion";
+   }
+   return value as ClassSession["type"] | "";
+}
+
+function normalizeEvaluativeFormat(
+   value: ClassSession["evaluativeFormat"] | "",
+): ClassSession["evaluativeFormat"] | "" {
+   if (value === "exposicion-oral" || value === "examen-oral") {
+      return "oral";
+   }
+   if (value === "examen-escrito") {
+      return "escrito";
+   }
+   if (value === "trabajo-practico-evaluativo") {
+      return "actividad-practica";
+   }
+   return value;
+}
 
 export function ClassEditorModal({
    open,
@@ -58,9 +101,14 @@ export function ClassEditorModal({
    const [time, setTime] = useState("08:00");
    const [topic, setTopic] = useState("");
    const [type, setType] = useState<ClassSession["type"]>("teorica");
+   const [evaluativeFormat, setEvaluativeFormat] = useState<
+      ClassSession["evaluativeFormat"] | ""
+   >("");
    const [subtopicsText, setSubtopicsText] = useState("");
-   const [activities, setActivities] = useState("");
-   const [notes, setNotes] = useState("");
+   const [practiceActivityName, setPracticeActivityName] = useState("");
+   const [practiceActivityDescription, setPracticeActivityDescription] = useState("");
+   const [evaluationName, setEvaluationName] = useState("");
+   const [evaluationDescription, setEvaluationDescription] = useState("");
    const [resourcesText, setResourcesText] = useState("");
 
    const availableAssignments = getAssignmentsByInstitution(institutionId);
@@ -83,19 +131,29 @@ export function ClassEditorModal({
       setDate(initialClass?.date ?? initialDate ?? "");
       setTime(initialClass?.time ?? "08:00");
       setTopic(initialClass?.topic ?? "");
-      setType(initialClass?.type ?? "teorica");
+      const initialType =
+         normalizeClassType((initialClass?.type as ClassSession["type"] | "oral" | "") ?? "teorica") ||
+         "teorica";
+      setType(initialType);
+      setEvaluativeFormat(
+         initialType === "evaluacion"
+            ? normalizeEvaluativeFormat(initialClass?.evaluativeFormat ?? "")
+            : "",
+      );
       setSubtopicsText(initialClass?.subtopics.join("\n") ?? "");
-      setActivities(initialClass?.activities ?? "");
-      setNotes(initialClass?.notes ?? "");
+      setPracticeActivityName(initialClass?.practiceActivityName ?? "");
+      setPracticeActivityDescription(initialClass?.practiceActivityDescription ?? "");
+      setEvaluationName(initialClass?.evaluationName ?? "");
+      setEvaluationDescription(initialClass?.evaluationDescription ?? "");
       setResourcesText(initialClass?.resources?.join(", ") ?? "");
    };
-
 
    useEffect(() => {
       if (open) {
          reset();
       }
    }, [open, initialClass, initialDate, activeInstitution]);
+
    const submit = (mode: "draft" | "publish") => {
       if (!assignmentId || !date || !time || !topic.trim()) {
          toast.error("Completa institucion, materia, fecha, hora y tema principal.");
@@ -103,6 +161,26 @@ export function ClassEditorModal({
       }
       if (!initialClass && date < todayStr) {
          toast.error("No se pueden crear clases en fechas pasadas.");
+         return;
+      }
+      if ((type === "practica" || type === "teorico-practica") && !practiceActivityName.trim()) {
+         toast.error("Completa el nombre de la actividad practica.");
+         return;
+      }
+      if ((type === "practica" || type === "teorico-practica") && !practiceActivityDescription.trim()) {
+         toast.error("Completa la descripcion de la actividad practica.");
+         return;
+      }
+      if (type === "evaluacion" && !evaluationName.trim()) {
+         toast.error("Completa el nombre de la evaluacion.");
+         return;
+      }
+      if (type === "evaluacion" && !evaluativeFormat) {
+         toast.error("Selecciona el tipo de evaluacion.");
+         return;
+      }
+      if (type === "evaluacion" && !evaluationDescription.trim()) {
+         toast.error("Completa la descripcion de la evaluacion.");
          return;
       }
 
@@ -132,8 +210,22 @@ export function ClassEditorModal({
                .filter(Boolean),
             type,
             status: mode === "publish" ? "planificada" : "sin-planificar",
-            activities: activities.trim() || undefined,
-            notes: notes.trim() || undefined,
+            evaluativeFormat:
+               type === "evaluacion" ? (evaluativeFormat || undefined) : undefined,
+            practiceActivityName:
+               type === "practica" || type === "teorico-practica"
+                  ? practiceActivityName.trim() || undefined
+                  : undefined,
+            practiceActivityDescription:
+               type === "practica" || type === "teorico-practica"
+                  ? practiceActivityDescription.trim() || undefined
+                  : undefined,
+            evaluationName:
+               type === "evaluacion" ? evaluationName.trim() || undefined : undefined,
+            evaluationDescription:
+               type === "evaluacion"
+                  ? evaluationDescription.trim() || undefined
+                  : undefined,
             resources: resources.length > 0 ? resources : undefined,
          },
          mode,
@@ -185,7 +277,7 @@ export function ClassEditorModal({
                            return (
                               <SelectItem key={assignment.id} value={assignment.id}>
                                  {subject.name} ({assignment.section})
-                           </SelectItem>
+                              </SelectItem>
                            );
                         })}
                      </SelectContent>
@@ -218,7 +310,7 @@ export function ClassEditorModal({
 
             <div className="flex flex-col gap-4 pb-2">
                <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs">Tema principal</Label>
+                  <Label className="text-xs">Eje principal / Tema principal</Label>
                   <Input
                      className="h-9 text-xs"
                      value={topic}
@@ -236,50 +328,103 @@ export function ClassEditorModal({
                </div>
 
                <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs">Tipo de clase</Label>
+                  <Label className="text-xs">Caracter de la clase</Label>
                   <Select
                      value={type}
-                     onValueChange={(value) =>
-                        setType(value as ClassSession["type"])
-                     }
+                     onValueChange={(value) => {
+                        const nextType = value as ClassSession["type"];
+                        setType(nextType);
+                        if (nextType !== "evaluacion") {
+                           setEvaluativeFormat("");
+                           setEvaluationName("");
+                           setEvaluationDescription("");
+                        }
+                        if (nextType !== "practica" && nextType !== "teorico-practica") {
+                           setPracticeActivityName("");
+                           setPracticeActivityDescription("");
+                        }
+                     }}
                   >
                      <SelectTrigger className="h-9 text-xs">
-                        <SelectValue placeholder="Seleccionar tipo..." />
+                        <SelectValue placeholder="Seleccionar caracter..." />
                      </SelectTrigger>
                      <SelectContent>
-                        {Object.entries(classTypeLabels).map(([value, label]) => (
-                           <SelectItem key={value} value={value}>
-                              {label}
+                        {classCharacterOptions.map((option) => (
+                           <SelectItem key={option.value} value={option.value}>
+                              {option.label}
                            </SelectItem>
                         ))}
                      </SelectContent>
                   </Select>
                </div>
 
-               <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs">Actividades</Label>
-                  <Textarea
-                     className="text-xs min-h-[85px] resize-none"
-                     value={activities}
-                     onChange={(event) => setActivities(event.target.value)}
-                  />
-               </div>
+               {(type === "practica" || type === "teorico-practica") && (
+                  <>
+                     <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs">Nombre de la actividad</Label>
+                        <Input
+                           className="h-9 text-xs"
+                           value={practiceActivityName}
+                           onChange={(event) => setPracticeActivityName(event.target.value)}
+                        />
+                     </div>
+                     <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs">Descripcion</Label>
+                        <Textarea
+                           className="text-xs min-h-[70px] resize-none"
+                           value={practiceActivityDescription}
+                           onChange={(event) => setPracticeActivityDescription(event.target.value)}
+                        />
+                     </div>
+                  </>
+               )}
 
+               {type === "evaluacion" && (
+                  <>
+                     <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs">Nombre de la evaluacion</Label>
+                        <Input
+                           className="h-9 text-xs"
+                           value={evaluationName}
+                           onChange={(event) => setEvaluationName(event.target.value)}
+                        />
+                     </div>
+                     <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs">Tipo de evaluacion</Label>
+                        <Select
+                           value={evaluativeFormat || undefined}
+                           onValueChange={(value) =>
+                              setEvaluativeFormat(value as NonNullable<ClassSession["evaluativeFormat"]>)
+                           }
+                        >
+                           <SelectTrigger className="h-9 text-xs">
+                              <SelectValue placeholder="Seleccionar tipo evaluativo..." />
+                           </SelectTrigger>
+                           <SelectContent>
+                              {evaluativeFormatOptions.map((option) => (
+                                 <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                 </SelectItem>
+                              ))}
+                           </SelectContent>
+                        </Select>
+                     </div>
+                     <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs">Descripcion</Label>
+                        <Textarea
+                           className="text-xs min-h-[70px] resize-none"
+                           value={evaluationDescription}
+                           onChange={(event) => setEvaluationDescription(event.target.value)}
+                        />
+                     </div>
+                  </>
+               )}
                <div className="flex flex-col gap-1.5">
                   <Label className="text-xs">Recursos (coma separada)</Label>
                   <Input
                      className="h-9 text-xs"
                      value={resourcesText}
                      onChange={(event) => setResourcesText(event.target.value)}
-                  />
-               </div>
-
-               <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs">Observaciones internas</Label>
-                  <Textarea
-                     className="text-xs min-h-[70px] resize-none"
-                     value={notes}
-                     onChange={(event) => setNotes(event.target.value)}
                   />
                </div>
             </div>
@@ -309,4 +454,3 @@ export function ClassEditorModal({
       </Dialog>
    );
 }
-
