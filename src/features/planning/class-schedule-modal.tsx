@@ -120,6 +120,8 @@ export function ClassScheduleModal({
       [availableAssignments, initialAssignmentId, institutionId],
    );
 
+   const firstAvailableAssignmentId = availableAssignments[0]?.id ?? "";
+
    const isLockedToInitialSelection = Boolean(resolvedInitialAssignmentId);
 
    const [assignmentId, setAssignmentId] = useState("");
@@ -139,12 +141,12 @@ export function ClassScheduleModal({
       }
 
       const nextAssignmentId =
-         resolvedInitialAssignmentId || availableAssignments[0]?.id || "";
+         resolvedInitialAssignmentId || firstAvailableAssignmentId;
       setAssignmentId(nextAssignmentId);
       setStartDate(todayDate());
       setEndDate(addDays(todayDate(), 60));
       setSlots([createSlot(1, "08:00"), createSlot(3, "08:00")]);
-   }, [availableAssignments, open, resolvedInitialAssignmentId]);
+   }, [firstAvailableAssignmentId, open, resolvedInitialAssignmentId]);
 
    const updateSlot = (slotId: string, updates: Partial<SlotInput>) => {
       setSlots((prev) =>
@@ -404,3 +406,4 @@ export function ClassScheduleModal({
       </>
    );
 }
+
