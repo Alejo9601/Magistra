@@ -214,6 +214,7 @@ export function ClaseDictadoContent() {
       record.completedSubtopics.includes(subtopic),
    ).length;
    const isFinalized = cls.status === "finalizada";
+   const showGradesSection = cls.type === "evaluacion" || cls.type === "practica" || cls.type === "teorico-practica";
    const classDateLabel = new Date(`${cls.date}T12:00:00`).toLocaleDateString("es-AR", {
       weekday: "short",
       day: "2-digit",
@@ -569,10 +570,11 @@ export function ClaseDictadoContent() {
                   </CardContent>
                </Card>
 
+               {showGradesSection && (
                <Card>
                   <CardHeader className="pb-3">
                      <CardTitle className="text-sm font-semibold">
-                        Registro rapido de notas
+                        Registro de notas
                      </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0 space-y-3">
@@ -713,6 +715,7 @@ export function ClaseDictadoContent() {
                      )}
                   </CardContent>
                </Card>
+               )}
 
                <Card>
                   <CardHeader className="pb-3">
@@ -745,6 +748,7 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
+
 
 
 
