@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
    Dialog,
@@ -28,7 +28,7 @@ import {
 import { resolveAssignmentIdForInstitution } from "@/features/planning/institution-context-guards";
 import type { ClassFormInput } from "@/features/planning/types";
 import { toast } from "sonner";
-import type { ClassSession } from "@/types";
+import type { ClassBlock, ClassSession } from "@/types";
 
 const classCharacterOptions: Array<{
    value: ClassSession["type"];
@@ -74,6 +74,44 @@ function normalizeEvaluativeFormat(
    return value;
 }
 
+function createEmptyBlock(order: number): ClassBlock {
+   return {
+      order,
+      modalidad: "teorico",
+      unidad: "",
+      tema: "",
+      actividades: "",
+   };
+}
+
+function normalizeBlockDuration(value: number | undefined) {
+   if (!value || Number.isNaN(value) || value <= 0) {
+      return 40;
+   }
+   return Math.round(value);
+}
+
+function calculateBlockCount(durationMinutes: number, blockDurationMinutes: number) {
+   const safeBlockDuration = normalizeBlockDuration(blockDurationMinutes);
+   const raw = Math.round(durationMinutes / safeBlockDuration);
+   return Math.max(1, Math.min(3, raw));
+}
+
+function buildBlocks(
+   durationMinutes: number,
+   blockDurationMinutes: number,
+   previous: ClassBlock[] = [],
+) {
+   const count = calculateBlockCount(durationMinutes, blockDurationMinutes);
+   return Array.from({ length: count }, (_, index) => {
+      const order = index + 1;
+      const existing = previous.find((block) => block.order === order);
+      return existing
+         ? { ...existing, order }
+         : createEmptyBlock(order);
+   });
+}
+
 export function ClassEditorModal({
    open,
    onOpenChange,
@@ -99,6 +137,9 @@ export function ClassEditorModal({
    const [assignmentId, setAssignmentId] = useState("");
    const [date, setDate] = useState("");
    const [time, setTime] = useState("08:00");
+   const [blockDurationMinutes, setBlockDurationMinutes] = useState(40);
+   const [durationMinutes, setDurationMinutes] = useState(40);
+   const [blocks, setBlocks] = useState<ClassBlock[]>([createEmptyBlock(1)]);
    const [topic, setTopic] = useState("");
    const [type, setType] = useState<ClassSession["type"]>("teorica");
    const [evaluativeFormat, setEvaluativeFormat] = useState<
@@ -113,6 +154,52 @@ export function ClassEditorModal({
 
    const availableAssignments = getAssignmentsByInstitution(institutionId);
 
+   const durationOptions = useMemo(() => {
+      const safe = normalizeBlockDuration(blockDurationMinutes);
+      return [1, 2, 3].map((multiplier) => ({
+         multiplier,
+         totalMinutes: safe * multiplier,
+      }));
+   }, [blockDurationMinutes]);
+
+   const applyDuration = (
+      nextDurationMinutes: number,
+      nextBlockDuration: number,
+      sourceBlocks?: ClassBlock[],
+   ) => {
+      const normalizedBlockDuration = normalizeBlockDuration(nextBlockDuration);
+      const normalizedDuration =
+         normalizedBlockDuration *
+         calculateBlockCount(nextDurationMinutes, normalizedBlockDuration);
+      setDurationMinutes(normalizedDuration);
+      setBlocks(buildBlocks(normalizedDuration, normalizedBlockDuration, sourceBlocks ?? blocks));
+   };
+
+   const handleAssignmentChange = (nextAssignmentId: string) => {
+      setAssignmentId(nextAssignmentId);
+      const assignment = getAssignmentById(nextAssignmentId);
+      const subject = assignment ? getSubjectById(assignment.subjectId) : null;
+      const nextBlockDuration = normalizeBlockDuration(
+         subject?.blockDurationMinutes,
+      );
+      const currentCount = Math.max(1, Math.min(3, blocks.length || 1));
+      setBlockDurationMinutes(nextBlockDuration);
+      applyDuration(nextBlockDuration * currentCount, nextBlockDuration, blocks);
+   };
+
+   const updateBlock = (order: number, updates: Partial<ClassBlock>) => {
+      setBlocks((prev) =>
+         prev.map((block) =>
+            block.order === order
+               ? {
+                    ...block,
+                    ...updates,
+                 }
+               : block,
+         ),
+      );
+   };
+
    const reset = () => {
       const nextInstitution = activeInstitution;
       const candidateAssignmentId =
@@ -120,14 +207,28 @@ export function ClassEditorModal({
          (initialClass?.subjectId
             ? getAssignmentIdBySubjectId(initialClass.subjectId)
             : "");
-      setAssignmentId(
-         resolveAssignmentIdForInstitution({
-            institutionId: nextInstitution,
-            candidateAssignmentId,
-            assignmentsByInstitution: getAssignmentsByInstitution(nextInstitution),
-            getAssignmentById,
-         }),
+      const resolvedAssignmentId = resolveAssignmentIdForInstitution({
+         institutionId: nextInstitution,
+         candidateAssignmentId,
+         assignmentsByInstitution: getAssignmentsByInstitution(nextInstitution),
+         getAssignmentById,
+      });
+      setAssignmentId(resolvedAssignmentId);
+
+      const assignment = getAssignmentById(resolvedAssignmentId);
+      const subject = assignment ? getSubjectById(assignment.subjectId) : null;
+      const nextBlockDuration = normalizeBlockDuration(
+         initialClass?.blockDurationMinutes ?? subject?.blockDurationMinutes,
       );
+      setBlockDurationMinutes(nextBlockDuration);
+
+      const initialDuration =
+         initialClass?.durationMinutes ??
+         nextBlockDuration *
+            Math.max(1, Math.min(3, initialClass?.blocks?.length ?? 1));
+      const sourceBlocks = initialClass?.blocks ?? [createEmptyBlock(1)];
+      applyDuration(initialDuration, nextBlockDuration, sourceBlocks);
+
       setDate(initialClass?.date ?? initialDate ?? "");
       setTime(initialClass?.time ?? "08:00");
       setTopic(initialClass?.topic ?? "");
@@ -155,8 +256,8 @@ export function ClassEditorModal({
    }, [open, initialClass, initialDate, activeInstitution]);
 
    const submit = (mode: "draft" | "publish") => {
-      if (!assignmentId || !date || !time || !topic.trim()) {
-         toast.error("Completa institucion, materia, fecha, hora y tema principal.");
+      if (!assignmentId || !date || !time) {
+         toast.error("Completa institucion, materia, fecha y hora.");
          return;
       }
       if (!initialClass && date < todayStr) {
@@ -196,6 +297,35 @@ export function ClassEditorModal({
          return;
       }
 
+      const normalizedBlocks = buildBlocks(durationMinutes, blockDurationMinutes, blocks);
+      const hasBlockContent = normalizedBlocks.some(
+         (block) =>
+            block.tema.trim().length > 0 ||
+            block.unidad.trim().length > 0 ||
+            block.actividades.trim().length > 0,
+      );
+      if (!topic.trim() && !hasBlockContent) {
+         toast.error("Completa el tema principal o carga contenido en algun bloque.");
+         return;
+      }
+
+      const manualSubtopics = subtopicsText
+         .split("\n")
+         .map((value) => value.trim())
+         .filter(Boolean);
+      const blockTopics = normalizedBlocks
+         .flatMap((block) => [block.unidad.trim(), block.tema.trim()])
+         .filter((value) => value.length > 0);
+
+      const resolvedTopic =
+         topic.trim() ||
+         normalizedBlocks.find((block) => block.tema.trim().length > 0)?.tema.trim() ||
+         "Por planificar";
+      const resolvedSubtopics =
+         manualSubtopics.length > 0
+            ? manualSubtopics
+            : Array.from(new Set(blockTopics)).filter((item) => item !== resolvedTopic);
+
       onSubmit(
          {
             institutionId: assignment.institutionId,
@@ -203,11 +333,11 @@ export function ClassEditorModal({
             assignmentId: assignment.id,
             date,
             time,
-            topic: topic.trim(),
-            subtopics: subtopicsText
-               .split("\n")
-               .map((value) => value.trim())
-               .filter(Boolean),
+            durationMinutes,
+            blockDurationMinutes,
+            blocks: normalizedBlocks,
+            topic: resolvedTopic,
+            subtopics: resolvedSubtopics,
             type,
             status: mode === "publish" ? "planificada" : "sin-planificar",
             evaluativeFormat:
@@ -241,7 +371,9 @@ export function ClassEditorModal({
          <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto">
             <DialogHeader>
                <DialogTitle>{initialClass ? "Editar clase" : "Nueva clase"}</DialogTitle>
-               <DialogDescription>Completa los datos para planificar una clase.</DialogDescription>
+               <DialogDescription>
+                  Crea una clase completa y el sistema genera automaticamente sus bloques.
+               </DialogDescription>
             </DialogHeader>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
@@ -266,7 +398,7 @@ export function ClassEditorModal({
 
                <div className="flex flex-col gap-1.5">
                   <Label className="text-xs">Materia</Label>
-                  <Select value={assignmentId} onValueChange={setAssignmentId}>
+                  <Select value={assignmentId} onValueChange={handleAssignmentChange}>
                      <SelectTrigger className="h-9 text-xs">
                         <SelectValue placeholder="Seleccionar..." />
                      </SelectTrigger>
@@ -305,6 +437,93 @@ export function ClassEditorModal({
                      disabled={isScheduledSlotLocked}
                      onChange={(event) => setTime(event.target.value)}
                   />
+               </div>
+
+               <div className="flex flex-col gap-1.5 sm:col-span-2">
+                  <Label className="text-xs">Duracion total de clase</Label>
+                  <Select
+                     value={String(durationMinutes)}
+                     onValueChange={(value) =>
+                        applyDuration(Number(value), blockDurationMinutes, blocks)
+                     }
+                  >
+                     <SelectTrigger className="h-9 text-xs">
+                        <SelectValue placeholder="Seleccionar duracion" />
+                     </SelectTrigger>
+                     <SelectContent>
+                        {durationOptions.map((option) => (
+                           <SelectItem key={option.multiplier} value={String(option.totalMinutes)}>
+                              {option.totalMinutes} min ({option.multiplier} bloque{option.multiplier > 1 ? "s" : ""} de {blockDurationMinutes} min)
+                           </SelectItem>
+                        ))}
+                     </SelectContent>
+                  </Select>
+               </div>
+            </div>
+
+            <div className="rounded-lg border border-border/70 p-3 space-y-3">
+               <div>
+                  <p className="text-xs font-semibold text-foreground">Bloques de clase</p>
+                  <p className="text-[11px] text-muted-foreground">
+                     Se generan automaticamente segun la duracion total. Solo puedes editarlos.
+                  </p>
+               </div>
+
+               <div className="space-y-3">
+                  {blocks.map((block) => (
+                     <div key={block.order} className="rounded-md border border-border/60 p-3 space-y-2">
+                        <p className="text-xs font-semibold text-foreground">Bloque {block.order}</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                           <div className="flex flex-col gap-1.5">
+                              <Label className="text-xs">Modalidad</Label>
+                              <Select
+                                 value={block.modalidad}
+                                 onValueChange={(value) =>
+                                    updateBlock(block.order, { modalidad: value as ClassBlock["modalidad"] })
+                                 }
+                              >
+                                 <SelectTrigger className="h-9 text-xs">
+                                    <SelectValue placeholder="Seleccionar modalidad" />
+                                 </SelectTrigger>
+                                 <SelectContent>
+                                    <SelectItem value="teorico">Teorico</SelectItem>
+                                    <SelectItem value="practico">Practico</SelectItem>
+                                 </SelectContent>
+                              </Select>
+                           </div>
+                           <div className="flex flex-col gap-1.5">
+                              <Label className="text-xs">Unidad</Label>
+                              <Input
+                                 className="h-9 text-xs"
+                                 value={block.unidad}
+                                 onChange={(event) =>
+                                    updateBlock(block.order, { unidad: event.target.value })
+                                 }
+                              />
+                           </div>
+                           <div className="flex flex-col gap-1.5">
+                              <Label className="text-xs">Tema</Label>
+                              <Input
+                                 className="h-9 text-xs"
+                                 value={block.tema}
+                                 onChange={(event) =>
+                                    updateBlock(block.order, { tema: event.target.value })
+                                 }
+                              />
+                           </div>
+                           <div className="flex flex-col gap-1.5 sm:col-span-2">
+                              <Label className="text-xs">Actividades</Label>
+                              <Textarea
+                                 className="text-xs min-h-[70px] resize-none"
+                                 value={block.actividades}
+                                 onChange={(event) =>
+                                    updateBlock(block.order, { actividades: event.target.value })
+                                 }
+                              />
+                           </div>
+                        </div>
+                     </div>
+                  ))}
                </div>
             </div>
 

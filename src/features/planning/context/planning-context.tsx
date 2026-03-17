@@ -3,8 +3,9 @@ import {
    classSessions,
    getAssignmentById,
    getAssignmentIdBySubjectId,
+   getSubjectById,
 } from "@/lib/edu-repository";
-import type { ClassSession } from "@/types";
+import type { ClassBlock, ClassSession } from "@/types";
 import {
    createPlanningClassId,
    loadPlanningClasses,
@@ -20,6 +21,7 @@ type RecurringInput = {
    slots: Array<{
       dayOfWeek: number;
       time: string;
+      blockCount: number;
    }>;
 };
 
@@ -55,6 +57,23 @@ function addDays(dateStr: string, days: number) {
    return `${yyyy}-${mm}-${dd}`;
 }
 
+function normalizeBlockDuration(value: number | undefined) {
+   if (!value || Number.isNaN(value) || value <= 0) {
+      return 40;
+   }
+   return Math.round(value);
+}
+
+function buildAutoBlocks(blockCount: number): ClassBlock[] {
+   return Array.from({ length: blockCount }, (_, index) => ({
+      order: index + 1,
+      modalidad: "teorico",
+      unidad: "",
+      tema: "",
+      actividades: "",
+   }));
+}
+
 export function PlanningProvider({ children }: { children: React.ReactNode }) {
    const [classes, setClasses] = useState<ClassSession[]>(() =>
       loadPlanningClasses(classSessions).map((classSession) => ({
@@ -70,188 +89,207 @@ export function PlanningProvider({ children }: { children: React.ReactNode }) {
    }, [classes]);
 
    const value: PlanningContextValue = {
-         classes,
-         createClass: (input) => {
-            const assignment = input.assignmentId
-               ? getAssignmentById(input.assignmentId)
-               : null;
-            const nextClass: ClassSession = {
-               ...input,
+      classes,
+      createClass: (input) => {
+         const assignment = input.assignmentId
+            ? getAssignmentById(input.assignmentId)
+            : null;
+         const nextClass: ClassSession = {
+            ...input,
+            id: createPlanningClassId(),
+            assignmentId:
+               assignment?.id ??
+               input.assignmentId ??
+               getAssignmentIdBySubjectId(input.subjectId),
+            subjectId: assignment?.subjectId ?? input.subjectId,
+            institutionId: assignment?.institutionId ?? input.institutionId,
+         };
+
+         setClasses((prev) => [...prev, nextClass]);
+         return nextClass;
+      },
+      createRecurringClasses: (input) => {
+         const scheduleTemplateId = `sch-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+         let createdCount = 0;
+
+         setClasses((prev) => {
+            const normalizedSlots = input.slots
+               .map((slot) => ({
+                  dayOfWeek: slot.dayOfWeek,
+                  time: slot.time,
+                  blockCount: slot.blockCount,
+               }))
+               .filter(
+                  (slot) => slot.time.trim().length > 0 && Number(slot.blockCount) > 0,
+               );
+            const next = [...prev];
+            const existingSlot = new Set(
+               prev.map(
+                  (classSession) =>
+                     `${classSession.assignmentId ?? getAssignmentIdBySubjectId(classSession.subjectId)}|${classSession.date}|${classSession.time}`,
+               ),
+            );
+            const assignment = getAssignmentById(input.assignmentId);
+            if (!assignment) {
+               return prev;
+            }
+
+            const subject = getSubjectById(assignment.subjectId);
+            const blockDurationMinutes = normalizeBlockDuration(
+               subject?.blockDurationMinutes,
+            );
+
+            const today = new Date();
+            const todayAtNoon = new Date(
+               `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}T12:00:00`,
+            );
+            const cursor = new Date(`${input.startDate}T12:00:00`);
+            const end = new Date(`${input.endDate}T12:00:00`);
+            if (cursor < todayAtNoon) {
+               cursor.setTime(todayAtNoon.getTime());
+            }
+
+            while (cursor <= end) {
+               const dayOfWeek = cursor.getDay();
+               const daySlots = normalizedSlots.filter(
+                  (slot) => slot.dayOfWeek === dayOfWeek,
+               );
+
+               if (daySlots.length > 0) {
+                  const yyyy = cursor.getFullYear();
+                  const mm = String(cursor.getMonth() + 1).padStart(2, "0");
+                  const dd = String(cursor.getDate()).padStart(2, "0");
+                  const date = `${yyyy}-${mm}-${dd}`;
+
+                  daySlots.forEach((slot) => {
+                     const slotKey = `${assignment.id}|${date}|${slot.time}`;
+                     if (existingSlot.has(slotKey)) {
+                        return;
+                     }
+
+                     const blockCount = Math.max(
+                        1,
+                        Math.min(3, Math.round(slot.blockCount)),
+                     );
+                     const durationMinutes = blockCount * blockDurationMinutes;
+
+                     next.push({
+                        id: createPlanningClassId(),
+                        scheduleTemplateId,
+                        institutionId: assignment.institutionId,
+                        subjectId: assignment.subjectId,
+                        assignmentId: assignment.id,
+                        date,
+                        time: slot.time,
+                        durationMinutes,
+                        blockDurationMinutes,
+                        blocks: buildAutoBlocks(blockCount),
+                        topic: "Por planificar",
+                        subtopics: [],
+                        type: "teorica",
+                        status: "sin-planificar",
+                     });
+                     existingSlot.add(slotKey);
+                     createdCount += 1;
+                  });
+               }
+               cursor.setDate(cursor.getDate() + 1);
+            }
+
+            return next;
+         });
+
+         return createdCount;
+      },
+      removeClassesByAssignment: (assignmentId) => {
+         let removedClassIds: string[] = [];
+         setClasses((prev) => {
+            removedClassIds = prev
+               .filter(
+                  (classSession) =>
+                     (classSession.assignmentId ??
+                        getAssignmentIdBySubjectId(classSession.subjectId)) ===
+                     assignmentId,
+               )
+               .map((classSession) => classSession.id);
+            return prev.filter(
+               (classSession) => !removedClassIds.includes(classSession.id),
+            );
+         });
+         return removedClassIds;
+      },
+      updateClass: (id, updates) => {
+         const assignment = updates.assignmentId
+            ? getAssignmentById(updates.assignmentId)
+            : null;
+         setClasses((prev) =>
+            prev.map((classSession) =>
+               classSession.id === id
+                  ? {
+                       ...classSession,
+                       ...updates,
+                       id: classSession.id,
+                       subjectId:
+                          assignment?.subjectId ??
+                          updates.subjectId ??
+                          classSession.subjectId,
+                       institutionId:
+                          assignment?.institutionId ??
+                          updates.institutionId ??
+                          classSession.institutionId,
+                       assignmentId:
+                          assignment?.id ??
+                          updates.assignmentId ??
+                          classSession.assignmentId,
+                    }
+                  : classSession,
+            ),
+         );
+      },
+      duplicateClass: (id, overrides) => {
+         let duplicated: ClassSession | null = null;
+
+         setClasses((prev) => {
+            const source = prev.find((classSession) => classSession.id === id);
+            if (!source) {
+               return prev;
+            }
+
+            duplicated = {
+               ...source,
                id: createPlanningClassId(),
-               assignmentId:
-                  assignment?.id ??
-                  input.assignmentId ??
-                  getAssignmentIdBySubjectId(input.subjectId),
-               subjectId: assignment?.subjectId ?? input.subjectId,
-               institutionId: assignment?.institutionId ?? input.institutionId,
+               date: overrides?.date ?? addDays(source.date, 7),
+               time: overrides?.time ?? source.time,
+               status: overrides?.status ?? "sin-planificar",
             };
 
-            setClasses((prev) => [...prev, nextClass]);
-            return nextClass;
-         },
-         createRecurringClasses: (input) => {
-            const scheduleTemplateId = `sch-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-            let createdCount = 0;
+            return [...prev, duplicated];
+         });
 
-            setClasses((prev) => {
-               const normalizedSlots = input.slots
-                  .map((slot) => ({
-                     dayOfWeek: slot.dayOfWeek,
-                     time: slot.time,
-                  }))
-                  .filter((slot) => slot.time.trim().length > 0);
-               const next = [...prev];
-               const existingSlot = new Set(
-                  prev.map(
-                     (classSession) =>
-                        `${classSession.assignmentId ?? getAssignmentIdBySubjectId(classSession.subjectId)}|${classSession.date}|${classSession.time}`,
-                  ),
-               );
-               const assignment = getAssignmentById(input.assignmentId);
-               if (!assignment) {
-                  return prev;
-               }
-
-               const today = new Date();
-               const todayAtNoon = new Date(
-                  `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}T12:00:00`,
-               );
-               const cursor = new Date(`${input.startDate}T12:00:00`);
-               const end = new Date(`${input.endDate}T12:00:00`);
-               if (cursor < todayAtNoon) {
-                  cursor.setTime(todayAtNoon.getTime());
-               }
-
-               while (cursor <= end) {
-                  const dayOfWeek = cursor.getDay();
-                  const daySlots = normalizedSlots.filter(
-                     (slot) => slot.dayOfWeek === dayOfWeek,
-                  );
-
-                  if (daySlots.length > 0) {
-                     const yyyy = cursor.getFullYear();
-                     const mm = String(cursor.getMonth() + 1).padStart(2, "0");
-                     const dd = String(cursor.getDate()).padStart(2, "0");
-                     const date = `${yyyy}-${mm}-${dd}`;
-
-                     daySlots.forEach((slot) => {
-                        const slotKey = `${assignment.id}|${date}|${slot.time}`;
-                        if (!existingSlot.has(slotKey)) {
-                           next.push({
-                              id: createPlanningClassId(),
-                              scheduleTemplateId,
-                              institutionId: assignment.institutionId,
-                              subjectId: assignment.subjectId,
-                              assignmentId: assignment.id,
-                              date,
-                              time: slot.time,
-                              topic: "Por planificar",
-                              subtopics: [],
-                              type: "teorica",
-                              status: "sin-planificar",
-                           });
-                           existingSlot.add(slotKey);
-                           createdCount += 1;
-                        }
-                     });
-                  }
-                  cursor.setDate(cursor.getDate() + 1);
-               }
-
-               return next;
-            });
-
-            return createdCount;
-         },
-         removeClassesByAssignment: (assignmentId) => {
-            let removedClassIds: string[] = [];
-            setClasses((prev) => {
-               removedClassIds = prev
-                  .filter(
-                     (classSession) =>
-                        (classSession.assignmentId ??
-                           getAssignmentIdBySubjectId(classSession.subjectId)) ===
-                        assignmentId,
-                  )
-                  .map((classSession) => classSession.id);
-               return prev.filter(
-                  (classSession) => !removedClassIds.includes(classSession.id),
-               );
-            });
-            return removedClassIds;
-         },
-         updateClass: (id, updates) => {
-            const assignment = updates.assignmentId
-               ? getAssignmentById(updates.assignmentId)
-               : null;
-            setClasses((prev) =>
-               prev.map((classSession) =>
-                  classSession.id === id
-                     ? {
-                          ...classSession,
-                          ...updates,
-                          id: classSession.id,
-                          subjectId:
-                             assignment?.subjectId ??
-                             updates.subjectId ??
-                             classSession.subjectId,
-                          institutionId:
-                             assignment?.institutionId ??
-                             updates.institutionId ??
-                             classSession.institutionId,
-                          assignmentId:
-                             assignment?.id ??
-                             updates.assignmentId ??
-                             classSession.assignmentId,
-                       }
-                     : classSession,
-               ),
-            );
-         },
-         duplicateClass: (id, overrides) => {
-            let duplicated: ClassSession | null = null;
-
-            setClasses((prev) => {
-               const source = prev.find((classSession) => classSession.id === id);
-               if (!source) {
-                  return prev;
-               }
-
-               duplicated = {
-                  ...source,
-                  id: createPlanningClassId(),
-                  date: overrides?.date ?? addDays(source.date, 7),
-                  time: overrides?.time ?? source.time,
-                  status: overrides?.status ?? "sin-planificar",
-               };
-
-               return [...prev, duplicated];
-            });
-
-            return duplicated;
-         },
-         markClassAsTaught: (id) => {
-            setClasses((prev) =>
-               prev.map((classSession) =>
-                  classSession.id === id
-                     ? { ...classSession, status: "finalizada" }
-                     : classSession,
-               ),
-            );
-         },
-         updateClassNotes: (id, notes) => {
-            setClasses((prev) =>
-               prev.map((classSession) =>
-                  classSession.id === id
-                     ? {
-                          ...classSession,
-                          notes: notes.trim().length > 0 ? notes : undefined,
-                       }
-                     : classSession,
-               ),
-            );
-         },
-      };
+         return duplicated;
+      },
+      markClassAsTaught: (id) => {
+         setClasses((prev) =>
+            prev.map((classSession) =>
+               classSession.id === id
+                  ? { ...classSession, status: "finalizada" }
+                  : classSession,
+            ),
+         );
+      },
+      updateClassNotes: (id, notes) => {
+         setClasses((prev) =>
+            prev.map((classSession) =>
+               classSession.id === id
+                  ? {
+                       ...classSession,
+                       notes: notes.trim().length > 0 ? notes : undefined,
+                    }
+                  : classSession,
+            ),
+         );
+      },
+   };
 
    return (
       <PlanningContext.Provider value={value}>{children}</PlanningContext.Provider>
@@ -265,5 +303,3 @@ export function usePlanningContext() {
    }
    return context;
 }
-
-

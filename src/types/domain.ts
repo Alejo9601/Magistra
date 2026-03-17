@@ -1,4 +1,4 @@
-export type Institution = {
+﻿export type Institution = {
    id: string;
    name: string;
    address: string;
@@ -12,6 +12,7 @@ export type Subject = {
    institutionId: string;
    course: string;
    periodFormat: AcademicPeriodFormat;
+   blockDurationMinutes?: number;
    studentCount: number;
    planProgress: number;
 };
@@ -59,6 +60,16 @@ export type ClassType =
 
 export type ClassStatus = "planificada" | "sin-planificar" | "finalizada";
 
+export type ClassBlockMode = "teorico" | "practico";
+
+export type ClassBlock = {
+   order: number;
+   modalidad: ClassBlockMode;
+   unidad: string;
+   tema: string;
+   actividades: string;
+};
+
 export type EvaluativeFormat =
    | "oral"
    | "escrito"
@@ -76,6 +87,9 @@ export type ClassSession = {
    assignmentId?: string;
    date: string;
    time: string;
+   durationMinutes?: number;
+   blockDurationMinutes?: number;
+   blocks?: ClassBlock[];
    scheduleTemplateId?: string;
    topic: string;
    subtopics: string[];
@@ -195,6 +209,8 @@ export type ClassroomRecord = {
    notes?: string;
    performanceEntries: ClassroomPerformanceEntry[];
 };
+
+
 
 
 

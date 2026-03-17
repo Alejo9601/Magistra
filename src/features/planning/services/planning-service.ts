@@ -1,4 +1,4 @@
-import type { ClassSession } from "@/types";
+﻿import type { ClassBlock, ClassBlockMode, ClassSession } from "@/types";
 import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
 
 const PLANNING_STORAGE_KEY = "aula.planning.classes";
@@ -37,6 +37,40 @@ function isEvaluativeFormat(
    );
 }
 
+function isBlockMode(value: unknown): value is ClassBlockMode {
+   return value === "teorico" || value === "practico";
+}
+
+function sanitizePositiveMinutes(value: unknown): number | undefined {
+   if (typeof value !== "number" || Number.isNaN(value) || value <= 0) {
+      return undefined;
+   }
+   return Math.round(value);
+}
+
+function sanitizeBlock(raw: unknown): ClassBlock | null {
+   if (!raw || typeof raw !== "object") {
+      return null;
+   }
+   const input = raw as Partial<ClassBlock>;
+   if (
+      typeof input.order !== "number" ||
+      !isBlockMode(input.modalidad) ||
+      typeof input.unidad !== "string" ||
+      typeof input.tema !== "string" ||
+      typeof input.actividades !== "string"
+   ) {
+      return null;
+   }
+   return {
+      order: Math.max(1, Math.floor(input.order)),
+      modalidad: input.modalidad,
+      unidad: input.unidad,
+      tema: input.tema,
+      actividades: input.actividades,
+   };
+}
+
 function sanitizeClassSession(raw: unknown): ClassSession | null {
    if (!raw || typeof raw !== "object") {
       return null;
@@ -68,6 +102,14 @@ function sanitizeClassSession(raw: unknown): ClassSession | null {
          typeof input.assignmentId === "string" ? input.assignmentId : undefined,
       date: input.date,
       time: input.time,
+      durationMinutes: sanitizePositiveMinutes(input.durationMinutes),
+      blockDurationMinutes: sanitizePositiveMinutes(input.blockDurationMinutes),
+      blocks: Array.isArray(input.blocks)
+         ? input.blocks
+              .map((entry) => sanitizeBlock(entry))
+              .filter((entry): entry is ClassBlock => entry !== null)
+              .sort((a, b) => a.order - b.order)
+         : undefined,
       scheduleTemplateId:
          typeof input.scheduleTemplateId === "string"
             ? input.scheduleTemplateId

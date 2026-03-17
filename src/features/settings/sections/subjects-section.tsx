@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { BookOpen, CalendarDays, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -51,6 +51,14 @@ const periodFormatOptions = [
    { value: "cuatrimestral", label: "Cuatrimestral" },
 ] as const;
 
+const blockDurationOptions = [
+   { value: 20, label: "20 min" },
+   { value: 30, label: "30 min" },
+   { value: 40, label: "40 min" },
+   { value: 50, label: "50 min" },
+   { value: 60, label: "60 min" },
+] as const;
+
 function periodFormatLabel(value: (typeof periodFormatOptions)[number]["value"]) {
    return periodFormatOptions.find((option) => option.value === value)?.label ?? "Trimestral";
 }
@@ -67,6 +75,7 @@ export function SubjectsSection() {
    const [subjectName, setSubjectName] = useState("");
    const [course, setCourse] = useState("");
    const [periodFormat, setPeriodFormat] = useState<(typeof periodFormatOptions)[number]["value"]>("trimestral");
+   const [blockDurationMinutes, setBlockDurationMinutes] = useState<(typeof blockDurationOptions)[number]["value"]>(40);
    const [copySectionStudents, setCopySectionStudents] = useState(false);
    const [scheduleOpen, setScheduleOpen] = useState(false);
    const [scheduleInstitutionId, setScheduleInstitutionId] = useState("");
@@ -85,6 +94,7 @@ export function SubjectsSection() {
       setSubjectName("");
       setCourse("");
       setPeriodFormat("trimestral");
+      setBlockDurationMinutes(40);
       setCopySectionStudents(false);
    };
 
@@ -99,6 +109,7 @@ export function SubjectsSection() {
          name: subjectName,
          course,
          periodFormat,
+         blockDurationMinutes,
       });
 
       if (copySectionStudents) {
@@ -184,7 +195,7 @@ export function SubjectsSection() {
                                     {sub.name}
                                  </span>
                                  <span className="text-xs text-muted-foreground ml-2">
-                                    {sub.course} - {periodFormatLabel(sub.periodFormat)}
+                                    {sub.course} - {periodFormatLabel(sub.periodFormat)} - Bloque {sub.blockDurationMinutes ?? 40} min
                                  </span>
                               </div>
                               <div className="flex items-center gap-1">
@@ -281,28 +292,50 @@ export function SubjectsSection() {
                         placeholder="Ej: 1A"
                      />
                   </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs">Formato de periodo</Label>
+                        <Select
+                           value={periodFormat}
+                           onValueChange={(value) =>
+                              setPeriodFormat(value as (typeof periodFormatOptions)[number]["value"])
+                           }
+                        >
+                           <SelectTrigger className="h-9 text-xs">
+                              <SelectValue placeholder="Seleccionar..." />
+                           </SelectTrigger>
+                           <SelectContent>
+                              {periodFormatOptions.map((option) => (
+                                 <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                 </SelectItem>
+                              ))}
+                           </SelectContent>
+                        </Select>
+                     </div>
 
-
-
-                  <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Formato de periodo</Label>
-                     <Select
-                        value={periodFormat}
-                        onValueChange={(value) =>
-                           setPeriodFormat(value as (typeof periodFormatOptions)[number]["value"])
-                        }
-                     >
-                        <SelectTrigger className="h-9 text-xs">
-                           <SelectValue placeholder="Seleccionar..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                           {periodFormatOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                 {option.label}
-                              </SelectItem>
-                           ))}
-                        </SelectContent>
-                     </Select>
+                     <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs">Duracion de bloque</Label>
+                        <Select
+                           value={String(blockDurationMinutes)}
+                           onValueChange={(value) =>
+                              setBlockDurationMinutes(
+                                 Number(value) as (typeof blockDurationOptions)[number]["value"],
+                              )
+                           }
+                        >
+                           <SelectTrigger className="h-9 text-xs">
+                              <SelectValue placeholder="Seleccionar..." />
+                           </SelectTrigger>
+                           <SelectContent>
+                              {blockDurationOptions.map((option) => (
+                                 <SelectItem key={option.value} value={String(option.value)}>
+                                    {option.label}
+                                 </SelectItem>
+                              ))}
+                           </SelectContent>
+                        </Select>
+                     </div>
                   </div>
 
                   <label className="flex items-start gap-2 cursor-pointer">
@@ -376,3 +409,7 @@ export function SubjectsSection() {
       </>
    );
 }
+
+
+
+

@@ -1,4 +1,4 @@
-import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
+﻿import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
 import { defaultEduData } from "@/data/default-edu-data";
 import { storageKeys } from "@/services/app-data-bootstrap-service";
 import type {
@@ -110,6 +110,10 @@ function sanitizeSubject(raw: unknown): Subject | null {
       periodFormat: isAcademicPeriodFormat(input.periodFormat)
          ? input.periodFormat
          : "trimestral",
+      blockDurationMinutes:
+         typeof input.blockDurationMinutes === "number" && input.blockDurationMinutes > 0
+            ? Math.round(input.blockDurationMinutes)
+            : 40,
       studentCount: input.studentCount,
       planProgress: input.planProgress,
    };
@@ -251,6 +255,7 @@ export function createSubject(input: {
    name: string;
    course: string;
    periodFormat: Subject["periodFormat"];
+   blockDurationMinutes?: number;
 }) {
    const next: Subject = {
       id: `sub-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
@@ -258,6 +263,10 @@ export function createSubject(input: {
       name: input.name.trim(),
       course: input.course.trim(),
       periodFormat: input.periodFormat,
+      blockDurationMinutes:
+         typeof input.blockDurationMinutes === "number" && input.blockDurationMinutes > 0
+            ? Math.round(input.blockDurationMinutes)
+            : 40,
       studentCount: 0,
       planProgress: 0,
    };
@@ -424,3 +433,4 @@ export function getInstitutionRepository(institutionId: string) {
 }
 
 export type InstitutionRepository = ReturnType<typeof getInstitutionRepository>;
+

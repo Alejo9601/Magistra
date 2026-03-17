@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
    AlertDialog,
@@ -54,13 +54,15 @@ type SlotInput = {
    id: string;
    dayOfWeek: number;
    time: string;
+   blockCount: number;
 };
 
-function createSlot(dayOfWeek = 1, time = "08:00"): SlotInput {
+function createSlot(dayOfWeek = 1, time = "08:00", blockCount = 1): SlotInput {
    return {
       id: `slot-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
       dayOfWeek,
       time,
+      blockCount,
    };
 }
 
@@ -102,6 +104,7 @@ export function ClassScheduleModal({
       slots: Array<{
          dayOfWeek: number;
          time: string;
+         blockCount: number;
       }>;
    }) => number;
 }) {
@@ -125,14 +128,17 @@ export function ClassScheduleModal({
    const isLockedToInitialSelection = Boolean(resolvedInitialAssignmentId);
 
    const [assignmentId, setAssignmentId] = useState("");
+   const selectedAssignment = assignmentId ? getAssignmentById(assignmentId) : null;
+   const selectedSubject = selectedAssignment ? getSubjectById(selectedAssignment.subjectId) : null;
+   const selectedBlockDuration = selectedSubject?.blockDurationMinutes ?? 40;
    const [startDate, setStartDate] = useState(todayDate());
    const [endDate, setEndDate] = useState(addDays(todayDate(), 60));
    const [pendingDeleteSlotId, setPendingDeleteSlotId] = useState<string | null>(
       null,
    );
    const [slots, setSlots] = useState<SlotInput[]>([
-      createSlot(1, "08:00"),
-      createSlot(3, "08:00"),
+      createSlot(1, "08:00", 1),
+      createSlot(3, "08:00", 1),
    ]);
 
    useEffect(() => {
@@ -145,7 +151,7 @@ export function ClassScheduleModal({
       setAssignmentId(nextAssignmentId);
       setStartDate(todayDate());
       setEndDate(addDays(todayDate(), 60));
-      setSlots([createSlot(1, "08:00"), createSlot(3, "08:00")]);
+      setSlots([createSlot(1, "08:00", 1), createSlot(3, "08:00", 1)]);
    }, [firstAvailableAssignmentId, open, resolvedInitialAssignmentId]);
 
    const updateSlot = (slotId: string, updates: Partial<SlotInput>) => {
@@ -162,6 +168,18 @@ export function ClassScheduleModal({
       setSlots((prev) => [...prev, createSlot()]);
    };
 
+   const adjustBlockCount = (slotId: string, delta: number) => {
+      setSlots((prev) =>
+         prev.map((slot) => {
+            if (slot.id !== slotId) {
+               return slot;
+            }
+            const nextCount = Math.max(1, Math.min(3, slot.blockCount + delta));
+            return { ...slot, blockCount: nextCount };
+         }),
+      );
+   };
+
    const submit = () => {
       if (!assignmentId || !startDate || !endDate) {
          toast.error("Completa institucion, materia y rango de fechas.");
@@ -176,15 +194,19 @@ export function ClassScheduleModal({
          return;
       }
       if (slots.some((slot) => slot.time.trim().length === 0)) {
-         toast.error("Todos los bloques deben tener horario.");
+         toast.error("Todos los bloques deben tener hora de inicio.");
          return;
       }
 
-      const uniqueSlotsMap = new Map<string, { dayOfWeek: number; time: string }>();
+      const uniqueSlotsMap = new Map<
+         string,
+         { dayOfWeek: number; time: string; blockCount: number }
+      >();
       slots.forEach((slot) => {
-         uniqueSlotsMap.set(`${slot.dayOfWeek}-${slot.time}`, {
+         uniqueSlotsMap.set(`${slot.dayOfWeek}-${slot.time}-${slot.blockCount}`, {
             dayOfWeek: slot.dayOfWeek,
             time: slot.time,
+            blockCount: slot.blockCount,
          });
       });
       const normalizedSlots = Array.from(uniqueSlotsMap.values());
@@ -290,7 +312,10 @@ export function ClassScheduleModal({
 
                <div className="rounded-lg border border-border/70 p-3">
                   <div className="mb-2 flex items-center justify-between">
-                     <Label className="text-xs">Bloques semanales (dia + hora)</Label>
+                     <div className="flex flex-col">
+                        <Label className="text-xs">Horarios semanales (dia + hora + cantidad de bloques)</Label>
+                        <span className="text-[11px] text-muted-foreground">1 bloque = {selectedBlockDuration} min</span>
+                     </div>
                      <Button
                         type="button"
                         variant="outline"
@@ -299,7 +324,7 @@ export function ClassScheduleModal({
                         onClick={addSlot}
                      >
                         <Plus className="size-3.5 mr-1" />
-                        Agregar bloque
+                        Agregar horario
                      </Button>
                   </div>
 
@@ -307,7 +332,7 @@ export function ClassScheduleModal({
                      {slots.map((slot) => (
                         <div
                            key={slot.id}
-                           className="grid grid-cols-[minmax(0,1fr)_130px_36px] gap-2"
+                           className="grid grid-cols-[minmax(0,1fr)_120px_140px_36px] gap-2"
                         >
                            <Select
                               value={String(slot.dayOfWeek)}
@@ -336,6 +361,30 @@ export function ClassScheduleModal({
                               }
                            />
 
+                           <div className="flex items-center justify-between gap-1 rounded-md border border-input px-2">
+                              <Button
+                                 type="button"
+                                 variant="ghost"
+                                 size="icon"
+                                 className="size-7"
+                                 onClick={() => adjustBlockCount(slot.id, -1)}
+                              >
+                                 <Minus className="size-3.5" />
+                              </Button>
+                              <span className="text-xs font-medium">
+                                 {slot.blockCount} bloque{slot.blockCount > 1 ? "s" : ""} de {selectedBlockDuration} min
+                              </span>
+                              <Button
+                                 type="button"
+                                 variant="ghost"
+                                 size="icon"
+                                 className="size-7"
+                                 onClick={() => adjustBlockCount(slot.id, 1)}
+                              >
+                                 <Plus className="size-3.5" />
+                              </Button>
+                           </div>
+
                            <Button
                               type="button"
                               variant="ghost"
@@ -353,9 +402,8 @@ export function ClassScheduleModal({
 
                <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-2">
                   <p className="text-[11px] text-muted-foreground">
-                     Esta configuracion solo define agenda de cursada. Las clases se crean como{" "}
-                     <span className="font-medium text-foreground">sin planificar</span> para
-                     completar contenido despues.
+                     La cantidad de bloques por clase define la duracion total automaticamente
+                     segun la duracion de bloque configurada en la materia.
                   </p>
                </div>
 
@@ -406,4 +454,9 @@ export function ClassScheduleModal({
       </>
    );
 }
+
+
+
+
+
 
