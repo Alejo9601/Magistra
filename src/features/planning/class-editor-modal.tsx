@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
    Dialog,
@@ -77,10 +77,14 @@ function normalizeEvaluativeFormat(
 function createEmptyBlock(order: number): ClassBlock {
    return {
       order,
-      modalidad: "teorico",
-      unidad: "",
-      tema: "",
-      actividades: "",
+      topic: "",
+      subtopics: [],
+      type: "teorica",
+      evaluativeFormat: undefined,
+      practiceActivityName: undefined,
+      practiceActivityDescription: undefined,
+      evaluationName: undefined,
+      evaluationDescription: undefined,
    };
 }
 
@@ -91,26 +95,6 @@ function normalizeBlockDuration(value: number | undefined) {
    return Math.round(value);
 }
 
-function calculateBlockCount(durationMinutes: number, blockDurationMinutes: number) {
-   const safeBlockDuration = normalizeBlockDuration(blockDurationMinutes);
-   const raw = Math.round(durationMinutes / safeBlockDuration);
-   return Math.max(1, Math.min(3, raw));
-}
-
-function buildBlocks(
-   durationMinutes: number,
-   blockDurationMinutes: number,
-   previous: ClassBlock[] = [],
-) {
-   const count = calculateBlockCount(durationMinutes, blockDurationMinutes);
-   return Array.from({ length: count }, (_, index) => {
-      const order = index + 1;
-      const existing = previous.find((block) => block.order === order);
-      return existing
-         ? { ...existing, order }
-         : createEmptyBlock(order);
-   });
-}
 
 export function ClassEditorModal({
    open,
@@ -138,42 +122,10 @@ export function ClassEditorModal({
    const [date, setDate] = useState("");
    const [time, setTime] = useState("08:00");
    const [blockDurationMinutes, setBlockDurationMinutes] = useState(40);
-   const [durationMinutes, setDurationMinutes] = useState(40);
-   const [blocks, setBlocks] = useState<ClassBlock[]>([createEmptyBlock(1)]);
-   const [topic, setTopic] = useState("");
-   const [type, setType] = useState<ClassSession["type"]>("teorica");
-   const [evaluativeFormat, setEvaluativeFormat] = useState<
-      ClassSession["evaluativeFormat"] | ""
-   >("");
-   const [subtopicsText, setSubtopicsText] = useState("");
-   const [practiceActivityName, setPracticeActivityName] = useState("");
-   const [practiceActivityDescription, setPracticeActivityDescription] = useState("");
-   const [evaluationName, setEvaluationName] = useState("");
-   const [evaluationDescription, setEvaluationDescription] = useState("");
+      const [blocks, setBlocks] = useState<ClassBlock[]>([createEmptyBlock(1)]);
    const [resourcesText, setResourcesText] = useState("");
 
    const availableAssignments = getAssignmentsByInstitution(institutionId);
-
-   const durationOptions = useMemo(() => {
-      const safe = normalizeBlockDuration(blockDurationMinutes);
-      return [1, 2, 3].map((multiplier) => ({
-         multiplier,
-         totalMinutes: safe * multiplier,
-      }));
-   }, [blockDurationMinutes]);
-
-   const applyDuration = (
-      nextDurationMinutes: number,
-      nextBlockDuration: number,
-      sourceBlocks?: ClassBlock[],
-   ) => {
-      const normalizedBlockDuration = normalizeBlockDuration(nextBlockDuration);
-      const normalizedDuration =
-         normalizedBlockDuration *
-         calculateBlockCount(nextDurationMinutes, normalizedBlockDuration);
-      setDurationMinutes(normalizedDuration);
-      setBlocks(buildBlocks(normalizedDuration, normalizedBlockDuration, sourceBlocks ?? blocks));
-   };
 
    const handleAssignmentChange = (nextAssignmentId: string) => {
       setAssignmentId(nextAssignmentId);
@@ -182,9 +134,7 @@ export function ClassEditorModal({
       const nextBlockDuration = normalizeBlockDuration(
          subject?.blockDurationMinutes,
       );
-      const currentCount = Math.max(1, Math.min(3, blocks.length || 1));
       setBlockDurationMinutes(nextBlockDuration);
-      applyDuration(nextBlockDuration * currentCount, nextBlockDuration, blocks);
    };
 
    const updateBlock = (order: number, updates: Partial<ClassBlock>) => {
@@ -221,31 +171,57 @@ export function ClassEditorModal({
          initialClass?.blockDurationMinutes ?? subject?.blockDurationMinutes,
       );
       setBlockDurationMinutes(nextBlockDuration);
-
-      const initialDuration =
-         initialClass?.durationMinutes ??
-         nextBlockDuration *
-            Math.max(1, Math.min(3, initialClass?.blocks?.length ?? 1));
-      const sourceBlocks = initialClass?.blocks ?? [createEmptyBlock(1)];
-      applyDuration(initialDuration, nextBlockDuration, sourceBlocks);
+      const initialType =
+         (normalizeClassType(
+            (initialClass?.type as ClassSession["type"] | "oral" | "") ?? "teorica",
+         ) || "teorica") as ClassBlock["type"];
+      const inferredBlockCount = Math.max(
+         1,
+         Math.round((initialClass?.durationMinutes ?? nextBlockDuration) / nextBlockDuration),
+      );
+      const sourceBlocks =
+         initialClass?.blocks && initialClass.blocks.length > 0
+            ? initialClass.blocks
+            : Array.from({ length: inferredBlockCount }, (_, index) =>
+                 index === 0
+                    ? {
+                         ...createEmptyBlock(1),
+                         topic: initialClass?.topic ?? "",
+                         subtopics: initialClass?.subtopics ?? [],
+                         type: initialType,
+                         evaluativeFormat:
+                            initialType === "evaluacion"
+                               ? normalizeEvaluativeFormat(
+                                    initialClass?.evaluativeFormat ?? "",
+                                 ) || undefined
+                               : undefined,
+                         practiceActivityName:
+                            initialType === "practica" || initialType === "teorico-practica"
+                               ? initialClass?.practiceActivityName
+                               : undefined,
+                         practiceActivityDescription:
+                            initialType === "practica" || initialType === "teorico-practica"
+                               ? initialClass?.practiceActivityDescription
+                               : undefined,
+                         evaluationName:
+                            initialType === "evaluacion"
+                               ? initialClass?.evaluationName
+                               : undefined,
+                         evaluationDescription:
+                            initialType === "evaluacion"
+                               ? initialClass?.evaluationDescription
+                               : undefined,
+                      }
+                    : createEmptyBlock(index + 1),
+              );
+      setBlocks(
+         sourceBlocks.length > 0
+            ? sourceBlocks.map((block, index) => ({ ...block, order: index + 1 }))
+            : [createEmptyBlock(1)],
+      );
 
       setDate(initialClass?.date ?? initialDate ?? "");
       setTime(initialClass?.time ?? "08:00");
-      setTopic(initialClass?.topic ?? "");
-      const initialType =
-         normalizeClassType((initialClass?.type as ClassSession["type"] | "oral" | "") ?? "teorica") ||
-         "teorica";
-      setType(initialType);
-      setEvaluativeFormat(
-         initialType === "evaluacion"
-            ? normalizeEvaluativeFormat(initialClass?.evaluativeFormat ?? "")
-            : "",
-      );
-      setSubtopicsText(initialClass?.subtopics.join("\n") ?? "");
-      setPracticeActivityName(initialClass?.practiceActivityName ?? "");
-      setPracticeActivityDescription(initialClass?.practiceActivityDescription ?? "");
-      setEvaluationName(initialClass?.evaluationName ?? "");
-      setEvaluationDescription(initialClass?.evaluationDescription ?? "");
       setResourcesText(initialClass?.resources?.join(", ") ?? "");
    };
 
@@ -264,27 +240,6 @@ export function ClassEditorModal({
          toast.error("No se pueden crear clases en fechas pasadas.");
          return;
       }
-      if ((type === "practica" || type === "teorico-practica") && !practiceActivityName.trim()) {
-         toast.error("Completa el nombre de la actividad practica.");
-         return;
-      }
-      if ((type === "practica" || type === "teorico-practica") && !practiceActivityDescription.trim()) {
-         toast.error("Completa la descripcion de la actividad practica.");
-         return;
-      }
-      if (type === "evaluacion" && !evaluationName.trim()) {
-         toast.error("Completa el nombre de la evaluacion.");
-         return;
-      }
-      if (type === "evaluacion" && !evaluativeFormat) {
-         toast.error("Selecciona el tipo de evaluacion.");
-         return;
-      }
-      if (type === "evaluacion" && !evaluationDescription.trim()) {
-         toast.error("Completa la descripcion de la evaluacion.");
-         return;
-      }
-
       const resources = resourcesText
          .split(",")
          .map((value) => value.trim())
@@ -297,34 +252,57 @@ export function ClassEditorModal({
          return;
       }
 
-      const normalizedBlocks = buildBlocks(durationMinutes, blockDurationMinutes, blocks);
+      const normalizedBlocks =
+         blocks.length > 0
+            ? blocks.map((block, index) => ({ ...block, order: index + 1 }))
+            : [createEmptyBlock(1)];
+      const durationMinutes = normalizedBlocks.length * blockDurationMinutes;
+      const primaryBlock = normalizedBlocks[0];
       const hasBlockContent = normalizedBlocks.some(
          (block) =>
-            block.tema.trim().length > 0 ||
-            block.unidad.trim().length > 0 ||
-            block.actividades.trim().length > 0,
+            block.topic.trim().length > 0 ||
+            block.subtopics.length > 0 ||
+            (block.practiceActivityName?.trim().length ?? 0) > 0 ||
+            (block.evaluationName?.trim().length ?? 0) > 0,
       );
-      if (!topic.trim() && !hasBlockContent) {
-         toast.error("Completa el tema principal o carga contenido en algun bloque.");
+      if (!hasBlockContent) {
+         toast.error("Completa al menos un bloque con contenido.");
          return;
       }
 
-      const manualSubtopics = subtopicsText
-         .split("\n")
-         .map((value) => value.trim())
-         .filter(Boolean);
+
+
       const blockTopics = normalizedBlocks
-         .flatMap((block) => [block.unidad.trim(), block.tema.trim()])
+         .flatMap((block) => [block.topic.trim(), ...block.subtopics.map((subtopic) => subtopic.trim())])
          .filter((value) => value.length > 0);
 
       const resolvedTopic =
-         topic.trim() ||
-         normalizedBlocks.find((block) => block.tema.trim().length > 0)?.tema.trim() ||
+         normalizedBlocks.find((block) => block.topic.trim().length > 0)?.topic.trim() ||
          "Por planificar";
       const resolvedSubtopics =
-         manualSubtopics.length > 0
-            ? manualSubtopics
-            : Array.from(new Set(blockTopics)).filter((item) => item !== resolvedTopic);
+         Array.from(new Set(blockTopics)).filter((item) => item !== resolvedTopic);
+
+      const resolvedType = primaryBlock?.type ?? "teorica";
+      const resolvedEvaluativeFormat =
+         resolvedType === "evaluacion"
+            ? primaryBlock?.evaluativeFormat ?? undefined
+            : undefined;
+      const resolvedPracticeActivityName =
+         resolvedType === "practica" || resolvedType === "teorico-practica"
+            ? primaryBlock?.practiceActivityName?.trim() || undefined
+            : undefined;
+      const resolvedPracticeActivityDescription =
+         resolvedType === "practica" || resolvedType === "teorico-practica"
+            ? primaryBlock?.practiceActivityDescription?.trim() || undefined
+            : undefined;
+      const resolvedEvaluationName =
+         resolvedType === "evaluacion"
+            ? primaryBlock?.evaluationName?.trim() || undefined
+            : undefined;
+      const resolvedEvaluationDescription =
+         resolvedType === "evaluacion"
+            ? primaryBlock?.evaluationDescription?.trim() || undefined
+            : undefined;
 
       onSubmit(
          {
@@ -338,24 +316,13 @@ export function ClassEditorModal({
             blocks: normalizedBlocks,
             topic: resolvedTopic,
             subtopics: resolvedSubtopics,
-            type,
+            type: resolvedType,
             status: mode === "publish" ? "planificada" : "sin-planificar",
-            evaluativeFormat:
-               type === "evaluacion" ? (evaluativeFormat || undefined) : undefined,
-            practiceActivityName:
-               type === "practica" || type === "teorico-practica"
-                  ? practiceActivityName.trim() || undefined
-                  : undefined,
-            practiceActivityDescription:
-               type === "practica" || type === "teorico-practica"
-                  ? practiceActivityDescription.trim() || undefined
-                  : undefined,
-            evaluationName:
-               type === "evaluacion" ? evaluationName.trim() || undefined : undefined,
-            evaluationDescription:
-               type === "evaluacion"
-                  ? evaluationDescription.trim() || undefined
-                  : undefined,
+            evaluativeFormat: resolvedEvaluativeFormat,
+            practiceActivityName: resolvedPracticeActivityName,
+            practiceActivityDescription: resolvedPracticeActivityDescription,
+            evaluationName: resolvedEvaluationName,
+            evaluationDescription: resolvedEvaluationDescription,
             resources: resources.length > 0 ? resources : undefined,
          },
          mode,
@@ -438,34 +405,13 @@ export function ClassEditorModal({
                      onChange={(event) => setTime(event.target.value)}
                   />
                </div>
-
-               <div className="flex flex-col gap-1.5 sm:col-span-2">
-                  <Label className="text-xs">Duracion total de clase</Label>
-                  <Select
-                     value={String(durationMinutes)}
-                     onValueChange={(value) =>
-                        applyDuration(Number(value), blockDurationMinutes, blocks)
-                     }
-                  >
-                     <SelectTrigger className="h-9 text-xs">
-                        <SelectValue placeholder="Seleccionar duracion" />
-                     </SelectTrigger>
-                     <SelectContent>
-                        {durationOptions.map((option) => (
-                           <SelectItem key={option.multiplier} value={String(option.totalMinutes)}>
-                              {option.totalMinutes} min ({option.multiplier} bloque{option.multiplier > 1 ? "s" : ""} de {blockDurationMinutes} min)
-                           </SelectItem>
-                        ))}
-                     </SelectContent>
-                  </Select>
-               </div>
             </div>
 
             <div className="rounded-lg border border-border/70 p-3 space-y-3">
                <div>
                   <p className="text-xs font-semibold text-foreground">Bloques de clase</p>
                   <p className="text-[11px] text-muted-foreground">
-                     Se generan automaticamente segun la duracion total. Solo puedes editarlos.
+                     Duracion por bloque: {blockDurationMinutes} min. Solo puedes editar su contenido.
                   </p>
                </div>
 
@@ -474,53 +420,155 @@ export function ClassEditorModal({
                      <div key={block.order} className="rounded-md border border-border/60 p-3 space-y-2">
                         <p className="text-xs font-semibold text-foreground">Bloque {block.order}</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                           <div className="flex flex-col gap-1.5">
-                              <Label className="text-xs">Modalidad</Label>
-                              <Select
-                                 value={block.modalidad}
-                                 onValueChange={(value) =>
-                                    updateBlock(block.order, { modalidad: value as ClassBlock["modalidad"] })
-                                 }
-                              >
-                                 <SelectTrigger className="h-9 text-xs">
-                                    <SelectValue placeholder="Seleccionar modalidad" />
-                                 </SelectTrigger>
-                                 <SelectContent>
-                                    <SelectItem value="teorico">Teorico</SelectItem>
-                                    <SelectItem value="practico">Practico</SelectItem>
-                                 </SelectContent>
-                              </Select>
-                           </div>
-                           <div className="flex flex-col gap-1.5">
-                              <Label className="text-xs">Unidad</Label>
+                           <div className="flex flex-col gap-1.5 sm:col-span-2">
+                              <Label className="text-xs">Eje principal / Tema principal</Label>
                               <Input
                                  className="h-9 text-xs"
-                                 value={block.unidad}
+                                 value={block.topic}
                                  onChange={(event) =>
-                                    updateBlock(block.order, { unidad: event.target.value })
-                                 }
-                              />
-                           </div>
-                           <div className="flex flex-col gap-1.5">
-                              <Label className="text-xs">Tema</Label>
-                              <Input
-                                 className="h-9 text-xs"
-                                 value={block.tema}
-                                 onChange={(event) =>
-                                    updateBlock(block.order, { tema: event.target.value })
+                                    updateBlock(block.order, { topic: event.target.value })
                                  }
                               />
                            </div>
                            <div className="flex flex-col gap-1.5 sm:col-span-2">
-                              <Label className="text-xs">Actividades</Label>
+                              <Label className="text-xs">Subtemas (uno por linea)</Label>
                               <Textarea
                                  className="text-xs min-h-[70px] resize-none"
-                                 value={block.actividades}
+                                 value={block.subtopics.join("\n")}
                                  onChange={(event) =>
-                                    updateBlock(block.order, { actividades: event.target.value })
+                                    updateBlock(block.order, {
+                                       subtopics: event.target.value
+                                          .split("\n")
+                                          .map((value) => value.trim())
+                                          .filter(Boolean),
+                                    })
                                  }
                               />
                            </div>
+                           <div className="flex flex-col gap-1.5 sm:col-span-2">
+                              <Label className="text-xs">Caracter de la clase</Label>
+                              <Select
+                                 value={block.type}
+                                 onValueChange={(value) => {
+                                    const nextType = value as Exclude<ClassSession["type"], "oral">;
+                                    updateBlock(block.order, {
+                                       type: nextType,
+                                       evaluativeFormat:
+                                          nextType === "evaluacion"
+                                             ? block.evaluativeFormat
+                                             : undefined,
+                                       evaluationName:
+                                          nextType === "evaluacion"
+                                             ? block.evaluationName
+                                             : undefined,
+                                       evaluationDescription:
+                                          nextType === "evaluacion"
+                                             ? block.evaluationDescription
+                                             : undefined,
+                                       practiceActivityName:
+                                          nextType === "practica" || nextType === "teorico-practica"
+                                             ? block.practiceActivityName
+                                             : undefined,
+                                       practiceActivityDescription:
+                                          nextType === "practica" || nextType === "teorico-practica"
+                                             ? block.practiceActivityDescription
+                                             : undefined,
+                                    });
+                                 }}
+                              >
+                                 <SelectTrigger className="h-9 text-xs">
+                                    <SelectValue placeholder="Seleccionar caracter..." />
+                                 </SelectTrigger>
+                                 <SelectContent>
+                                    {classCharacterOptions.map((option) => (
+                                       <SelectItem key={option.value} value={option.value}>
+                                          {option.label}
+                                       </SelectItem>
+                                    ))}
+                                 </SelectContent>
+                              </Select>
+                           </div>
+
+                           {(block.type === "practica" || block.type === "teorico-practica") && (
+                              <>
+                                 <div className="flex flex-col gap-1.5">
+                                    <Label className="text-xs">Nombre de la actividad</Label>
+                                    <Input
+                                       className="h-9 text-xs"
+                                       value={block.practiceActivityName ?? ""}
+                                       onChange={(event) =>
+                                          updateBlock(block.order, {
+                                             practiceActivityName: event.target.value,
+                                          })
+                                       }
+                                    />
+                                 </div>
+                                 <div className="flex flex-col gap-1.5 sm:col-span-2">
+                                    <Label className="text-xs">Descripcion</Label>
+                                    <Textarea
+                                       className="text-xs min-h-[70px] resize-none"
+                                       value={block.practiceActivityDescription ?? ""}
+                                       onChange={(event) =>
+                                          updateBlock(block.order, {
+                                             practiceActivityDescription: event.target.value,
+                                          })
+                                       }
+                                    />
+                                 </div>
+                              </>
+                           )}
+
+                           {block.type === "evaluacion" && (
+                              <>
+                                 <div className="flex flex-col gap-1.5">
+                                    <Label className="text-xs">Nombre de la evaluacion</Label>
+                                    <Input
+                                       className="h-9 text-xs"
+                                       value={block.evaluationName ?? ""}
+                                       onChange={(event) =>
+                                          updateBlock(block.order, {
+                                             evaluationName: event.target.value,
+                                          })
+                                       }
+                                    />
+                                 </div>
+                                 <div className="flex flex-col gap-1.5">
+                                    <Label className="text-xs">Tipo de evaluacion</Label>
+                                    <Select
+                                       value={block.evaluativeFormat || undefined}
+                                       onValueChange={(value) =>
+                                          updateBlock(block.order, {
+                                             evaluativeFormat:
+                                                value as NonNullable<ClassSession["evaluativeFormat"]>,
+                                          })
+                                       }
+                                    >
+                                       <SelectTrigger className="h-9 text-xs">
+                                          <SelectValue placeholder="Seleccionar tipo evaluativo..." />
+                                       </SelectTrigger>
+                                       <SelectContent>
+                                          {evaluativeFormatOptions.map((option) => (
+                                             <SelectItem key={option.value} value={option.value}>
+                                                {option.label}
+                                             </SelectItem>
+                                          ))}
+                                       </SelectContent>
+                                    </Select>
+                                 </div>
+                                 <div className="flex flex-col gap-1.5 sm:col-span-2">
+                                    <Label className="text-xs">Descripcion</Label>
+                                    <Textarea
+                                       className="text-xs min-h-[70px] resize-none"
+                                       value={block.evaluationDescription ?? ""}
+                                       onChange={(event) =>
+                                          updateBlock(block.order, {
+                                             evaluationDescription: event.target.value,
+                                          })
+                                       }
+                                    />
+                                 </div>
+                              </>
+                           )}
                         </div>
                      </div>
                   ))}
@@ -528,116 +576,6 @@ export function ClassEditorModal({
             </div>
 
             <div className="flex flex-col gap-4 pb-2">
-               <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs">Eje principal / Tema principal</Label>
-                  <Input
-                     className="h-9 text-xs"
-                     value={topic}
-                     onChange={(event) => setTopic(event.target.value)}
-                  />
-               </div>
-
-               <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs">Subtemas (uno por linea)</Label>
-                  <Textarea
-                     className="text-xs min-h-[70px] resize-none"
-                     value={subtopicsText}
-                     onChange={(event) => setSubtopicsText(event.target.value)}
-                  />
-               </div>
-
-               <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs">Caracter de la clase</Label>
-                  <Select
-                     value={type}
-                     onValueChange={(value) => {
-                        const nextType = value as ClassSession["type"];
-                        setType(nextType);
-                        if (nextType !== "evaluacion") {
-                           setEvaluativeFormat("");
-                           setEvaluationName("");
-                           setEvaluationDescription("");
-                        }
-                        if (nextType !== "practica" && nextType !== "teorico-practica") {
-                           setPracticeActivityName("");
-                           setPracticeActivityDescription("");
-                        }
-                     }}
-                  >
-                     <SelectTrigger className="h-9 text-xs">
-                        <SelectValue placeholder="Seleccionar caracter..." />
-                     </SelectTrigger>
-                     <SelectContent>
-                        {classCharacterOptions.map((option) => (
-                           <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                           </SelectItem>
-                        ))}
-                     </SelectContent>
-                  </Select>
-               </div>
-
-               {(type === "practica" || type === "teorico-practica") && (
-                  <>
-                     <div className="flex flex-col gap-1.5">
-                        <Label className="text-xs">Nombre de la actividad</Label>
-                        <Input
-                           className="h-9 text-xs"
-                           value={practiceActivityName}
-                           onChange={(event) => setPracticeActivityName(event.target.value)}
-                        />
-                     </div>
-                     <div className="flex flex-col gap-1.5">
-                        <Label className="text-xs">Descripcion</Label>
-                        <Textarea
-                           className="text-xs min-h-[70px] resize-none"
-                           value={practiceActivityDescription}
-                           onChange={(event) => setPracticeActivityDescription(event.target.value)}
-                        />
-                     </div>
-                  </>
-               )}
-
-               {type === "evaluacion" && (
-                  <>
-                     <div className="flex flex-col gap-1.5">
-                        <Label className="text-xs">Nombre de la evaluacion</Label>
-                        <Input
-                           className="h-9 text-xs"
-                           value={evaluationName}
-                           onChange={(event) => setEvaluationName(event.target.value)}
-                        />
-                     </div>
-                     <div className="flex flex-col gap-1.5">
-                        <Label className="text-xs">Tipo de evaluacion</Label>
-                        <Select
-                           value={evaluativeFormat || undefined}
-                           onValueChange={(value) =>
-                              setEvaluativeFormat(value as NonNullable<ClassSession["evaluativeFormat"]>)
-                           }
-                        >
-                           <SelectTrigger className="h-9 text-xs">
-                              <SelectValue placeholder="Seleccionar tipo evaluativo..." />
-                           </SelectTrigger>
-                           <SelectContent>
-                              {evaluativeFormatOptions.map((option) => (
-                                 <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                 </SelectItem>
-                              ))}
-                           </SelectContent>
-                        </Select>
-                     </div>
-                     <div className="flex flex-col gap-1.5">
-                        <Label className="text-xs">Descripcion</Label>
-                        <Textarea
-                           className="text-xs min-h-[70px] resize-none"
-                           value={evaluationDescription}
-                           onChange={(event) => setEvaluationDescription(event.target.value)}
-                        />
-                     </div>
-                  </>
-               )}
                <div className="flex flex-col gap-1.5">
                   <Label className="text-xs">Recursos (coma separada)</Label>
                   <Input
@@ -673,3 +611,9 @@ export function ClassEditorModal({
       </Dialog>
    );
 }
+
+
+
+
+
+

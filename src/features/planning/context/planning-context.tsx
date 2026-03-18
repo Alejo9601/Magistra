@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import {
    classSessions,
    getAssignmentById,
@@ -67,10 +67,9 @@ function normalizeBlockDuration(value: number | undefined) {
 function buildAutoBlocks(blockCount: number): ClassBlock[] {
    return Array.from({ length: blockCount }, (_, index) => ({
       order: index + 1,
-      modalidad: "teorico",
-      unidad: "",
-      tema: "",
-      actividades: "",
+      topic: "",
+      subtopics: [],
+      type: "teorica",
    }));
 }
 
@@ -303,3 +302,4 @@ export function usePlanningContext() {
    }
    return context;
 }
+

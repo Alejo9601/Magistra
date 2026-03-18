@@ -1,4 +1,4 @@
-﻿import type { ClassBlock, ClassBlockMode, ClassSession } from "@/types";
+import type { ClassBlock, ClassSession } from "@/types";
 import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
 
 const PLANNING_STORAGE_KEY = "aula.planning.classes";
@@ -11,7 +11,7 @@ function isClassStatus(value: unknown): value is ClassSession["status"] {
    );
 }
 
-function isClassType(value: unknown): value is ClassSession["type"] {
+function isClassType(value: unknown): value is Exclude<ClassSession["type"], "oral"> {
    return (
       value === "teorica" ||
       value === "practica" ||
@@ -37,9 +37,6 @@ function isEvaluativeFormat(
    );
 }
 
-function isBlockMode(value: unknown): value is ClassBlockMode {
-   return value === "teorico" || value === "practico";
-}
 
 function sanitizePositiveMinutes(value: unknown): number | undefined {
    if (typeof value !== "number" || Number.isNaN(value) || value <= 0) {
@@ -53,21 +50,48 @@ function sanitizeBlock(raw: unknown): ClassBlock | null {
       return null;
    }
    const input = raw as Partial<ClassBlock>;
+   const rawType = (raw as { type?: unknown }).type;
+   const normalizedType = rawType === "oral" ? "evaluacion" : rawType;
+
    if (
       typeof input.order !== "number" ||
-      !isBlockMode(input.modalidad) ||
-      typeof input.unidad !== "string" ||
-      typeof input.tema !== "string" ||
-      typeof input.actividades !== "string"
+      typeof input.topic !== "string" ||
+      !Array.isArray(input.subtopics) ||
+      !isClassType(normalizedType)
    ) {
       return null;
    }
+
    return {
       order: Math.max(1, Math.floor(input.order)),
-      modalidad: input.modalidad,
-      unidad: input.unidad,
-      tema: input.tema,
-      actividades: input.actividades,
+      topic: input.topic,
+      subtopics: input.subtopics.filter(
+         (subtopic): subtopic is string => typeof subtopic === "string",
+      ),
+      type: normalizedType,
+      evaluativeFormat: isEvaluativeFormat(input.evaluativeFormat)
+         ? input.evaluativeFormat
+         : undefined,
+      practiceActivityName:
+         typeof input.practiceActivityName === "string" &&
+         input.practiceActivityName.trim().length > 0
+            ? input.practiceActivityName.trim()
+            : undefined,
+      practiceActivityDescription:
+         typeof input.practiceActivityDescription === "string" &&
+         input.practiceActivityDescription.trim().length > 0
+            ? input.practiceActivityDescription.trim()
+            : undefined,
+      evaluationName:
+         typeof input.evaluationName === "string" &&
+         input.evaluationName.trim().length > 0
+            ? input.evaluationName.trim()
+            : undefined,
+      evaluationDescription:
+         typeof input.evaluationDescription === "string" &&
+         input.evaluationDescription.trim().length > 0
+            ? input.evaluationDescription.trim()
+            : undefined,
    };
 }
 
@@ -183,3 +207,4 @@ export function savePlanningClasses(classes: ClassSession[]) {
 export function createPlanningClassId() {
    return `cls-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 }
+

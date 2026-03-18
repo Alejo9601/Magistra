@@ -1,4 +1,4 @@
-﻿export type Institution = {
+export type Institution = {
    id: string;
    name: string;
    address: string;
@@ -60,14 +60,16 @@ export type ClassType =
 
 export type ClassStatus = "planificada" | "sin-planificar" | "finalizada";
 
-export type ClassBlockMode = "teorico" | "practico";
-
 export type ClassBlock = {
    order: number;
-   modalidad: ClassBlockMode;
-   unidad: string;
-   tema: string;
-   actividades: string;
+   topic: string;
+   subtopics: string[];
+   type: Exclude<ClassType, "oral">;
+   evaluativeFormat?: EvaluativeFormat;
+   practiceActivityName?: string;
+   practiceActivityDescription?: string;
+   evaluationName?: string;
+   evaluationDescription?: string;
 };
 
 export type EvaluativeFormat =
@@ -209,9 +211,4 @@ export type ClassroomRecord = {
    notes?: string;
    performanceEntries: ClassroomPerformanceEntry[];
 };
-
-
-
-
-
 
