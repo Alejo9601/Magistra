@@ -143,7 +143,7 @@ export function resolveClassDataFromBlocks(normalizedBlocks: ClassBlock[]) {
    const hasBlockContent = normalizedBlocks.some(
       (block) =>
          block.topic.trim().length > 0 ||
-         block.subtopics.length > 0 ||
+         block.subtopics.some((subtopic) => subtopic.trim().length > 0) ||
          (block.practiceActivityName?.trim().length ?? 0) > 0 ||
          (block.evaluationName?.trim().length ?? 0) > 0,
    );
@@ -193,3 +193,5 @@ export function resolveClassDataFromBlocks(normalizedBlocks: ClassBlock[]) {
       resolvedEvaluationDescription,
    };
 }
+
+

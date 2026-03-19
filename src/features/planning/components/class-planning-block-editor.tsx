@@ -64,10 +64,7 @@ export function ClassPlanningBlockEditor({
                   value={block.subtopics.join("\n")}
                   onChange={(event) =>
                      onUpdateBlock(block.order, {
-                        subtopics: event.target.value
-                           .split("\n")
-                           .map((value) => value.trim())
-                           .filter(Boolean),
+                        subtopics: event.target.value.split(/\r?\n/),
                      })
                   }
                />
@@ -200,3 +197,5 @@ export function ClassPlanningBlockEditor({
       </div>
    );
 }
+
+
