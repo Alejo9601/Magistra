@@ -19,7 +19,7 @@ import {
    SelectValue,
 } from "@/components/ui/select";
 import { institutions, subjects } from "@/lib/edu-repository";
-import { contentTypeLabels } from "@/features/content/constants";
+import { contentTypeLabels } from "@/features/resources/constants";
 import { toast } from "sonner";
 
 export function UploadContentDialog({
@@ -145,4 +145,5 @@ export function UploadContentDialog({
       </Dialog>
    );
 }
+
 

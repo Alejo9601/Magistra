@@ -5,7 +5,7 @@ import PlanificacionPage from "@/pages/planificacion/page";
 import GruposPage from "@/pages/grupos/page";
 import SeguimientoPage from "@/pages/seguimiento/page";
 import StudentProfilePage from "@/pages/seguimiento/[id]/page";
-import ContenidosPage from "@/pages/contenidos/page";
+import RecursosPage from "@/pages/recursos/page";
 import ConfiguracionPage from "@/pages/configuracion/page";
 import ClaseDetailPage from "@/pages/clase/[id]/page";
 import { InstitutionProvider } from "@/features/institution";
@@ -46,8 +46,8 @@ function App() {
                                        element={<StudentProfilePage />}
                                     />
                                     <Route
-                                       path="/contenidos"
-                                       element={<ContenidosPage />}
+                                       path="/recursos"
+                                       element={<RecursosPage />}
                                     />
                                     <Route
                                        path="/configuracion"
@@ -77,6 +77,7 @@ function App() {
 }
 
 export default App;
+
 
 
 

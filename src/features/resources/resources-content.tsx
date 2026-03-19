@@ -13,11 +13,11 @@ import {
 } from "@/components/ui/select";
 import { contentItems, institutions } from "@/lib/edu-repository";
 import { useInstitutionContext } from "@/features/institution";
-import { contentTypeLabels } from "@/features/content/constants";
-import { ContentCard } from "@/features/content/content-card";
-import { UploadContentDialog } from "@/features/content/upload-content-dialog";
+import { contentTypeLabels } from "@/features/resources/constants";
+import { ContentCard } from "@/features/resources/content-card";
+import { UploadContentDialog } from "@/features/resources/upload-content-dialog";
 
-export function ContenidosContent() {
+export function ResourcesContent() {
    const { activeInstitution } = useInstitutionContext();
    const [search, setSearch] = useState("");
    const [filterType, setFilterType] = useState("all");
@@ -117,6 +117,7 @@ export function ContenidosContent() {
       </div>
    );
 }
+
 
 
 

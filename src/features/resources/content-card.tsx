@@ -2,7 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getSubjectById, getInstitutionById } from "@/lib/edu-repository";
-import { fileTypeIcons } from "@/features/content/constants";
+import { fileTypeIcons } from "@/features/resources/constants";
 import type { ContentItem } from "@/types";
 
 export function ContentCard({ item }: { item: ContentItem }) {
@@ -49,4 +49,5 @@ export function ContentCard({ item }: { item: ContentItem }) {
       </Card>
    );
 }
+
 

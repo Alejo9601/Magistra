@@ -31,7 +31,7 @@ const navItems = [
    { title: "Planificacion", url: "/planificacion", icon: CalendarDays },
    { title: "Mis Grupos", url: "/grupos", icon: Users },
    { title: "Seguimiento", url: "/seguimiento", icon: BarChart3 },
-   { title: "Contenidos", url: "/contenidos", icon: FolderOpen },
+   { title: "Recursos", url: "/recursos", icon: FolderOpen },
    { title: "Configuracion", url: "/configuracion", icon: Settings },
 ];
 
@@ -129,3 +129,4 @@ export function AppSidebar() {
       </Sidebar>
    );
 }
+
