@@ -141,7 +141,6 @@ export function ClassEditorModal({
    const [resourcesText, setResourcesText] = useState("");
 
    const availableAssignments = getAssignmentsByInstitution(institutionId);
-
    const handleAssignmentChange = (nextAssignmentId: string) => {
       setAssignmentId(nextAssignmentId);
       const assignment = getAssignmentById(nextAssignmentId);
@@ -427,12 +426,11 @@ export function ClassEditorModal({
             </div>
 
             <div className="space-y-3">
-               <div>
+               <div className="space-y-1">
                   <p className="text-xs font-semibold text-foreground">Bloques de clase</p>
                   <p className="text-[11px] text-muted-foreground">
                      Duracion por bloque: {blockDurationMinutes} min. Solo puedes editar su contenido.
-                  </p>
-               </div>
+                  </p>               </div>
 
                <label className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Checkbox
@@ -661,6 +659,9 @@ export function ClassEditorModal({
       </Dialog>
    );
 }
+
+
+
 
 
 
