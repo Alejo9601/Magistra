@@ -21,7 +21,7 @@ import {
    subjects,
 } from "@/lib/edu-repository";
 import { usePlanningContext } from "@/features/planning";
-import { ClassScheduleModal } from "@/features/planning/class-schedule-modal";
+import { ClassScheduleModal } from "@/features/planning/components/class-schedule-modal";
 import {
    blockDurationOptions,
    periodFormatOptions,
@@ -280,6 +280,7 @@ export function SubjectsSection() {
       </>
    );
 }
+
 
 
 
