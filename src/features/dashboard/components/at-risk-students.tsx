@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useStudentsContext } from "@/features/students";
 import { usePlanningContext } from "@/features/planning";
 import { useClassroomContext } from "@/features/classroom";
-import { getAtRiskStudentsFromLiveData } from "@/features/dashboard/dashboard-derived";
+import { getAtRiskStudentsFromLiveData } from "@/features/dashboard/utils/dashboard-derived";
 
 function computeAttendancePct(
    studentId: string,
@@ -105,3 +105,4 @@ export function AtRiskStudents({ activeInstitution }: { activeInstitution: strin
       </Card>
    );
 }
+

@@ -1,23 +1,6 @@
 ﻿import { loadOperativeThresholdOverrides } from "@/features/dashboard/services/operative-thresholds-service";
-
-export type DashboardTask = {
-   id: string;
-   institutionId: string;
-   text: string;
-   done: boolean;
-};
-
-export type OperativeThresholds = {
-   atRiskPctWarning: number;
-   atRiskPctCritical: number;
-   pendingWarning: number;
-   pendingCritical: number;
-   unplannedPctWarning: number;
-   unplannedPctCritical: number;
-   unplannedClassCriticalHours: number;
-};
-
-export type SemaphoreLevel = "green" | "yellow" | "red";
+import type { DashboardTask, OperativeThresholds, SemaphoreLevel } from "@/features/dashboard/types/dashboard-types";
+export type { DashboardTask, OperativeThresholds, SemaphoreLevel } from "@/features/dashboard/types/dashboard-types";
 
 export const DEFAULT_THRESHOLDS: OperativeThresholds = {
    atRiskPctWarning: 8,
@@ -139,4 +122,8 @@ export function semaphoreScore(level: SemaphoreLevel) {
    if (level === "yellow") return 60;
    return 25;
 }
+
+
+
+
 

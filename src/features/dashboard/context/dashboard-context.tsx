@@ -1,5 +1,5 @@
 ﻿import { createContext, useContext, useEffect, useState } from "react";
-import { type DashboardTask } from "@/features/dashboard/constants";
+import type { DashboardTask } from "@/features/dashboard/types";
 import {
    loadDashboardTasks,
    saveDashboardTasks,
@@ -47,5 +47,7 @@ export function useDashboardContext() {
    }
    return context;
 }
+
+
 
 

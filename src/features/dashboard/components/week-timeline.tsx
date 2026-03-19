@@ -10,12 +10,12 @@ import {
    DialogHeader,
    DialogTitle,
 } from "@/components/ui/dialog";
-import { ClassStatusBadge } from "@/features/dashboard/class-status-badge";
+import { ClassStatusBadge } from "@/features/dashboard/components/class-status-badge";
 import { getInstitutionById, getSubjectById } from "@/lib/edu-repository";
 import {
    getTodayStr,
    getWeekDaysFromToday,
-} from "@/features/dashboard/constants";
+} from "@/features/dashboard/utils/constants";
 import { usePlanningContext } from "@/features/planning";
 
 export function WeekTimeline({ activeInstitution }: { activeInstitution: string }) {
@@ -165,3 +165,4 @@ export function WeekTimeline({ activeInstitution }: { activeInstitution: string 
       </div>
    );
 }
+

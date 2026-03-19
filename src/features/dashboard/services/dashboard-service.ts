@@ -1,7 +1,7 @@
-import {
+﻿import {
    initialDashboardTasks,
    type DashboardTask,
-} from "@/features/dashboard/constants";
+} from "@/features/dashboard/utils/constants";
 import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
 
 const DASHBOARD_TASKS_STORAGE_KEY = "aula.dashboard.tasks";
@@ -39,3 +39,5 @@ export function loadDashboardTasks() {
 export function saveDashboardTasks(tasks: DashboardTask[]) {
    writeJsonToStorage(DASHBOARD_TASKS_STORAGE_KEY, tasks);
 }
+
+

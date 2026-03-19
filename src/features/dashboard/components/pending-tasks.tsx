@@ -11,8 +11,8 @@ import { getSubjectsByInstitution } from "@/lib/edu-repository";
 import {
    getAtRiskStudentsFromLiveData,
    getSuggestedDashboardTasks,
-} from "@/features/dashboard/dashboard-derived";
-import { getTodayStr } from "@/features/dashboard/constants";
+} from "@/features/dashboard/utils/dashboard-derived";
+import { getTodayStr } from "@/features/dashboard/utils/constants";
 
 export function PendingTasks({ activeInstitution }: { activeInstitution: string }) {
    const { tasks, toggleTask } = useDashboardContext();
@@ -105,3 +105,4 @@ export function PendingTasks({ activeInstitution }: { activeInstitution: string 
       </Card>
    );
 }
+

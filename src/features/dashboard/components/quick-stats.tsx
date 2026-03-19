@@ -10,11 +10,11 @@ import {
    resolveSemaphoreLevel,
    semaphoreScore,
    type SemaphoreLevel,
-} from "@/features/dashboard/constants";
+} from "@/features/dashboard/utils/constants";
 import {
    getAtRiskStudentsFromLiveData,
    getSuggestedDashboardTasks,
-} from "@/features/dashboard/dashboard-derived";
+} from "@/features/dashboard/utils/dashboard-derived";
 import { usePlanningContext } from "@/features/planning";
 import { useDashboardContext } from "@/features/dashboard";
 import { useStudentsContext } from "@/features/students";
@@ -264,3 +264,4 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
       </div>
    );
 }
+
