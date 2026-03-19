@@ -1,9 +1,5 @@
 ﻿import { useEffect, useMemo, useRef, useState, type TouchEvent } from "react";
 import {
-   ChevronLeft,
-   ChevronRight,
-   List,
-   CalendarDays,
    Plus,
    Edit3,
    RotateCcw,
@@ -21,13 +17,6 @@ import {
    DialogHeader,
    DialogTitle,
 } from "@/components/ui/dialog";
-import {
-   Select,
-   SelectContent,
-   SelectItem,
-   SelectTrigger,
-   SelectValue,
-} from "@/components/ui/select";
 import { TableCell } from "@/components/ui/table";
 import {
    getAssignmentById,
@@ -44,6 +33,7 @@ import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ClassEditorModal } from "@/features/planning/class-editor-modal";
 import { ClassScheduleModal } from "@/features/planning/class-schedule-modal";
+import { PlanificacionToolbar } from "@/features/planning/components/planificacion-toolbar";
 import { MonthlyClassesCollapsibleTable } from "@/components/monthly-classes-collapsible-table";
 import {
    classTypeColors,
@@ -429,117 +419,22 @@ export function PlanificacionContent() {
 
    return (
       <div className="flex h-full min-h-0 max-h-full w-full flex-col overflow-hidden p-3 sm:p-6">
-         <div className="-mx-3 mb-4 border-b border-border/70 bg-background/95 px-3 pb-3 sm:-mx-6 sm:px-6">
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pt-1">
-               <div>
-                  <p className="text-sm text-muted-foreground">
-                     Organiza, edita y publica tus clases por institucion.
-                  </p>
-               </div>
-               <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-                  <div className="flex items-center rounded-lg bg-muted p-0.5">
-                     <button
-                        onClick={() => setView("calendar")}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${view === "calendar" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-                     >
-                        <CalendarDays className="size-3.5" /> Mensual
-                     </button>
-                     <button
-                        onClick={() => setView("list")}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${view === "list" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-                     >
-                        <List className="size-3.5" /> Lista
-                     </button>
-                  </div>
-                  <Button
-                     size="sm"
-                     className="text-xs w-full sm:w-auto"
-                     onClick={() => openCreateModal()}
-                  >
-                     <Plus className="size-3.5 mr-1.5" /> Nueva clase
-                  </Button>
-                  <Button
-                     variant="outline"
-                     size="sm"
-                     className="text-xs w-full sm:w-auto"
-                     onClick={() => setScheduleModalOpen(true)}
-                  >
-                     Configurar cursada
-                  </Button>
-               </div>
-            </div>
-
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-               {view === "calendar" && (
-                  <>
-                     <h2 className="text-sm font-semibold text-foreground sm:hidden">
-                        {monthNames[month]} {year}
-                     </h2>
-                     <div className="hidden shrink-0 items-center gap-2 sm:flex">
-                        <Button
-                           variant="outline"
-                           size="icon"
-                           className="size-8"
-                           onClick={() => goToAdjacentMonth(-1)}
-                        >
-                           <ChevronLeft className="size-4" />
-                        </Button>
-                        <h2 className="min-w-[170px] px-2 text-center text-sm font-semibold text-foreground">
-                           {monthNames[month]} {year}
-                        </h2>
-                        <Button
-                           variant="outline"
-                           size="icon"
-                           className="size-8"
-                           onClick={() => goToAdjacentMonth(1)}
-                        >
-                           <ChevronRight className="size-4" />
-                        </Button>
-                     </div>
-                  </>
-               )}
-
-               <Select
-                  value={statusFilter}
-                  onValueChange={(value) =>
-                     setStatusFilter(value as StatusFilter)
-                  }
-               >
-                  <SelectTrigger className="h-8 w-full text-xs sm:w-[170px]">
-                     <SelectValue placeholder="Estado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                     <SelectItem value="all">Todos los estados</SelectItem>
-                     <SelectItem value="planificada">Planificada</SelectItem>
-                     <SelectItem value="sin-planificar">
-                        Sin planificar
-                     </SelectItem>
-                     <SelectItem value="finalizada">Finalizada</SelectItem>
-                  </SelectContent>
-               </Select>
-
-               <Select
-                  value={typeFilter}
-                  onValueChange={(value) => setTypeFilter(value as TypeFilter)}
-               >
-                  <SelectTrigger className="h-8 w-full text-xs sm:w-[170px]">
-                     <SelectValue placeholder="Tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                     <SelectItem value="all">Todos los tipos</SelectItem>
-                     {Object.entries(classTypeLabels).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                           {label}
-                        </SelectItem>
-                     ))}
-                  </SelectContent>
-               </Select>
-
-               <span className="ml-auto w-full text-right text-xs text-muted-foreground sm:w-auto">
-                  {visibleClassesCount} clases
-               </span>
-            </div>
-         </div>
+         <PlanificacionToolbar
+            view={view}
+            onViewChange={setView}
+            onCreateClass={() => openCreateModal()}
+            onOpenSchedule={() => setScheduleModalOpen(true)}
+            monthName={monthNames[month]}
+            year={year}
+            onPreviousMonth={() => goToAdjacentMonth(-1)}
+            onNextMonth={() => goToAdjacentMonth(1)}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            typeFilter={typeFilter}
+            onTypeFilterChange={setTypeFilter}
+            classTypeLabels={classTypeLabels}
+            visibleClassesCount={visibleClassesCount}
+         />
 
          <div className="flex-1 min-h-0">
             {view === "calendar" ? (
@@ -1187,6 +1082,8 @@ export function PlanificacionContent() {
       </div>
    );
 }
+
+
 
 
 
