@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState, type TouchEvent } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { getAssignmentIdBySubjectId } from "@/lib/edu-repository";
 import { useAssessmentsContext } from "@/features/assessments";
 import { useActivitiesContext } from "@/features/activities";
@@ -7,6 +7,7 @@ import { usePlanningContext } from "@/features/planning";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePlanningCalendarNavigation } from "@/features/planning/hooks";
 import { PlanificacionToolbar } from "@/features/planning/components/planificacion-toolbar";
 import { PlanningCalendarView } from "@/features/planning/components/planning-calendar-view";
 import { PlanningClassesList } from "@/features/planning/components/planning-classes-list";
@@ -37,11 +38,15 @@ export function PlanificacionContent() {
    const isMobile = useIsMobile();
    const [searchParams] = useSearchParams();
    const today = new Date();
-   const swipeStartXRef = useRef<number | null>(null);
 
    const [view, setView] = useState<ViewMode>("calendar");
-   const [month, setMonth] = useState(today.getMonth());
-   const [year, setYear] = useState(today.getFullYear());
+   const {
+      month,
+      year,
+      goToAdjacentMonth,
+      handleCalendarTouchStart,
+      handleCalendarTouchEnd,
+   } = usePlanningCalendarNavigation(today);
    const initialStatusFilter =
       searchParams.get("status") === "planificada" ||
       searchParams.get("status") === "sin-planificar" ||
@@ -125,41 +130,6 @@ export function PlanificacionContent() {
          isPastDate: dateStr < todayStr,
       };
    });
-
-   const goToAdjacentMonth = (delta: -1 | 1) => {
-      setMonth((currentMonth) => {
-         if (delta === -1 && currentMonth === 0) {
-            setYear((currentYear) => currentYear - 1);
-            return 11;
-         }
-         if (delta === 1 && currentMonth === 11) {
-            setYear((currentYear) => currentYear + 1);
-            return 0;
-         }
-         return currentMonth + delta;
-      });
-   };
-
-   const handleCalendarTouchStart = (event: TouchEvent<HTMLDivElement>) => {
-      swipeStartXRef.current = event.touches[0]?.clientX ?? null;
-   };
-
-   const handleCalendarTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
-      const startX = swipeStartXRef.current;
-      swipeStartXRef.current = null;
-      if (startX === null) {
-         return;
-      }
-      const endX = event.changedTouches[0]?.clientX;
-      if (typeof endX !== "number") {
-         return;
-      }
-      const deltaX = endX - startX;
-      if (Math.abs(deltaX) < 40) {
-         return;
-      }
-      goToAdjacentMonth(deltaX > 0 ? -1 : 1);
-   };
 
    const openCreateModal = (date?: string) => {
       setEditingClassId(null);
@@ -371,6 +341,8 @@ export function PlanificacionContent() {
       </div>
    );
 }
+
+
 
 
 
