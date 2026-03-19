@@ -11,7 +11,7 @@ import { PlanificacionToolbar } from "@/features/planning/components/planificaci
 import { PlanningCalendarView } from "@/features/planning/components/planning-calendar-view";
 import { PlanningClassesList } from "@/features/planning/components/planning-classes-list";
 import { PlanningModals } from "@/features/planning/components/planning-modals";
-import { classTypeLabels, monthNames } from "@/features/planning/constants";
+import { classTypeLabels, monthNames } from "@/features/planning/utils/constants";
 import { syncClassLinkedRecords } from "@/features/planning/utils/sync-class-linked-records";
 import type {
    ClassFormInput,
@@ -371,6 +371,7 @@ export function PlanificacionContent() {
       </div>
    );
 }
+
 
 
 

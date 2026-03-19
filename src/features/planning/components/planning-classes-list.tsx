@@ -14,7 +14,7 @@ import {
    classTypeLabels,
    getStatusColor,
    getStatusLabel,
-} from "@/features/planning/constants";
+} from "@/features/planning/utils/constants";
 import type { ClassSession } from "@/types";
 
 type PlanningClassesListProps = {
@@ -312,3 +312,4 @@ export function PlanningClassesList({
       </div>
    );
 }
+

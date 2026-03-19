@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
+﻿import { describe, expect, it } from "vitest";
 import {
    resolveAssignmentIdForInstitution,
    resolveInstitutionId,
-} from "@/features/planning/institution-context-guards";
+} from "@/features/planning/utils/institution-context-guards";
 
 const assignments = [
    { id: "a1", institutionId: "inst-a" },
@@ -87,3 +87,4 @@ describe("resolveAssignmentIdForInstitution", () => {
       ).toBe("");
    });
 });
+

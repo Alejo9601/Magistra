@@ -37,7 +37,7 @@ import {
 import {
    resolveAssignmentIdForInstitution,
    resolveInstitutionId,
-} from "@/features/planning/institution-context-guards";
+} from "@/features/planning/utils/institution-context-guards";
 import { toast } from "sonner";
 import {
    addDays,
@@ -326,6 +326,7 @@ export function ClassScheduleModal({
       </>
    );
 }
+
 
 
 

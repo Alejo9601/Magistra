@@ -19,7 +19,7 @@ import {
    classTypeLabels,
    getStatusColor,
    getStatusLabel,
-} from "@/features/planning/constants";
+} from "@/features/planning/utils/constants";
 import type { ClassSession } from "@/types";
 
 export function DayClassesDialog({
@@ -139,3 +139,4 @@ export function DayClassesDialog({
       </Dialog>
    );
 }
+

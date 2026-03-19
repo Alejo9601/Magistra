@@ -13,7 +13,7 @@ import {
    getSubjectById,
    institutions,
 } from "@/lib/edu-repository";
-import { resolveAssignmentIdForInstitution } from "@/features/planning/institution-context-guards";
+import { resolveAssignmentIdForInstitution } from "@/features/planning/utils/institution-context-guards";
 import type { ClassFormInput } from "@/features/planning/types";
 import { ClassMetaFields } from "@/features/planning/components/class-meta-fields";
 import { ClassEditorFooterActions } from "@/features/planning/components/class-editor-footer-actions";
@@ -263,6 +263,7 @@ export function ClassEditorModal({
       </Dialog>
    );
 }
+
 
 
 

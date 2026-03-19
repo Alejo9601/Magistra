@@ -1,5 +1,5 @@
-﻿import { ClassEditorModal } from "@/features/planning/class-editor-modal";
-import { ClassScheduleModal } from "@/features/planning/class-schedule-modal";
+﻿import { ClassEditorModal } from "@/features/planning/components/class-editor-modal";
+import { ClassScheduleModal } from "@/features/planning/components/class-schedule-modal";
 import { DayClassesDialog } from "@/features/planning/components/day-classes-dialog";
 import type { ClassFormInput } from "@/features/planning/types";
 import type { ClassSession } from "@/types";
@@ -76,3 +76,4 @@ export function PlanningModals({
       </>
    );
 }
+
