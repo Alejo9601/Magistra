@@ -10,15 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-   Select,
-   SelectContent,
-   SelectItem,
-   SelectTrigger,
-   SelectValue,
-} from "@/components/ui/select";
 import {
    getAssignmentById,
    getAssignmentIdBySubjectId,
@@ -28,6 +19,10 @@ import {
 } from "@/lib/edu-repository";
 import { resolveAssignmentIdForInstitution } from "@/features/planning/institution-context-guards";
 import type { ClassFormInput } from "@/features/planning/types";
+import { ClassMetaFields } from "@/features/planning/components/class-meta-fields";
+import { ClassPlanningBlockEditor } from "@/features/planning/components/class-planning-block-editor";
+import { BlockPlanningHeader } from "@/features/planning/components/block-planning-header";
+import { PlanningModeToggle } from "@/features/planning/components/planning-mode-toggle";
 import { toast } from "sonner";
 import type { ClassBlock, ClassSession } from "@/types";
 
@@ -136,7 +131,7 @@ export function ClassEditorModal({
    const [date, setDate] = useState("");
    const [time, setTime] = useState("08:00");
    const [blockDurationMinutes, setBlockDurationMinutes] = useState(40);
-      const [blocks, setBlocks] = useState<ClassBlock[]>([createEmptyBlock(1)]);
+   const [blocks, setBlocks] = useState<ClassBlock[]>([createEmptyBlock(1)]);
    const [planBlocksSeparately, setPlanBlocksSeparately] = useState(false);
    const [resourcesText, setResourcesText] = useState("");
 
@@ -167,6 +162,18 @@ export function ClassEditorModal({
       );
    };
 
+   const handlePlanModeChange = (enabled: boolean) => {
+      setPlanBlocksSeparately(enabled);
+      if (!enabled) {
+         setBlocks((prev) => {
+            if (prev.length <= 1) {
+               return prev;
+            }
+            const base = prev[0] ?? createEmptyBlock(1);
+            return prev.map((_, index) => cloneBlockContent(base, index + 1));
+         });
+      }
+   };
    const reset = () => {
       const nextInstitution = activeInstitution;
       const candidateAssignmentId =
@@ -361,264 +368,46 @@ export function ClassEditorModal({
                </DialogDescription>
             </DialogHeader>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
-               <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs">Institucion</Label>
-                  <Select
-                     value={institutionId}
-                     disabled={isInstitutionLocked}
-                  >
-                     <SelectTrigger className="h-9 text-xs">
-                        <SelectValue placeholder="Seleccionar..." />
-                     </SelectTrigger>
-                     <SelectContent>
-                        {institutions.map((institution) => (
-                           <SelectItem key={institution.id} value={institution.id}>
-                              {institution.name}
-                           </SelectItem>
-                        ))}
-                     </SelectContent>
-                  </Select>
-               </div>
-
-               <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs">Materia</Label>
-                  <Select value={assignmentId} onValueChange={handleAssignmentChange}>
-                     <SelectTrigger className="h-9 text-xs">
-                        <SelectValue placeholder="Seleccionar..." />
-                     </SelectTrigger>
-                     <SelectContent>
-                        {availableAssignments.map((assignment) => {
-                           const subject = getSubjectById(assignment.subjectId);
-                           if (!subject) return null;
-                           return (
-                              <SelectItem key={assignment.id} value={assignment.id}>
-                                 {subject.name} ({assignment.section})
-                              </SelectItem>
-                           );
-                        })}
-                     </SelectContent>
-                  </Select>
-               </div>
-
-               <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs">Fecha</Label>
-                  <Input
-                     type="date"
-                     className="h-9 text-xs"
-                     value={date}
-                     min={initialClass ? undefined : todayStr}
-                     disabled={isScheduledSlotLocked}
-                     onChange={(event) => setDate(event.target.value)}
-                  />
-               </div>
-
-               <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs">Hora</Label>
-                  <Input
-                     type="time"
-                     className="h-9 text-xs"
-                     value={time}
-                     disabled={isScheduledSlotLocked}
-                     onChange={(event) => setTime(event.target.value)}
-                  />
-               </div>
-            </div>
+            <ClassMetaFields
+               institutionId={institutionId}
+               isInstitutionLocked={isInstitutionLocked}
+               institutions={institutions.map((institution) => ({
+                  id: institution.id,
+                  name: institution.name,
+               }))}
+               assignmentId={assignmentId}
+               onAssignmentChange={handleAssignmentChange}
+               availableAssignments={availableAssignments.map((assignment) => ({
+                  id: assignment.id,
+                  subjectId: assignment.subjectId,
+                  section: assignment.section,
+               }))}
+               resolveSubjectName={(subjectId) => getSubjectById(subjectId)?.name ?? null}
+               date={date}
+               time={time}
+               dateMin={initialClass ? undefined : todayStr}
+               isScheduledSlotLocked={isScheduledSlotLocked}
+               onDateChange={setDate}
+               onTimeChange={setTime}
+            />
 
             <div className="space-y-3">
-               <div className="space-y-1">
-                  <p className="text-xs font-semibold text-foreground">Bloques de clase</p>
-                  <p className="text-[11px] text-muted-foreground">
-                     Duracion por bloque: {blockDurationMinutes} min. Solo puedes editar su contenido.
-                  </p>               </div>
-
-               <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Checkbox
-                     checked={planBlocksSeparately}
-                     onCheckedChange={(checked) => {
-                        const enabled = checked === true;
-                        setPlanBlocksSeparately(enabled);
-                        if (!enabled) {
-                           setBlocks((prev) => {
-                              if (prev.length <= 1) {
-                                 return prev;
-                              }
-                              const base = prev[0] ?? createEmptyBlock(1);
-                              return prev.map((_, index) => cloneBlockContent(base, index + 1));
-                           });
-                        }
-                     }}
-                  />
-                  <span>Planificar bloques por separado</span>
-               </label>
+               <BlockPlanningHeader blockDurationMinutes={blockDurationMinutes} />
+               <PlanningModeToggle
+                  planBlocksSeparately={planBlocksSeparately}
+                  onChange={handlePlanModeChange}
+               />
 
                <div className="space-y-3">
                   {(planBlocksSeparately ? blocks : blocks.slice(0, 1)).map((block) => (
-                     <div
+                     <ClassPlanningBlockEditor
                         key={block.order}
-                        className={
-                           planBlocksSeparately
-                              ? "rounded-md border border-border/50 p-3 space-y-2"
-                              : "space-y-2"
-                        }
-                     >
-                        <p className="text-xs font-semibold text-foreground">
-                           {planBlocksSeparately
-                              ? `Bloque ${block.order}`
-                              : "Planificacion de la clase"}
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                           <div className="flex flex-col gap-1.5 sm:col-span-2">
-                              <Label className="text-xs">Eje principal / Tema principal</Label>
-                              <Input
-                                 className="h-9 text-xs"
-                                 value={block.topic}
-                                 onChange={(event) =>
-                                    updateBlock(block.order, { topic: event.target.value })
-                                 }
-                              />
-                           </div>
-                           <div className="flex flex-col gap-1.5 sm:col-span-2">
-                              <Label className="text-xs">Subtemas (uno por linea)</Label>
-                              <Textarea
-                                 className="text-xs min-h-[70px] resize-none"
-                                 value={block.subtopics.join("\n")}
-                                 onChange={(event) =>
-                                    updateBlock(block.order, {
-                                       subtopics: event.target.value
-                                          .split("\n")
-                                          .map((value) => value.trim())
-                                          .filter(Boolean),
-                                    })
-                                 }
-                              />
-                           </div>
-                           <div className="flex flex-col gap-1.5 sm:col-span-2">
-                              <Label className="text-xs">Caracter de la clase</Label>
-                              <Select
-                                 value={block.type}
-                                 onValueChange={(value) => {
-                                    const nextType = value as Exclude<ClassSession["type"], "oral">;
-                                    updateBlock(block.order, {
-                                       type: nextType,
-                                       evaluativeFormat:
-                                          nextType === "evaluacion"
-                                             ? block.evaluativeFormat
-                                             : undefined,
-                                       evaluationName:
-                                          nextType === "evaluacion"
-                                             ? block.evaluationName
-                                             : undefined,
-                                       evaluationDescription:
-                                          nextType === "evaluacion"
-                                             ? block.evaluationDescription
-                                             : undefined,
-                                       practiceActivityName:
-                                          nextType === "practica" || nextType === "teorico-practica"
-                                             ? block.practiceActivityName
-                                             : undefined,
-                                       practiceActivityDescription:
-                                          nextType === "practica" || nextType === "teorico-practica"
-                                             ? block.practiceActivityDescription
-                                             : undefined,
-                                    });
-                                 }}
-                              >
-                                 <SelectTrigger className="h-9 text-xs">
-                                    <SelectValue placeholder="Seleccionar caracter..." />
-                                 </SelectTrigger>
-                                 <SelectContent>
-                                    {classCharacterOptions.map((option) => (
-                                       <SelectItem key={option.value} value={option.value}>
-                                          {option.label}
-                                       </SelectItem>
-                                    ))}
-                                 </SelectContent>
-                              </Select>
-                           </div>
-
-                           {(block.type === "practica" || block.type === "teorico-practica") && (
-                              <>
-                                 <div className="flex flex-col gap-1.5">
-                                    <Label className="text-xs">Nombre de la actividad</Label>
-                                    <Input
-                                       className="h-9 text-xs"
-                                       value={block.practiceActivityName ?? ""}
-                                       onChange={(event) =>
-                                          updateBlock(block.order, {
-                                             practiceActivityName: event.target.value,
-                                          })
-                                       }
-                                    />
-                                 </div>
-                                 <div className="flex flex-col gap-1.5 sm:col-span-2">
-                                    <Label className="text-xs">Descripcion</Label>
-                                    <Textarea
-                                       className="text-xs min-h-[70px] resize-none"
-                                       value={block.practiceActivityDescription ?? ""}
-                                       onChange={(event) =>
-                                          updateBlock(block.order, {
-                                             practiceActivityDescription: event.target.value,
-                                          })
-                                       }
-                                    />
-                                 </div>
-                              </>
-                           )}
-
-                           {block.type === "evaluacion" && (
-                              <>
-                                 <div className="flex flex-col gap-1.5">
-                                    <Label className="text-xs">Nombre de la evaluacion</Label>
-                                    <Input
-                                       className="h-9 text-xs"
-                                       value={block.evaluationName ?? ""}
-                                       onChange={(event) =>
-                                          updateBlock(block.order, {
-                                             evaluationName: event.target.value,
-                                          })
-                                       }
-                                    />
-                                 </div>
-                                 <div className="flex flex-col gap-1.5">
-                                    <Label className="text-xs">Tipo de evaluacion</Label>
-                                    <Select
-                                       value={block.evaluativeFormat || undefined}
-                                       onValueChange={(value) =>
-                                          updateBlock(block.order, {
-                                             evaluativeFormat:
-                                                value as NonNullable<ClassSession["evaluativeFormat"]>,
-                                          })
-                                       }
-                                    >
-                                       <SelectTrigger className="h-9 text-xs">
-                                          <SelectValue placeholder="Seleccionar tipo evaluativo..." />
-                                       </SelectTrigger>
-                                       <SelectContent>
-                                          {evaluativeFormatOptions.map((option) => (
-                                             <SelectItem key={option.value} value={option.value}>
-                                                {option.label}
-                                             </SelectItem>
-                                          ))}
-                                       </SelectContent>
-                                    </Select>
-                                 </div>
-                                 <div className="flex flex-col gap-1.5 sm:col-span-2">
-                                    <Label className="text-xs">Descripcion</Label>
-                                    <Textarea
-                                       className="text-xs min-h-[70px] resize-none"
-                                       value={block.evaluationDescription ?? ""}
-                                       onChange={(event) =>
-                                          updateBlock(block.order, {
-                                             evaluationDescription: event.target.value,
-                                          })
-                                       }
-                                    />
-                                 </div>
-                              </>
-                           )}
-                        </div>
-                     </div>
+                        block={block}
+                        planBlocksSeparately={planBlocksSeparately}
+                        classCharacterOptions={classCharacterOptions}
+                        evaluativeFormatOptions={evaluativeFormatOptions}
+                        onUpdateBlock={updateBlock}
+                     />
                   ))}
                </div>
             </div>
@@ -659,6 +448,12 @@ export function ClassEditorModal({
       </Dialog>
    );
 }
+
+
+
+
+
+
 
 
 
