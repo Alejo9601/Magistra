@@ -21,70 +21,16 @@ import { classTypeLabels } from "@/features/classroom/constants";
 import { ClaseDictadoHeader } from "@/features/classroom/components/clase-dictado-header";
 import { ClaseDictadoSummaryCard } from "@/features/classroom/components/clase-dictado-summary-card";
 import { ClaseDictadoSubtopicsCard } from "@/features/classroom/components/clase-dictado-subtopics-card";
+import {
+   evaluativeFormatLabelMap,
+   normalizeExamReference,
+   normalizeReferenceForKind,
+   parseActivityChecklist,
+   performanceEntryKey,
+   performanceKindLabel,
+} from "@/features/classroom/utils";
 import type { AttendanceStatus } from "@/features/classroom/types";
 import type { ClassroomPerformanceEntry, ClassroomPerformanceKind } from "@/types";
-
-function parseActivityChecklist(activities?: string) {
-   if (!activities) {
-      return [];
-   }
-   const parts = activities
-      .split(/\r?\n|[.;]/g)
-      .map((entry) => entry.trim())
-      .filter((entry) => entry.length > 0);
-   return Array.from(new Set(parts));
-}
-
-const performanceKindOptions: Array<{
-   value: ClassroomPerformanceKind;
-   label: string;
-}> = [
-   { value: "activity", label: "Actividad" },
-   { value: "practice_work", label: "Trabajo practico" },
-   { value: "exam", label: "Evaluacion" },
-];
-
-const evaluativeFormatLabelMap: Record<
-   NonNullable<import("@/types").ClassSession["evaluativeFormat"]>,
-   string
-> = {
-   oral: "Oral",
-   escrito: "Escrito",
-   "actividad-practica": "Actividad Practica",
-   otro: "Otro",
-   "exposicion-oral": "Oral",
-   "examen-escrito": "Escrito",
-   "examen-oral": "Oral",
-   "trabajo-practico-evaluativo": "Actividad Practica",
-};
-
-function performanceKindLabel(kind: ClassroomPerformanceKind) {
-   return performanceKindOptions.find((option) => option.value === kind)?.label ?? kind;
-}
-
-function performanceEntryKey(entry: Pick<ClassroomPerformanceEntry, "studentId" | "kind">) {
-   return `${entry.studentId}::${entry.kind}`;
-}
-
-function normalizeText(value: string) {
-   return value.trim().replace(/\s+/g, " ");
-}
-
-function normalizeExamReference(value: string) {
-   const normalized = normalizeText(value);
-   const lowered = normalized.toLowerCase();
-   const prefixes = ["oral:", "escrito:", "actividad practica:", "otro:"];
-   const prefix = prefixes.find((candidate) => lowered.startsWith(candidate));
-   if (!prefix) {
-      return normalized;
-   }
-   return normalizeText(normalized.slice(prefix.length));
-}
-
-function normalizeReferenceForKind(value: string, kind: ClassroomPerformanceKind) {
-   const normalized = kind === "exam" ? normalizeExamReference(value) : normalizeText(value);
-   return normalized.toLowerCase();
-}
 
 
 export function ClaseDictadoContent() {
@@ -620,6 +566,7 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
+
 
 
 
