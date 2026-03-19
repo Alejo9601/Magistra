@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Plus, Search, BookOpen, Trash2, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -49,8 +49,17 @@ import {
    getInstitutionById,
    getSubjectById,
 } from "@/lib/edu-repository";
-import { StudentStatusBadge } from "@/features/groups/status-badge";
-import { toast } from "sonner";
+import { StudentStatusBadge } from "@/features/groups/components/student-status-badge";
+import {
+   activityStatusBadgeClass,
+   activityStatusLabel,
+   activityTypeLabel,
+   assessmentTypeLabel,
+   evaluativeClassTypeLabel,
+   inferEvaluativeTypeFromTitle,
+} from "@/features/groups/utils";
+import type { GroupDetailProps } from "@/features/groups/types";
+import { useGroupDetailActions } from "@/features/groups/hooks";
 import { useStudentsContext } from "@/features/students";
 import { useClassroomContext } from "@/features/classroom";
 import {
@@ -64,98 +73,76 @@ import {
    type ActivityType,
 } from "@/features/activities";
 
-const evaluativeClassTypeLabel: Record<string, string> = {
-   oral: "Oral",
-   escrito: "Escrito",
-   "actividad-practica": "Actividad Practica",
-   otro: "Otro",
-   "exposicion-oral": "Oral",
-   "examen-escrito": "Escrito",
-   "examen-oral": "Oral",
-   "trabajo-practico-evaluativo": "Actividad Practica",
-};
-
-const assessmentTypeLabel: Record<AssessmentType, string> = {
-   exam: "Examen",
-   practice_work: "Trabajo practico",
-};
-
-
-function inferEvaluativeTypeFromTitle(title: string) {
-   const normalized = title.trim().toLowerCase();
-   if (normalized.startsWith("oral:")) return "Oral";
-   if (normalized.startsWith("escrito:")) return "Escrito";
-   if (normalized.startsWith("actividad practica:")) return "Actividad Practica";
-   if (normalized.startsWith("otro:")) return "Otro";
-   return null;
-}
-
-const activityTypeLabel: Record<ActivityType, string> = {
-   classwork: "En clase",
-   homework: "Tarea",
-   lab: "Laboratorio",
-   project: "Proyecto",
-};
-
-const activityStatusLabel: Record<ActivityStatus, string> = {
-   draft: "Borrador",
-   planned: "Planificada",
-   assigned: "Asignada",
-   completed: "Completada",
-};
-
-const activityStatusBadgeClass: Record<ActivityStatus, string> = {
-   draft: "bg-muted text-muted-foreground",
-   planned: "bg-primary/10 text-primary",
-   assigned: "bg-info/10 text-info",
-   completed: "bg-success/10 text-success",
-};
-
-export function GroupDetail({
-   assignmentId,
-   onBack,
-}: {
-   assignmentId: string;
-   onBack: () => void;
-}) {
+export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
    const { getStudentsByAssignment, addStudent } = useStudentsContext();
    const { getRecord } = useClassroomContext();
    const { getAssessmentsByAssignment, addAssessment, removeAssessment } =
       useAssessmentsContext();
    const { getActivitiesByAssignment, addActivity, removeActivity } =
       useActivitiesContext();
-   const [addStudentOpen, setAddStudentOpen] = useState(false);
-   const [addAssessmentOpen, setAddAssessmentOpen] = useState(false);
-   const [addActivityOpen, setAddActivityOpen] = useState(false);
-   const [studentSearch, setStudentSearch] = useState("");
-   const [newName, setNewName] = useState("");
-   const [newLastName, setNewLastName] = useState("");
-   const [newDni, setNewDni] = useState("");
-   const [newEmail, setNewEmail] = useState("");
-   const [newObservations, setNewObservations] = useState("");
-   const [newAssessmentTitle, setNewAssessmentTitle] = useState("");
-   const [newAssessmentType, setNewAssessmentType] =
-      useState<AssessmentType>("exam");
-   const [newAssessmentDate, setNewAssessmentDate] = useState("");
-   const [newAssessmentStatus, setNewAssessmentStatus] =
-      useState<AssessmentStatus>("draft");
-   const [newAssessmentWeight, setNewAssessmentWeight] = useState("1");
-   const [newAssessmentMaxScore, setNewAssessmentMaxScore] = useState("10");
-   const [newAssessmentDescription, setNewAssessmentDescription] = useState("");
-   const [newActivityTitle, setNewActivityTitle] = useState("");
-   const [newActivityType, setNewActivityType] = useState<ActivityType>("classwork");
-   const [newActivityStatus, setNewActivityStatus] =
-      useState<ActivityStatus>("planned");
-   const [newActivityDescription, setNewActivityDescription] = useState("");
-   const [pendingDelete, setPendingDelete] = useState<{
-      kind: "assessment" | "activity";
-      id: string;
-      title: string;
-   } | null>(null);
+   const groupStudents = getStudentsByAssignment(assignmentId);
+   const {
+      addStudentOpen,
+      setAddStudentOpen,
+      addAssessmentOpen,
+      setAddAssessmentOpen,
+      addActivityOpen,
+      setAddActivityOpen,
+      studentSearch,
+      setStudentSearch,
+      newName,
+      setNewName,
+      newLastName,
+      setNewLastName,
+      newDni,
+      setNewDni,
+      newEmail,
+      setNewEmail,
+      newObservations,
+      setNewObservations,
+      newAssessmentTitle,
+      setNewAssessmentTitle,
+      newAssessmentType,
+      setNewAssessmentType,
+      newAssessmentDate,
+      setNewAssessmentDate,
+      newAssessmentStatus,
+      setNewAssessmentStatus,
+      newAssessmentWeight,
+      setNewAssessmentWeight,
+      newAssessmentMaxScore,
+      setNewAssessmentMaxScore,
+      newAssessmentDescription,
+      setNewAssessmentDescription,
+      newActivityTitle,
+      setNewActivityTitle,
+      newActivityType,
+      setNewActivityType,
+      newActivityStatus,
+      setNewActivityStatus,
+      newActivityDescription,
+      setNewActivityDescription,
+      pendingDelete,
+      setPendingDelete,
+      resetStudentForm,
+      resetAssessmentForm,
+      resetActivityForm,
+      submitStudent,
+      submitAssessment,
+      submitActivity,
+      confirmDelete,
+   } = useGroupDetailActions({
+      assignmentId,
+      groupStudents,
+      addStudent,
+      addAssessment,
+      addActivity,
+      removeAssessment,
+      removeActivity,
+   });
    const assignment = getAssignmentById(assignmentId);
    const subject = assignment ? getSubjectById(assignment.subjectId) : null;
    const inst = assignment ? getInstitutionById(assignment.institutionId) : null;
-   const groupStudents = getStudentsByAssignment(assignmentId);
    const groupClasses = getClassesByAssignment(assignmentId);
    const groupAssessments = useMemo(
       () =>
@@ -220,114 +207,6 @@ export function GroupDetail({
    );
 
    if (!assignment || !subject || !inst) return null;
-
-   const resetStudentForm = () => {
-      setNewName("");
-      setNewLastName("");
-      setNewDni("");
-      setNewEmail("");
-      setNewObservations("");
-   };
-   const resetAssessmentForm = () => {
-      setNewAssessmentTitle("");
-      setNewAssessmentType("exam");
-      setNewAssessmentDate("");
-      setNewAssessmentStatus("draft");
-      setNewAssessmentWeight("1");
-      setNewAssessmentMaxScore("10");
-      setNewAssessmentDescription("");
-   };
-   const resetActivityForm = () => {
-      setNewActivityTitle("");
-      setNewActivityType("classwork");
-      setNewActivityStatus("planned");
-      setNewActivityDescription("");
-   };
-
-   const submitStudent = () => {
-      if (!newName.trim() || !newLastName.trim() || !newDni.trim()) {
-         toast.error("Completa nombre, apellido y DNI/legajo.");
-         return;
-      }
-
-      const normalizedDni = newDni.trim();
-      const alreadyInGroup = groupStudents.some(
-         (student) => student.dni.trim() === normalizedDni,
-      );
-      if (alreadyInGroup) {
-         toast.error("Ese alumno ya esta vinculado a este grupo.");
-         return;
-      }
-
-      try {
-         addStudent({
-            assignmentId,
-            name: newName,
-            lastName: newLastName,
-            dni: normalizedDni,
-            email: newEmail,
-            observations: newObservations,
-         });
-         setAddStudentOpen(false);
-         resetStudentForm();
-         toast.success("Alumno agregado correctamente");
-      } catch (error) {
-         const message =
-            error instanceof Error
-               ? error.message
-               : "No se pudo agregar el alumno.";
-         toast.error(message);
-      }
-   };
-
-   const submitAssessment = () => {
-      if (!newAssessmentTitle.trim() || !newAssessmentDate) {
-         toast.error("Completa titulo y fecha.");
-         return;
-      }
-
-      const weight = Number(newAssessmentWeight);
-      const maxScore = Number(newAssessmentMaxScore);
-      if (!Number.isFinite(weight) || weight <= 0) {
-         toast.error("La ponderacion debe ser mayor a 0.");
-         return;
-      }
-      if (!Number.isFinite(maxScore) || maxScore <= 0) {
-         toast.error("La nota maxima debe ser mayor a 0.");
-         return;
-      }
-
-      addAssessment({
-         assignmentId,
-         title: newAssessmentTitle,
-         date: newAssessmentDate,
-         type: newAssessmentType,
-         status: newAssessmentStatus,
-         weight,
-         maxScore,
-         description: newAssessmentDescription,
-      });
-      setAddAssessmentOpen(false);
-      resetAssessmentForm();
-      toast.success("Evaluacion creada correctamente");
-   };
-
-   const submitActivity = () => {
-      if (!newActivityTitle.trim()) {
-         toast.error("Completa el titulo de la actividad.");
-         return;
-      }
-      addActivity({
-         assignmentId,
-         title: newActivityTitle,
-         type: newActivityType,
-         status: newActivityStatus,
-         description: newActivityDescription,
-      });
-      setAddActivityOpen(false);
-      resetActivityForm();
-      toast.success("Actividad creada correctamente");
-   };
 
    return (
       <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:p-6">
@@ -800,17 +679,7 @@ export function GroupDetail({
                   <AlertDialogCancel className="text-xs">Cancelar</AlertDialogCancel>
                   <AlertDialogAction
                      className="text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                     onClick={() => {
-                        if (!pendingDelete) return;
-                        if (pendingDelete.kind === "assessment") {
-                           removeAssessment(pendingDelete.id);
-                           toast.success("Evaluacion eliminada");
-                        } else {
-                           removeActivity(pendingDelete.id);
-                           toast.success("Actividad eliminada");
-                        }
-                        setPendingDelete(null);
-                     }}
+                     onClick={confirmDelete}
                   >
                      Eliminar
                   </AlertDialogAction>
@@ -1145,6 +1014,10 @@ export function GroupDetail({
       </div>
    );
 }
+
+
+
+
 
 
 
