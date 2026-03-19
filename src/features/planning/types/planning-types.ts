@@ -1,4 +1,4 @@
-import type { ClassSession } from "@/types";
+﻿import type { ClassSession } from "@/types";
 
 export type ViewMode = "calendar" | "list";
 export type StatusFilter = "all" | ClassSession["status"];
