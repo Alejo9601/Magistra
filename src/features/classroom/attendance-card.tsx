@@ -1,7 +1,8 @@
 ﻿import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { attendanceConfig, type AttendanceStatus } from "@/features/classroom/constants";
+import { attendanceConfig } from "@/features/classroom/constants";
+import type { AttendanceStatus } from "@/features/classroom/types";
 import type { Student } from "@/lib/edu-repository";
 
 export function AttendanceCard({
@@ -79,5 +80,7 @@ export function AttendanceCard({
       </Card>
    );
 }
+
+
 
 

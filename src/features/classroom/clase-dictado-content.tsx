@@ -20,7 +20,8 @@ import { useClassroomContext } from "@/features/classroom";
 import { useActivitiesContext } from "@/features/activities";
 import { useAssessmentsContext } from "@/features/assessments";
 import { AttendanceCard } from "@/features/classroom/attendance-card";
-import { classTypeLabels, type AttendanceStatus } from "@/features/classroom/constants";
+import { classTypeLabels } from "@/features/classroom/constants";
+import type { AttendanceStatus } from "@/features/classroom/types";
 import type { ClassroomPerformanceEntry, ClassroomPerformanceKind } from "@/types";
 
 function parseActivityChecklist(activities?: string) {
@@ -748,6 +749,7 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
+
 
 
 

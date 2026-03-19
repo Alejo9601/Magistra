@@ -6,7 +6,7 @@ import {
 } from "@/lib/edu-repository";
 import { usePlanningContext } from "@/features/planning";
 import { toast } from "sonner";
-import { type AttendanceStatus } from "@/features/classroom/constants";
+import { type AttendanceStatus } from "@/features/classroom/types";
 import {
    ClassDetailHeader,
    ClassInfoCard,
@@ -161,5 +161,6 @@ export function ClaseDetailContent() {
       </div>
    );
 }
+
 
 

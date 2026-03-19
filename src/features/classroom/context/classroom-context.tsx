@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import type { AttendanceStatus } from "@/features/classroom/constants";
+﻿import { createContext, useContext, useEffect, useState } from "react";
+import type { AttendanceStatus } from "@/features/classroom/types";
 import {
    createFallbackClassroomRecord,
    loadClassroomRecords,
@@ -118,3 +118,4 @@ export function useClassroomContext() {
    }
    return context;
 }
+
