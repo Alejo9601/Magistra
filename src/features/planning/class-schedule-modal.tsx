@@ -1,5 +1,4 @@
 ﻿import { useEffect, useMemo, useState } from "react";
-import { Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
    AlertDialog,
@@ -21,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ClassScheduleSlotsSection } from "@/features/planning/components/class-schedule-slots-section";
 import {
    Select,
    SelectContent,
@@ -39,49 +39,14 @@ import {
    resolveInstitutionId,
 } from "@/features/planning/institution-context-guards";
 import { toast } from "sonner";
-
-const weekDays = [
-   { value: 1, label: "Lunes" },
-   { value: 2, label: "Martes" },
-   { value: 3, label: "Miercoles" },
-   { value: 4, label: "Jueves" },
-   { value: 5, label: "Viernes" },
-   { value: 6, label: "Sabado" },
-   { value: 0, label: "Domingo" },
-];
-
-type SlotInput = {
-   id: string;
-   dayOfWeek: number;
-   time: string;
-   blockCount: number;
-};
-
-function createSlot(dayOfWeek = 1, time = "08:00", blockCount = 1): SlotInput {
-   return {
-      id: `slot-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-      dayOfWeek,
-      time,
-      blockCount,
-   };
-}
-
-function todayDate() {
-   const now = new Date();
-   const yyyy = now.getFullYear();
-   const mm = String(now.getMonth() + 1).padStart(2, "0");
-   const dd = String(now.getDate()).padStart(2, "0");
-   return `${yyyy}-${mm}-${dd}`;
-}
-
-function addDays(dateStr: string, days: number) {
-   const date = new Date(`${dateStr}T12:00:00`);
-   date.setDate(date.getDate() + days);
-   const yyyy = date.getFullYear();
-   const mm = String(date.getMonth() + 1).padStart(2, "0");
-   const dd = String(date.getDate()).padStart(2, "0");
-   return `${yyyy}-${mm}-${dd}`;
-}
+import {
+   addDays,
+   adjustSlotBlockCount,
+   createSlot,
+   normalizeSlotsForSchedule,
+   todayDate,
+   type SlotInput,
+} from "@/features/planning/utils/class-schedule-utils";
 
 export function ClassScheduleModal({
    open,
@@ -174,8 +139,7 @@ export function ClassScheduleModal({
             if (slot.id !== slotId) {
                return slot;
             }
-            const nextCount = Math.max(1, Math.min(3, slot.blockCount + delta));
-            return { ...slot, blockCount: nextCount };
+            return { ...slot, blockCount: adjustSlotBlockCount(slot.blockCount, delta) };
          }),
       );
    };
@@ -198,18 +162,7 @@ export function ClassScheduleModal({
          return;
       }
 
-      const uniqueSlotsMap = new Map<
-         string,
-         { dayOfWeek: number; time: string; blockCount: number }
-      >();
-      slots.forEach((slot) => {
-         uniqueSlotsMap.set(`${slot.dayOfWeek}-${slot.time}-${slot.blockCount}`, {
-            dayOfWeek: slot.dayOfWeek,
-            time: slot.time,
-            blockCount: slot.blockCount,
-         });
-      });
-      const normalizedSlots = Array.from(uniqueSlotsMap.values());
+      const normalizedSlots = normalizeSlotsForSchedule(slots);
 
       const created = onSchedule({
          institutionId,
@@ -310,95 +263,14 @@ export function ClassScheduleModal({
                   </div>
                </div>
 
-               <div className="rounded-lg border border-border/70 p-3">
-                  <div className="mb-2 flex items-center justify-between">
-                     <div className="flex flex-col">
-                        <Label className="text-xs">Horarios semanales (dia + hora + cantidad de bloques)</Label>
-                        <span className="text-[11px] text-muted-foreground">1 bloque = {selectedBlockDuration} min</span>
-                     </div>
-                     <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-[11px]"
-                        onClick={addSlot}
-                     >
-                        <Plus className="size-3.5 mr-1" />
-                        Agregar horario
-                     </Button>
-                  </div>
-
-                  <div className="space-y-2">
-                     {slots.map((slot) => (
-                        <div
-                           key={slot.id}
-                           className="grid grid-cols-[minmax(0,1fr)_120px_140px_36px] gap-2"
-                        >
-                           <Select
-                              value={String(slot.dayOfWeek)}
-                              onValueChange={(value) =>
-                                 updateSlot(slot.id, { dayOfWeek: Number(value) })
-                              }
-                           >
-                              <SelectTrigger className="h-9 text-xs">
-                                 <SelectValue placeholder="Dia" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                 {weekDays.map((day) => (
-                                    <SelectItem key={day.value} value={String(day.value)}>
-                                       {day.label}
-                                    </SelectItem>
-                                 ))}
-                              </SelectContent>
-                           </Select>
-
-                           <Input
-                              type="time"
-                              className="h-9 text-xs"
-                              value={slot.time}
-                              onChange={(event) =>
-                                 updateSlot(slot.id, { time: event.target.value })
-                              }
-                           />
-
-                           <div className="flex items-center justify-between gap-1 rounded-md border border-input px-2">
-                              <Button
-                                 type="button"
-                                 variant="ghost"
-                                 size="icon"
-                                 className="size-7"
-                                 onClick={() => adjustBlockCount(slot.id, -1)}
-                              >
-                                 <Minus className="size-3.5" />
-                              </Button>
-                              <span className="text-xs font-medium">
-                                 {slot.blockCount} bloque{slot.blockCount > 1 ? "s" : ""} de {selectedBlockDuration} min
-                              </span>
-                              <Button
-                                 type="button"
-                                 variant="ghost"
-                                 size="icon"
-                                 className="size-7"
-                                 onClick={() => adjustBlockCount(slot.id, 1)}
-                              >
-                                 <Plus className="size-3.5" />
-                              </Button>
-                           </div>
-
-                           <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="size-9"
-                              onClick={() => setPendingDeleteSlotId(slot.id)}
-                              disabled={slots.length === 1}
-                           >
-                              <Trash2 className="size-4 text-muted-foreground" />
-                           </Button>
-                        </div>
-                     ))}
-                  </div>
-               </div>
+               <ClassScheduleSlotsSection
+                  selectedBlockDuration={selectedBlockDuration}
+                  slots={slots}
+                  onAddSlot={addSlot}
+                  onUpdateSlot={updateSlot}
+                  onAdjustBlockCount={adjustBlockCount}
+                  onRequestDeleteSlot={setPendingDeleteSlotId}
+               />
 
                <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-2">
                   <p className="text-[11px] text-muted-foreground">
@@ -454,6 +326,10 @@ export function ClassScheduleModal({
       </>
    );
 }
+
+
+
+
 
 
 
