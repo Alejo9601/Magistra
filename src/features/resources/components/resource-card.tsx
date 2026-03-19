@@ -2,10 +2,10 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getSubjectById, getInstitutionById } from "@/lib/edu-repository";
-import { fileTypeIcons } from "@/features/resources/constants";
+import { fileTypeIcons } from "@/features/resources/utils";
 import type { ContentItem } from "@/types";
 
-export function ContentCard({ item }: { item: ContentItem }) {
+export function ResourceCard({ item }: { item: ContentItem }) {
    const IconComp = fileTypeIcons[item.fileType] || FileText;
    const subject = getSubjectById(item.subjectId);
    const inst = getInstitutionById(item.institutionId);
@@ -49,5 +49,6 @@ export function ContentCard({ item }: { item: ContentItem }) {
       </Card>
    );
 }
+
 
 

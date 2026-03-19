@@ -1,3 +1,4 @@
-﻿export { ResourcesContent } from "@/features/resources/resources-content";
+﻿export { ResourcesContent } from "@/features/resources/pages";
+
 
 
