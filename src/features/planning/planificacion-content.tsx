@@ -24,10 +24,8 @@ import { usePlanningContext } from "@/features/planning";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ClassEditorModal } from "@/features/planning/class-editor-modal";
-import { ClassScheduleModal } from "@/features/planning/class-schedule-modal";
-import { DayClassesDialog } from "@/features/planning/components/day-classes-dialog";
 import { PlanificacionToolbar } from "@/features/planning/components/planificacion-toolbar";
+import { PlanningModals } from "@/features/planning/components/planning-modals";
 import { MonthlyClassesCollapsibleTable } from "@/components/monthly-classes-collapsible-table";
 import {
    classTypeColors,
@@ -936,31 +934,27 @@ export function PlanificacionContent() {
             )}
          </div>
 
-         <ClassEditorModal
-            open={modalOpen}
-            onOpenChange={setModalOpen}
+         <PlanningModals
+            modalOpen={modalOpen}
+            setModalOpen={setModalOpen}
             activeInstitution={activeInstitution}
-            initialClass={editingClass}
-            initialDate={prefillDate}
-            onSubmit={onSave}
-         />
-
-         <ClassScheduleModal
-            open={scheduleModalOpen}
-            onOpenChange={setScheduleModalOpen}
-            activeInstitution={activeInstitution}
+            editingClass={editingClass}
+            prefillDate={prefillDate}
+            onSave={onSave}
+            scheduleModalOpen={scheduleModalOpen}
+            setScheduleModalOpen={setScheduleModalOpen}
             onSchedule={(payload) => createRecurringClasses(payload)}
-         />         <DayClassesDialog
             selectedDayDate={selectedDayDate}
             selectedDayClasses={selectedDayClasses}
-            onClose={() => setSelectedDayDate(null)}
-            onEditClass={openEditModalFromDayDetails}
-            onReplanClass={(id) => replanClass(id, { fromDayDetails: true })}
+            onCloseDayDetails={() => setSelectedDayDate(null)}
+            onEditFromDayDetails={openEditModalFromDayDetails}
+            onReplanFromDayDetails={(id) => replanClass(id, { fromDayDetails: true })}
             onDuplicate={onDuplicate}
          />
       </div>
    );
 }
+
 
 
 
