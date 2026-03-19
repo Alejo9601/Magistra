@@ -3,9 +3,6 @@ import { BookOpen, CalendarDays, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
    AlertDialog,
    AlertDialogAction,
@@ -17,21 +14,6 @@ import {
    AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-   Dialog,
-   DialogContent,
-   DialogDescription,
-   DialogFooter,
-   DialogHeader,
-   DialogTitle,
-} from "@/components/ui/dialog";
-import {
-   Select,
-   SelectContent,
-   SelectItem,
-   SelectTrigger,
-   SelectValue,
-} from "@/components/ui/select";
-import {
    createSubject,
    deleteSubject,
    getAssignmentIdBySubjectId,
@@ -40,24 +22,17 @@ import {
 } from "@/lib/edu-repository";
 import { usePlanningContext } from "@/features/planning";
 import { ClassScheduleModal } from "@/features/planning/class-schedule-modal";
+import {
+   blockDurationOptions,
+   periodFormatOptions,
+   SubjectCreateDialog,
+} from "@/features/settings/sections/subject-create-dialog";
 import { useClassroomContext } from "@/features/classroom";
 import { useStudentsContext } from "@/features/students";
 import { useAssessmentsContext } from "@/features/assessments";
 import { useActivitiesContext } from "@/features/activities";
 import { toast } from "sonner";
 
-const periodFormatOptions = [
-   { value: "trimestral", label: "Trimestral" },
-   { value: "cuatrimestral", label: "Cuatrimestral" },
-] as const;
-
-const blockDurationOptions = [
-   { value: 20, label: "20 min" },
-   { value: 30, label: "30 min" },
-   { value: 40, label: "40 min" },
-   { value: 50, label: "50 min" },
-   { value: 60, label: "60 min" },
-] as const;
 
 function periodFormatLabel(value: (typeof periodFormatOptions)[number]["value"]) {
    return periodFormatOptions.find((option) => option.value === value)?.label ?? "Trimestral";
@@ -239,133 +214,29 @@ export function SubjectsSection() {
             </CardContent>
          </Card>
 
-         <Dialog
+         <SubjectCreateDialog
             open={addOpen}
+            institutionId={institutionId}
+            subjectName={subjectName}
+            course={course}
+            periodFormat={periodFormat}
+            blockDurationMinutes={blockDurationMinutes}
+            copySectionStudents={copySectionStudents}
             onOpenChange={(open) => {
                setAddOpen(open);
                if (!open) {
                   resetForm();
                }
             }}
-         >
-            <DialogContent className="sm:max-w-[420px]">
-               <DialogHeader>
-                  <DialogTitle>Agregar materia</DialogTitle>
-                  <DialogDescription>
-                     Crea una nueva materia/curso para una institucion.
-                  </DialogDescription>
-               </DialogHeader>
-
-               <div className="flex flex-col gap-4 py-2">
-                  <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Institucion</Label>
-                     <Select value={institutionId} onValueChange={setInstitutionId}>
-                        <SelectTrigger className="h-9 text-xs">
-                           <SelectValue placeholder="Seleccionar..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                           {institutions.map((institution) => (
-                              <SelectItem key={institution.id} value={institution.id}>
-                                 {institution.name}
-                              </SelectItem>
-                           ))}
-                        </SelectContent>
-                     </Select>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Materia</Label>
-                     <Input
-                        className="h-9 text-xs"
-                        value={subjectName}
-                        onChange={(event) => setSubjectName(event.target.value)}
-                        placeholder="Ej: Matematica"
-                     />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Curso/Seccion</Label>
-                     <Input
-                        className="h-9 text-xs"
-                        value={course}
-                        onChange={(event) => setCourse(event.target.value)}
-                        placeholder="Ej: 1A"
-                     />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                     <div className="flex flex-col gap-1.5">
-                        <Label className="text-xs">Formato de periodo</Label>
-                        <Select
-                           value={periodFormat}
-                           onValueChange={(value) =>
-                              setPeriodFormat(value as (typeof periodFormatOptions)[number]["value"])
-                           }
-                        >
-                           <SelectTrigger className="h-9 text-xs">
-                              <SelectValue placeholder="Seleccionar..." />
-                           </SelectTrigger>
-                           <SelectContent>
-                              {periodFormatOptions.map((option) => (
-                                 <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                 </SelectItem>
-                              ))}
-                           </SelectContent>
-                        </Select>
-                     </div>
-
-                     <div className="flex flex-col gap-1.5">
-                        <Label className="text-xs">Duracion de bloque</Label>
-                        <Select
-                           value={String(blockDurationMinutes)}
-                           onValueChange={(value) =>
-                              setBlockDurationMinutes(
-                                 Number(value) as (typeof blockDurationOptions)[number]["value"],
-                              )
-                           }
-                        >
-                           <SelectTrigger className="h-9 text-xs">
-                              <SelectValue placeholder="Seleccionar..." />
-                           </SelectTrigger>
-                           <SelectContent>
-                              {blockDurationOptions.map((option) => (
-                                 <SelectItem key={option.value} value={String(option.value)}>
-                                    {option.label}
-                                 </SelectItem>
-                              ))}
-                           </SelectContent>
-                        </Select>
-                     </div>
-                  </div>
-
-                  <label className="flex items-start gap-2 cursor-pointer">
-                     <Checkbox
-                        checked={copySectionStudents}
-                        onCheckedChange={(checked) => setCopySectionStudents(Boolean(checked))}
-                        className="mt-0.5"
-                     />
-                     <span className="text-xs text-muted-foreground leading-relaxed">
-                        Incluir alumnos de otras materias con la misma seccion/division
-                        (misma institucion).
-                     </span>
-                  </label>
-               </div>
-
-               <DialogFooter>
-                  <Button
-                     variant="outline"
-                     size="sm"
-                     className="text-xs"
-                     onClick={() => setAddOpen(false)}
-                  >
-                     Cancelar
-                  </Button>
-                  <Button size="sm" className="text-xs" onClick={handleCreate}>
-                     Guardar
-                  </Button>
-               </DialogFooter>
-            </DialogContent>
-         </Dialog>
+            onInstitutionChange={setInstitutionId}
+            onSubjectNameChange={setSubjectName}
+            onCourseChange={setCourse}
+            onPeriodFormatChange={setPeriodFormat}
+            onBlockDurationChange={setBlockDurationMinutes}
+            onCopySectionStudentsChange={setCopySectionStudents}
+            onCancel={() => setAddOpen(false)}
+            onSubmit={handleCreate}
+         />
 
          <ClassScheduleModal
             open={scheduleOpen}
@@ -409,6 +280,9 @@ export function SubjectsSection() {
       </>
    );
 }
+
+
+
 
 
 
