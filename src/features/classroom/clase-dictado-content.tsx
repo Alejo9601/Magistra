@@ -1,10 +1,7 @@
 ﻿import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, Plus, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -21,6 +18,9 @@ import { useActivitiesContext } from "@/features/activities";
 import { useAssessmentsContext } from "@/features/assessments";
 import { AttendanceCard } from "@/features/classroom/attendance-card";
 import { classTypeLabels } from "@/features/classroom/constants";
+import { ClaseDictadoHeader } from "@/features/classroom/components/clase-dictado-header";
+import { ClaseDictadoSummaryCard } from "@/features/classroom/components/clase-dictado-summary-card";
+import { ClaseDictadoSubtopicsCard } from "@/features/classroom/components/clase-dictado-subtopics-card";
 import type { AttendanceStatus } from "@/features/classroom/types";
 import type { ClassroomPerformanceEntry, ClassroomPerformanceKind } from "@/types";
 
@@ -211,9 +211,6 @@ export function ClaseDictadoContent() {
          record.attendance[student.id] ?? ("P" as AttendanceStatus),
       ]),
    );
-   const completedSubtopicsCount = cls.subtopics.filter((subtopic) =>
-      record.completedSubtopics.includes(subtopic),
-   ).length;
    const isFinalized = cls.status === "finalizada";
    const showGradesSection = cls.type === "evaluacion" || cls.type === "practica" || cls.type === "teorico-practica";
    const classDateLabel = new Date(`${cls.date}T12:00:00`).toLocaleDateString("es-AR", {
@@ -405,171 +402,45 @@ export function ClaseDictadoContent() {
 
    return (
       <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:p-6">
-         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-            <div className="flex items-center gap-3">
-               <Button variant="ghost" size="icon" className="size-8" onClick={handleBack}>
-                  <ArrowLeft className="size-4" />
-               </Button>
-               <div className="space-y-1">
-                  {isFinalized ? (
-                     <Badge variant="secondary" className="w-fit border-0 bg-success/10 text-success">
-                        Finalizada
-                     </Badge>
-                  ) : null}
-                  <p className="text-base sm:text-lg font-semibold text-foreground tracking-tight">
-                     {subject.name}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-                     <Badge variant="secondary" className="border-0 bg-primary/10 text-primary">
-                        {classDateLabel}
-                     </Badge>
-                     <Badge variant="secondary" className="border-0 bg-muted text-foreground">
-                        {cls.time} hs
-                     </Badge>
-                     <span className="text-muted-foreground">{subject.course}</span>
-                  </div>
-               </div>
-            </div>
-            {isFinalized ? (
-               <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-xs"
-                  onClick={() => {
-                     updateClass(cls.id, {
-                        status: cls.topic.trim().length > 0 ? "planificada" : "sin-planificar",
-                     });
-                     toast.success("Clase reabierta. Ya puedes editar y volver a cerrarla.");
-                  }}
-               >
-                  Reabrir clase
-               </Button>
-            ) : (
-               <Button
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => {
-                     setAttendance(cls.id, attendanceWithDefaults);
-                     markClassAsTaught(cls.id);
-                     toast.success("Clase finalizada y asistencia registrada.");
-                  }}
-               >
-                  <CheckCircle2 className="size-3.5 mr-1.5" />
-                  Cerrar clase de hoy
-               </Button>
-            )}
-         </div>
+         <ClaseDictadoHeader
+            subjectName={subject.name}
+            classDateLabel={classDateLabel}
+            classTime={cls.time}
+            course={subject.course}
+            isFinalized={isFinalized}
+            onBack={handleBack}
+            onReopenClass={() => {
+               updateClass(cls.id, {
+                  status: cls.topic.trim().length > 0 ? "planificada" : "sin-planificar",
+               });
+               toast.success("Clase reabierta. Ya puedes editar y volver a cerrarla.");
+            }}
+            onCloseClass={() => {
+               setAttendance(cls.id, attendanceWithDefaults);
+               markClassAsTaught(cls.id);
+               toast.success("Clase finalizada y asistencia registrada.");
+            }}
+         />
 
          <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
             <div className="xl:col-span-3 space-y-6">
-               <Card>
-                  <CardHeader className="pb-3">
-                     <CardTitle className="text-sm font-semibold">
-                        Resumen de planificacion
-                     </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0 space-y-2">
-                     <p className="text-xs text-muted-foreground">
-                        <span className="font-semibold text-foreground">Eje principal:</span> {cls.topic}
-                     </p>
-                     <p className="text-xs text-muted-foreground">
-                        <span className="font-semibold text-foreground">Caracter:</span> {classTypeLabels[cls.type] ?? cls.type}
-                     </p>
-                     {(cls.type === "practica" || cls.type === "teorico-practica") && (
-                        <>
-                           <p className="text-xs text-muted-foreground">
-                              <span className="font-semibold text-foreground">Actividad:</span> {cls.practiceActivityName || "Sin nombre"}
-                           </p>
-                           <p className="text-xs text-muted-foreground">
-                              <span className="font-semibold text-foreground">Descripcion:</span> {cls.practiceActivityDescription || "Sin descripcion"}
-                           </p>
-                        </>
-                     )}
-                     {cls.type === "evaluacion" && (
-                        <>
-                           <p className="text-xs text-muted-foreground">
-                              <span className="font-semibold text-foreground">Evaluacion:</span> {cls.evaluationName || "Sin nombre"}
-                           </p>
-                           <p className="text-xs text-muted-foreground">
-                              <span className="font-semibold text-foreground">Tipo:</span> {cls.evaluativeFormat ? evaluativeFormatLabelMap[cls.evaluativeFormat] : "Sin tipo"}
-                           </p>
-                           <p className="text-xs text-muted-foreground">
-                              <span className="font-semibold text-foreground">Descripcion:</span> {cls.evaluationDescription || "Sin descripcion"}
-                           </p>
-                        </>
-                     )}
-                  </CardContent>
-               </Card>
+               <ClaseDictadoSummaryCard
+                  cls={cls}
+                  classTypeLabels={classTypeLabels}
+                  evaluativeFormatLabelMap={evaluativeFormatLabelMap}
+               />
 
-               <Card>
-                  <CardHeader className="pb-3">
-                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm font-semibold">
-                           Subtemas dictados
-                        </CardTitle>
-                        <div className="flex items-center gap-2">
-                           <Badge variant="secondary" className="text-[10px]">
-                              {completedSubtopicsCount}/{cls.subtopics.length}
-                           </Badge>
-                           <Button
-                              variant="outline"
-                              size="icon"
-                              className="size-7"
-                              onClick={() => setAddingSubtopic((prev) => !prev)}
-                              disabled={isFinalized}
-                              title="Agregar subtema"
-                           >
-                              {addingSubtopic ? (
-                                 <X className="size-3.5" />
-                              ) : (
-                                 <Plus className="size-3.5" />
-                              )}
-                           </Button>
-                        </div>
-                     </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                     {addingSubtopic && (
-                        <div className="mb-3 flex gap-2">
-                           <Input
-                              className="h-8 text-xs"
-                              placeholder="Nuevo subtema..."
-                              value={newSubtopic}
-                              onChange={(event) => setNewSubtopic(event.target.value)}
-                              disabled={isFinalized}
-                           />
-                           <Button size="sm" className="h-8 text-xs" onClick={handleAddSubtopic} disabled={isFinalized}>
-                              Agregar
-                           </Button>
-                        </div>
-                     )}
-                     {cls.subtopics.length === 0 ? (
-                        <p className="text-xs text-muted-foreground">
-                           Esta clase no tiene subtemas cargados.
-                        </p>
-                     ) : (
-                        <div className="space-y-2">
-                           {cls.subtopics.map((subtopic) => (
-                              <label
-                                 key={subtopic}
-                                 className="flex items-start gap-2.5 cursor-pointer"
-                              >
-                                 <Checkbox
-                                    checked={record.completedSubtopics.includes(subtopic)}
-                                    onCheckedChange={() =>
-                                       !isFinalized && toggleSubtopic(cls.id, subtopic)
-                                    }
-                                    disabled={isFinalized}
-                                 />
-                                 <span className="text-xs text-foreground">
-                                    {subtopic}
-                                 </span>
-                              </label>
-                           ))}
-                        </div>
-                     )}
-                  </CardContent>
-               </Card>
+               <ClaseDictadoSubtopicsCard
+                  subtopics={cls.subtopics}
+                  completedSubtopics={record.completedSubtopics}
+                  addingSubtopic={addingSubtopic}
+                  newSubtopic={newSubtopic}
+                  isFinalized={isFinalized}
+                  onToggleAdd={() => setAddingSubtopic((prev) => !prev)}
+                  onNewSubtopicChange={setNewSubtopic}
+                  onAddSubtopic={handleAddSubtopic}
+                  onToggleSubtopic={(subtopic) => toggleSubtopic(cls.id, subtopic)}
+               />
 
                {showGradesSection && (
                <Card>
@@ -749,6 +620,12 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
+
+
+
+
+
+
 
 
 
