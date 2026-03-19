@@ -1,1 +1,1 @@
-export { GruposContent } from "@/features/groups/grupos-content";
+﻿export { GruposContent } from "@/features/groups/pages";

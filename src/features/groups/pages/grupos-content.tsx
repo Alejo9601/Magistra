@@ -1,8 +1,8 @@
 ﻿import { useState } from "react";
 import { getAssignmentsByInstitution } from "@/lib/edu-repository";
 import { useInstitutionContext } from "@/features/institution";
-import { GroupsList } from "@/features/groups/containers/groups-list";
-import { GroupDetail } from "@/features/groups/group-detail";
+import { GroupsList } from "@/features/groups/containers";
+import { GroupDetail } from "@/features/groups/pages";
 
 export function GruposContent() {
    const { activeInstitution } = useInstitutionContext();
@@ -32,4 +32,6 @@ export function GruposContent() {
       />
    );
 }
+
+
 

@@ -1,9 +1,9 @@
-import {
+﻿import {
    getAssignmentsByInstitution,
    getInstitutionById,
    getSubjectById,
 } from "@/lib/edu-repository";
-import { GroupsListView } from "@/features/groups/components/groups-list-view";
+import { GroupsListView } from "@/features/groups/components";
 
 export function GroupsList({
    onSelect,
@@ -33,3 +33,4 @@ export function GroupsList({
 
    return <GroupsListView groups={groups} onSelect={onSelect} />;
 }
+
