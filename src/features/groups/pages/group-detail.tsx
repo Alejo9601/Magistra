@@ -1,10 +1,6 @@
 ﻿import { useMemo } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Plus, Search, BookOpen, Trash2, Eye } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -18,7 +14,7 @@ import {
    AlertDialogHeader,
    AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
    Dialog,
    DialogContent,
@@ -27,15 +23,6 @@ import {
    DialogHeader,
    DialogTitle,
 } from "@/components/ui/dialog";
-import {
-   Table,
-   TableBody,
-   TableCell,
-   TableHead,
-   TableHeader,
-   TableRow,
-} from "@/components/ui/table";
-import { MonthlyClassesCollapsibleTable } from "@/components/monthly-classes-collapsible-table";
 import {
    Select,
    SelectContent,
@@ -49,16 +36,13 @@ import {
    getInstitutionById,
    getSubjectById,
 } from "@/lib/edu-repository";
-import { StudentStatusBadge } from "@/features/groups/components/student-status-badge";
-import {
-   activityStatusBadgeClass,
-   activityStatusLabel,
-   activityTypeLabel,
-   assessmentTypeLabel,
-   evaluativeClassTypeLabel,
-   inferEvaluativeTypeFromTitle,
-} from "@/features/groups/utils";
 import type { GroupDetailProps } from "@/features/groups/types";
+import {
+   GroupDetailActivitiesTab,
+   GroupDetailAssessmentsTab,
+   GroupDetailPlanningTab,
+   GroupDetailStudentsTab,
+} from "@/features/groups/components";
 import { useGroupDetailActions } from "@/features/groups/hooks";
 import { useStudentsContext } from "@/features/students";
 import { useClassroomContext } from "@/features/classroom";
@@ -245,414 +229,44 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
                   Actividades
                </TabsTrigger>
                </TabsList>
-            </div>
+            </div>            <GroupDetailStudentsTab
+               assignmentId={assignmentId}
+               groupAttendanceAverage={groupAttendanceAverage}
+               atRiskCount={atRiskCount}
+               studentSearch={studentSearch}
+               onStudentSearchChange={setStudentSearch}
+               onAddStudent={() => setAddStudentOpen(true)}
+               filteredStudents={filteredStudents}
+               attendanceByStudent={attendanceByStudent}
+            />
 
-            <TabsContent value="alumnos">
-               <div className="mt-2 mb-3 flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary" className="text-[10px]">
-                     Asistencia promedio del grupo: {groupAttendanceAverage}%
-                  </Badge>
-                  <Badge variant="secondary" className="text-[10px]">
-                     En riesgo por asistencia: {atRiskCount}
-                  </Badge>
-               </div>
-               <div className="mb-4 mt-2 flex flex-wrap items-center gap-2 sm:justify-between">
-                  <div className="relative w-full max-w-xs flex-1">
-                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-                     <Input
-                        className="h-8 pl-8 text-xs"
-                        placeholder="Buscar alumno..."
-                        value={studentSearch}
-                        onChange={(event) => setStudentSearch(event.target.value)}
-                     />
-                  </div>
-                  <Button
-                     size="sm"
-                     className="w-full text-xs sm:w-auto"
-                     onClick={() => setAddStudentOpen(true)}
-                  >
-                     <Plus className="size-3.5 mr-1.5" />
-                     Agregar Alumno
-                  </Button>
-               </div>
-               <Card>
-                  <CardContent className="p-0">
-                     <Table className="min-w-[760px]">
-                        <TableHeader>
-                           <TableRow>
-                              <TableHead className="text-xs">Nombre</TableHead>
-                              <TableHead className="text-xs">
-                                 Asistencia %
-                              </TableHead>
-                              <TableHead className="text-xs">
-                                 Promedio
-                              </TableHead>
-                              <TableHead className="text-xs">Estado</TableHead>
-                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                           {filteredStudents.map((student) => {
-                              const studentAttendance =
-                                 attendanceByStudent.get(student.id) ??
-                                 student.attendance;
-                              return (
-                                 <TableRow
-                                    key={student.id}
-                                    className="hover:bg-muted/30 cursor-pointer"
-                                 >
-                                    <TableCell>
-                                    <Link
-                                       to={`/seguimiento/${student.id}?assignmentId=${assignmentId}`}
-                                       className="flex items-center gap-2.5"
-                                    >
-                                          <Avatar className="size-7">
-                                             <AvatarFallback className="bg-muted text-muted-foreground text-[10px] font-semibold">
-                                                {student.name[0]}
-                                                {student.lastName[0]}
-                                             </AvatarFallback>
-                                          </Avatar>
-                                          <span className="text-xs font-medium text-foreground">
-                                             {student.lastName}, {student.name}
-                                          </span>
-                                       </Link>
-                                    </TableCell>
-                                    <TableCell>
-                                       <div className="flex items-center gap-2">
-                                          <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
-                                             <div
-                                                className={`h-full rounded-full ${studentAttendance >= 80 ? "bg-success" : studentAttendance >= 65 ? "bg-warning" : "bg-destructive"}`}
-                                                style={{
-                                                   width: `${studentAttendance}%`,
-                                                }}
-                                             />
-                                          </div>
-                                          <span className="text-xs text-muted-foreground">
-                                             {studentAttendance}%
-                                          </span>
-                                       </div>
-                                    </TableCell>
-                                    <TableCell className="text-xs font-medium">
-                                       {student.average.toFixed(1)}
-                                    </TableCell>
-                                    <TableCell>
-                                       <StudentStatusBadge status={student.status} />
-                                    </TableCell>
-                                 </TableRow>
-                              );
-                           })}
-                           {filteredStudents.length === 0 && (
-                              <TableRow>
-                                 <TableCell
-                                    colSpan={4}
-                                    className="text-center py-8"
-                                 >
-                                    <p className="text-xs text-muted-foreground">
-                                       No se encontraron alumnos para esa busqueda
-                                    </p>
-                                 </TableCell>
-                              </TableRow>
-                           )}
-                        </TableBody>
-                     </Table>
-                  </CardContent>
-               </Card>
-            </TabsContent>
+            <GroupDetailPlanningTab groupClasses={groupClasses} />
 
-            <TabsContent value="planificacion">
-               <MonthlyClassesCollapsibleTable
-                  classes={groupClasses}
-                  emptyMessage="No hay clases planificadas para este grupo."
-                  tableClassName="min-w-[560px]"
-                  columns={[
-                     { label: "Fecha", className: "text-xs" },
-                     { label: "Tema", className: "text-xs" },
-                     { label: "Tipo", className: "text-xs" },
-                     { label: "Estado", className: "text-xs" },
-                  ]}
-                  renderCells={(cls) => {
-                     const dateObj = new Date(cls.date + "T12:00:00");
+            <GroupDetailAssessmentsTab
+               groupAssessments={groupAssessments}
+               groupClasses={groupClasses}
+               studentsCount={groupStudents.length}
+               onAddAssessment={() => setAddAssessmentOpen(true)}
+               onDeleteAssessment={(id, title) =>
+                  setPendingDelete({
+                     kind: "assessment",
+                     id,
+                     title,
+                  })
+               }
+            />
 
-                     return (
-                        <>
-                           <TableCell className="text-xs">
-                              {dateObj.toLocaleDateString("es-AR", {
-                                 day: "2-digit",
-                                 month: "short",
-                              })}{" "}
-                              {cls.time}
-                           </TableCell>
-                           <TableCell className="text-xs font-medium">
-                              {cls.topic}
-                           </TableCell>
-                           <TableCell>
-                              <Badge variant="secondary" className="text-[10px] capitalize">
-                                 {cls.type}
-                              </Badge>
-                           </TableCell>
-                           <TableCell>
-                              <Badge
-                                 className={`border-0 text-[10px] ${
-                                    cls.status === "planificada"
-                                       ? "bg-primary/10 text-primary"
-                                       : cls.status === "finalizada"
-                                         ? "bg-success/10 text-success"
-                                         : "bg-warning/10 text-warning-foreground"
-                                 }`}
-                              >
-                                 {cls.status === "planificada"
-                                    ? "Planificada"
-                                    : cls.status === "finalizada"
-                                      ? "Finalizada"
-                                      : "Sin planificar"}
-                              </Badge>
-                           </TableCell>
-                        </>
-                     );
-                  }}
-               />
-            </TabsContent>
-
-                        <TabsContent value="evaluaciones">
-               <div className="mt-2 mb-3 flex items-center justify-end">
-                  <Button
-                     size="sm"
-                     className="text-xs"
-                     onClick={() => setAddAssessmentOpen(true)}
-                  >
-                     <Plus className="size-3.5 mr-1.5" />
-                     Crear evaluacion o TP
-                  </Button>
-               </div>
-               <Card className="mt-2">
-                  <CardContent className="p-0">
-                     <Table className="min-w-[980px]">
-                        <TableHeader>
-                           <TableRow>
-                              <TableHead className="text-xs">Nombre de la evaluacion</TableHead>
-                              <TableHead className="text-xs">Fecha clase relacionada</TableHead>
-                              <TableHead className="text-xs">Tipo</TableHead>
-                              <TableHead className="text-xs">Estado</TableHead>
-                              <TableHead className="text-xs">Notas cargadas</TableHead>
-                              <TableHead className="text-xs text-right">Acciones</TableHead>
-                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                           {groupAssessments.map((assessment) => {
-                              const linkedClass = assessment.linkedClassId
-                                 ? groupClasses.find((classSession) => classSession.id === assessment.linkedClassId) ?? null
-                                 : null;
-                              const linkedClassDate = linkedClass
-                                 ? new Date(linkedClass.date + "T12:00:00").toLocaleDateString("es-AR", {
-                                      day: "2-digit",
-                                      month: "short",
-                                   })
-                                 : "Sin clase";
-                              const inferredAssessmentType = inferEvaluativeTypeFromTitle(assessment.title);
-                              const linkedClassType = linkedClass?.evaluativeFormat
-                                 ? evaluativeClassTypeLabel[linkedClass.evaluativeFormat] ?? inferredAssessmentType ?? assessmentTypeLabel[assessment.type]
-                                 : inferredAssessmentType ?? assessmentTypeLabel[assessment.type];
-                              const derivedStatus = linkedClass
-                                 ? linkedClass.status === "finalizada"
-                                    ? "Finalizado"
-                                    : "Pendiente"
-                                 : assessment.status === "graded"
-                                    ? "Finalizado"
-                                    : "Pendiente";
-                              const derivedStatusClass =
-                                 derivedStatus === "Finalizado"
-                                    ? "bg-success/10 text-success"
-                                    : "bg-warning/10 text-warning-foreground";
-                              return (
-                                 <TableRow key={assessment.id} className="hover:bg-muted/30">
-                                    <TableCell className="text-xs font-medium">
-                                       {assessment.title}
-                                    </TableCell>
-                                    <TableCell className="text-xs text-muted-foreground">
-                                       {linkedClassDate}
-                                    </TableCell>
-                                    <TableCell>
-                                       <Badge variant="secondary" className="text-[10px] capitalize">
-                                          {linkedClassType}
-                                       </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                       <Badge
-                                          className={`border-0 text-[10px] ${derivedStatusClass}`}
-                                       >
-                                          {derivedStatus}
-                                       </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                       <span className="text-xs text-muted-foreground">
-                                          {assessment.gradesLoaded} / {groupStudents.length}
-                                       </span>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                       <div className="inline-flex items-center gap-1">
-                                          {assessment.linkedClassId ? (
-                                             <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-7 px-2 text-xs"
-                                                asChild
-                                             >
-                                                <Link to={`/clase/${assessment.linkedClassId}/dictado`}>
-                                                   <Eye className="size-3.5 mr-1" />
-                                                   Ver notas
-                                                </Link>
-                                             </Button>
-                                          ) : null}
-                                          <Button
-                                             type="button"
-                                             variant="ghost"
-                                             size="icon"
-                                             className="size-7"
-                                             onClick={() =>
-                                                setPendingDelete({
-                                                   kind: "assessment",
-                                                   id: assessment.id,
-                                                   title: assessment.title,
-                                                })
-                                             }
-                                          >
-                                             <Trash2 className="size-3.5 text-muted-foreground" />
-                                          </Button>
-                                       </div>
-                                    </TableCell>
-                                 </TableRow>
-                              );
-                           })}
-                           {groupAssessments.length === 0 && (
-                              <TableRow>
-                                 <TableCell colSpan={7} className="text-center py-8">
-                                    <BookOpen className="size-8 text-muted-foreground/30 mx-auto mb-2" />
-                                    <p className="text-xs text-muted-foreground">
-                                       No hay evaluaciones registradas
-                                    </p>
-                                    <Button
-                                       variant="outline"
-                                       size="sm"
-                                       className="mt-3 text-xs"
-                                       onClick={() => setAddAssessmentOpen(true)}
-                                    >
-                                       <Plus className="size-3.5 mr-1.5" />
-                                       Crear evaluacion
-                                    </Button>
-                                 </TableCell>
-                              </TableRow>
-                           )}
-                        </TableBody>
-                     </Table>
-                  </CardContent>
-               </Card>
-            </TabsContent>
-
-            <TabsContent value="actividades">
-               <div className="mt-2 mb-3 flex items-center justify-end">
-                  <Button
-                     size="sm"
-                     className="text-xs"
-                     onClick={() => setAddActivityOpen(true)}
-                  >
-                     <Plus className="size-3.5 mr-1.5" />
-                     Crear actividad
-                  </Button>
-               </div>
-               <Card className="mt-2">
-                  <CardContent className="p-0">
-                     <Table className="min-w-[760px]">
-                        <TableHeader>
-                           <TableRow>
-                              <TableHead className="text-xs">Actividad</TableHead>
-                              <TableHead className="text-xs">Tipo</TableHead>
-                              <TableHead className="text-xs">Clase relacionada</TableHead>
-                              <TableHead className="text-xs">Estado</TableHead>
-                              <TableHead className="text-xs">
-                                 Clases vinculadas
-                              </TableHead>
-                              <TableHead className="text-xs text-right">
-                                 Acciones
-                              </TableHead>
-                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                           {groupActivities.map((activity) => (
-                              <TableRow key={activity.id} className="hover:bg-muted/30">
-                                 <TableCell className="text-xs font-medium">
-                                    <div>
-                                       <p>{activity.title}</p>
-                                       {activity.description && (
-                                          <p className="text-[11px] text-muted-foreground mt-1">
-                                             {activity.description}
-                                          </p>
-                                       )}
-                                    </div>
-                                 </TableCell>
-                                 <TableCell>
-                                    <Badge
-                                       variant="secondary"
-                                       className="text-[10px] capitalize"
-                                    >
-                                       {activityTypeLabel[activity.type]}
-                                    </Badge>
-                                 </TableCell>
-                                 <TableCell>
-                                    <Badge
-                                       className={`border-0 text-[10px] ${activityStatusBadgeClass[activity.status]}`}
-                                    >
-                                       {activityStatusLabel[activity.status]}
-                                    </Badge>
-                                 </TableCell>
-                                 <TableCell className="text-xs text-muted-foreground">
-                                    {activity.linkedClassIds.length}
-                                 </TableCell>
-                                 <TableCell className="text-right">
-                                    <Button
-                                       type="button"
-                                       variant="ghost"
-                                       size="icon"
-                                       className="size-7"
-                                       onClick={() =>
-                                          setPendingDelete({
-                                             kind: "activity",
-                                             id: activity.id,
-                                             title: activity.title,
-                                          })
-                                       }
-                                    >
-                                       <Trash2 className="size-3.5 text-muted-foreground" />
-                                    </Button>
-                                 </TableCell>
-                              </TableRow>
-                           ))}
-                           {groupActivities.length === 0 && (
-                              <TableRow>
-                                 <TableCell
-                                    colSpan={5}
-                                    className="text-center py-8"
-                                 >
-                                    <BookOpen className="size-8 text-muted-foreground/30 mx-auto mb-2" />
-                                    <p className="text-xs text-muted-foreground">
-                                       No hay actividades registradas
-                                    </p>
-                                    <Button
-                                       variant="outline"
-                                       size="sm"
-                                       className="mt-3 text-xs"
-                                       onClick={() => setAddActivityOpen(true)}
-                                    >
-                                       <Plus className="size-3.5 mr-1.5" />
-                                       Crear actividad
-                                    </Button>
-                                 </TableCell>
-                              </TableRow>
-                           )}
-                        </TableBody>
-                     </Table>
-                  </CardContent>
-               </Card>
-            </TabsContent>
+            <GroupDetailActivitiesTab
+               groupActivities={groupActivities}
+               onAddActivity={() => setAddActivityOpen(true)}
+               onDeleteActivity={(id, title) =>
+                  setPendingDelete({
+                     kind: "activity",
+                     id,
+                     title,
+                  })
+               }
+            />
          </Tabs>
 
          <AlertDialog
@@ -1014,6 +628,7 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
       </div>
    );
 }
+
 
 
 
