@@ -7,7 +7,7 @@ import {
    DEFAULT_THRESHOLDS,
    getThresholdsForInstitution,
    type OperativeThresholds,
-} from "@/features/dashboard/constants";
+} from "@/features/dashboard/utils/constants";
 import { saveInstitutionOperativeThresholds } from "@/features/dashboard/services";
 import { useInstitutionContext } from "@/features/institution";
 import { getInstitutionById } from "@/lib/edu-repository";
@@ -249,4 +249,5 @@ export function OperativeThresholdsSection() {
       </Card>
    );
 }
+
 
