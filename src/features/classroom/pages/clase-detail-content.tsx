@@ -10,9 +10,9 @@ import { type AttendanceStatus } from "@/features/classroom/types";
 import {
    ClassDetailHeader,
    ClassInfoCard,
-} from "@/features/classroom/class-info-card";
-import { ClassNotesCard } from "@/features/classroom/class-notes-card";
-import { AttendanceCard } from "@/features/classroom/attendance-card";
+} from "@/features/classroom/components/class-info-card";
+import { ClassNotesCard } from "@/features/classroom/components/class-notes-card";
+import { AttendanceCard } from "@/features/classroom/components/attendance-card";
 import { Link, useParams } from "react-router-dom";
 import { useStudentsContext } from "@/features/students";
 import { Button } from "@/components/ui/button";
@@ -161,6 +161,7 @@ export function ClaseDetailContent() {
       </div>
    );
 }
+
 
 
 

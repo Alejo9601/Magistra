@@ -1,3 +1,5 @@
-export { ClaseDetailContent } from "@/features/classroom/clase-detail-content";
-export { ClaseDictadoContent } from "@/features/classroom/clase-dictado-content";
+﻿export { ClaseDetailContent, ClaseDictadoContent } from "@/features/classroom/pages";
+
 export { ClassroomProvider, useClassroomContext } from "@/features/classroom/context";
+
+

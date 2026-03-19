@@ -14,8 +14,8 @@ import { useStudentsContext } from "@/features/students";
 import { useClassroomContext } from "@/features/classroom";
 import { useActivitiesContext } from "@/features/activities";
 import { useAssessmentsContext } from "@/features/assessments";
-import { AttendanceCard } from "@/features/classroom/attendance-card";
-import { classTypeLabels } from "@/features/classroom/constants";
+import { AttendanceCard } from "@/features/classroom/components/attendance-card";
+import { classTypeLabels } from "@/features/classroom/utils/classroom-constants";
 import { ClaseDictadoHeader } from "@/features/classroom/components/clase-dictado-header";
 import { ClaseDictadoSummaryCard } from "@/features/classroom/components/clase-dictado-summary-card";
 import { ClaseDictadoSubtopicsCard } from "@/features/classroom/components/clase-dictado-subtopics-card";
@@ -204,3 +204,4 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
+
