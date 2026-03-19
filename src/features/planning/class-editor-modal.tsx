@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
    Select,
    SelectContent,
@@ -88,6 +89,19 @@ function createEmptyBlock(order: number): ClassBlock {
    };
 }
 
+function cloneBlockContent(source: ClassBlock, order: number): ClassBlock {
+   return {
+      order,
+      topic: source.topic,
+      subtopics: [...source.subtopics],
+      type: source.type,
+      evaluativeFormat: source.evaluativeFormat,
+      practiceActivityName: source.practiceActivityName,
+      practiceActivityDescription: source.practiceActivityDescription,
+      evaluationName: source.evaluationName,
+      evaluationDescription: source.evaluationDescription,
+   };
+}
 function normalizeBlockDuration(value: number | undefined) {
    if (!value || Number.isNaN(value) || value <= 0) {
       return 40;
@@ -123,6 +137,7 @@ export function ClassEditorModal({
    const [time, setTime] = useState("08:00");
    const [blockDurationMinutes, setBlockDurationMinutes] = useState(40);
       const [blocks, setBlocks] = useState<ClassBlock[]>([createEmptyBlock(1)]);
+   const [planBlocksSeparately, setPlanBlocksSeparately] = useState(false);
    const [resourcesText, setResourcesText] = useState("");
 
    const availableAssignments = getAssignmentsByInstitution(institutionId);
@@ -139,14 +154,17 @@ export function ClassEditorModal({
 
    const updateBlock = (order: number, updates: Partial<ClassBlock>) => {
       setBlocks((prev) =>
-         prev.map((block) =>
-            block.order === order
-               ? {
-                    ...block,
-                    ...updates,
-                 }
-               : block,
-         ),
+         prev.map((block) => {
+            const shouldUpdate = !planBlocksSeparately || block.order === order;
+            if (!shouldUpdate) {
+               return block;
+            }
+            return {
+               ...block,
+               ...updates,
+               order: block.order,
+            };
+         }),
       );
    };
 
@@ -219,6 +237,7 @@ export function ClassEditorModal({
             ? sourceBlocks.map((block, index) => ({ ...block, order: index + 1 }))
             : [createEmptyBlock(1)],
       );
+      setPlanBlocksSeparately(false);
 
       setDate(initialClass?.date ?? initialDate ?? "");
       setTime(initialClass?.time ?? "08:00");
@@ -407,7 +426,7 @@ export function ClassEditorModal({
                </div>
             </div>
 
-            <div className="rounded-lg border border-border/70 p-3 space-y-3">
+            <div className="space-y-3">
                <div>
                   <p className="text-xs font-semibold text-foreground">Bloques de clase</p>
                   <p className="text-[11px] text-muted-foreground">
@@ -415,10 +434,41 @@ export function ClassEditorModal({
                   </p>
                </div>
 
+               <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Checkbox
+                     checked={planBlocksSeparately}
+                     onCheckedChange={(checked) => {
+                        const enabled = checked === true;
+                        setPlanBlocksSeparately(enabled);
+                        if (!enabled) {
+                           setBlocks((prev) => {
+                              if (prev.length <= 1) {
+                                 return prev;
+                              }
+                              const base = prev[0] ?? createEmptyBlock(1);
+                              return prev.map((_, index) => cloneBlockContent(base, index + 1));
+                           });
+                        }
+                     }}
+                  />
+                  <span>Planificar bloques por separado</span>
+               </label>
+
                <div className="space-y-3">
-                  {blocks.map((block) => (
-                     <div key={block.order} className="rounded-md border border-border/60 p-3 space-y-2">
-                        <p className="text-xs font-semibold text-foreground">Bloque {block.order}</p>
+                  {(planBlocksSeparately ? blocks : blocks.slice(0, 1)).map((block) => (
+                     <div
+                        key={block.order}
+                        className={
+                           planBlocksSeparately
+                              ? "rounded-md border border-border/50 p-3 space-y-2"
+                              : "space-y-2"
+                        }
+                     >
+                        <p className="text-xs font-semibold text-foreground">
+                           {planBlocksSeparately
+                              ? `Bloque ${block.order}`
+                              : "Planificacion de la clase"}
+                        </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                            <div className="flex flex-col gap-1.5 sm:col-span-2">
                               <Label className="text-xs">Eje principal / Tema principal</Label>
@@ -611,6 +661,15 @@ export function ClassEditorModal({
       </Dialog>
    );
 }
+
+
+
+
+
+
+
+
+
 
 
 
