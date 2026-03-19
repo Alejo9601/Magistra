@@ -1,15 +1,11 @@
 ﻿import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import {
    Dialog,
    DialogContent,
    DialogDescription,
-   DialogFooter,
    DialogHeader,
    DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
    getAssignmentById,
    getAssignmentIdBySubjectId,
@@ -20,9 +16,9 @@ import {
 import { resolveAssignmentIdForInstitution } from "@/features/planning/institution-context-guards";
 import type { ClassFormInput } from "@/features/planning/types";
 import { ClassMetaFields } from "@/features/planning/components/class-meta-fields";
-import { ClassPlanningBlockEditor } from "@/features/planning/components/class-planning-block-editor";
-import { BlockPlanningHeader } from "@/features/planning/components/block-planning-header";
-import { PlanningModeToggle } from "@/features/planning/components/planning-mode-toggle";
+import { ClassEditorFooterActions } from "@/features/planning/components/class-editor-footer-actions";
+import { ClassEditorPlanningSection } from "@/features/planning/components/class-editor-planning-section";
+import { ClassEditorResourcesField } from "@/features/planning/components/class-editor-resources-field";
 import {
    classCharacterOptions,
    cloneBlockContent,
@@ -243,63 +239,32 @@ export function ClassEditorModal({
                onTimeChange={setTime}
             />
 
-            <div className="space-y-3">
-               <BlockPlanningHeader blockDurationMinutes={blockDurationMinutes} />
-               <PlanningModeToggle
-                  planBlocksSeparately={planBlocksSeparately}
-                  onChange={handlePlanModeChange}
-               />
+            <ClassEditorPlanningSection
+               blockDurationMinutes={blockDurationMinutes}
+               planBlocksSeparately={planBlocksSeparately}
+               blocks={blocks}
+               classCharacterOptions={classCharacterOptions}
+               evaluativeFormatOptions={evaluativeFormatOptions}
+               onPlanModeChange={handlePlanModeChange}
+               onUpdateBlock={updateBlock}
+            />
 
-               <div className="space-y-3">
-                  {(planBlocksSeparately ? blocks : blocks.slice(0, 1)).map((block) => (
-                     <ClassPlanningBlockEditor
-                        key={block.order}
-                        block={block}
-                        planBlocksSeparately={planBlocksSeparately}
-                        classCharacterOptions={classCharacterOptions}
-                        evaluativeFormatOptions={evaluativeFormatOptions}
-                        onUpdateBlock={updateBlock}
-                     />
-                  ))}
-               </div>
-            </div>
+            <ClassEditorResourcesField
+               value={resourcesText}
+               onChange={setResourcesText}
+            />
 
-            <div className="flex flex-col gap-4 pb-2">
-               <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs">Recursos (coma separada)</Label>
-                  <Input
-                     className="h-9 text-xs"
-                     value={resourcesText}
-                     onChange={(event) => setResourcesText(event.target.value)}
-                  />
-               </div>
-            </div>
-
-            <DialogFooter className="gap-2">
-               <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => onOpenChange(false)}
-               >
-                  Cancelar
-               </Button>
-               <Button
-                  variant="secondary"
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => submit("draft")}
-               >
-                  Guardar borrador
-               </Button>
-               <Button size="sm" className="text-xs" onClick={() => submit("publish")}>
-                  Guardar y publicar
-               </Button>
-            </DialogFooter>
+            <ClassEditorFooterActions
+               onClose={() => onOpenChange(false)}
+               onSaveDraft={() => submit("draft")}
+               onPublish={() => submit("publish")}
+            />
          </DialogContent>
       </Dialog>
    );
 }
+
+
 
 
 
