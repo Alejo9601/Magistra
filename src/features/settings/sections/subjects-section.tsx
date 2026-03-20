@@ -1,5 +1,5 @@
 ﻿import { useState } from "react";
-import { BookOpen, CalendarDays, Plus, Trash2 } from "lucide-react";
+import { BookOpen, CalendarDays, Plus, SlidersHorizontal, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import {
    getAssignmentIdBySubjectId,
    institutions,
    subjects,
+   updateSubjectGradingScheme,
 } from "@/lib/edu-repository";
 import { usePlanningContext } from "@/features/planning";
 import { ClassScheduleModal } from "@/features/planning/components/class-schedule-modal";
@@ -27,12 +28,13 @@ import {
    periodFormatOptions,
    SubjectCreateDialog,
 } from "@/features/settings/sections/subject-create-dialog";
+import { SubjectGradingDialog } from "@/features/settings/sections/subject-grading-dialog";
 import { useClassroomContext } from "@/features/classroom";
 import { useStudentsContext } from "@/features/students";
 import { useAssessmentsContext } from "@/features/assessments";
 import { useActivitiesContext } from "@/features/activities";
 import { toast } from "sonner";
-
+import type { SubjectGradingScheme } from "@/types";
 
 function periodFormatLabel(value: (typeof periodFormatOptions)[number]["value"]) {
    return periodFormatOptions.find((option) => option.value === value)?.label ?? "Trimestral";
@@ -55,14 +57,18 @@ export function SubjectsSection() {
    const [scheduleOpen, setScheduleOpen] = useState(false);
    const [scheduleInstitutionId, setScheduleInstitutionId] = useState("");
    const [scheduleAssignmentId, setScheduleAssignmentId] = useState("");
-   const [pendingDeleteSubjectId, setPendingDeleteSubjectId] = useState<
-      string | null
-   >(null);
+   const [pendingDeleteSubjectId, setPendingDeleteSubjectId] = useState<string | null>(null);
+   const [gradingSubjectId, setGradingSubjectId] = useState<string | null>(null);
 
    const groupedSubjects = institutions.map((inst) => ({
       institution: inst,
       subjects: subjects.filter((s) => s.institutionId === inst.id),
    }));
+
+   const gradingSubject =
+      gradingSubjectId !== null
+         ? subjects.find((subject) => subject.id === gradingSubjectId) ?? null
+         : null;
 
    const resetForm = () => {
       setInstitutionId(institutions[0]?.id ?? "");
@@ -121,10 +127,23 @@ export function SubjectsSection() {
       toast.success("Materia eliminada con sus datos relacionados.");
    };
 
-   const openSchedule = (subjectId: string, institutionId: string) => {
-      setScheduleInstitutionId(institutionId);
+   const openSchedule = (subjectId: string, nextInstitutionId: string) => {
+      setScheduleInstitutionId(nextInstitutionId);
       setScheduleAssignmentId(getAssignmentIdBySubjectId(subjectId));
       setScheduleOpen(true);
+   };
+
+   const handleSaveSubjectGrading = (
+      subjectId: string,
+      gradingScheme: SubjectGradingScheme,
+   ) => {
+      const updated = updateSubjectGradingScheme(subjectId, gradingScheme);
+      if (!updated) {
+         toast.error("No se pudo actualizar la configuración de calificación.");
+         return;
+      }
+      toast.success("Configuración de calificación actualizada.");
+      setGradingSubjectId(null);
    };
 
    return (
@@ -181,9 +200,16 @@ export function SubjectsSection() {
                                     variant="ghost"
                                     size="icon"
                                     className="size-7"
-                                    onClick={() =>
-                                       openSchedule(sub.id, institution.id)
-                                    }
+                                    onClick={() => setGradingSubjectId(sub.id)}
+                                    title="Configurar calificación"
+                                 >
+                                    <SlidersHorizontal className="size-3.5 text-muted-foreground" />
+                                 </Button>
+                                 <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-7"
+                                    onClick={() => openSchedule(sub.id, institution.id)}
                                     title="Configurar cursada"
                                  >
                                     <CalendarDays className="size-3.5 text-primary" />
@@ -247,6 +273,17 @@ export function SubjectsSection() {
             onSchedule={(payload) => createRecurringClasses(payload)}
          />
 
+         <SubjectGradingDialog
+            open={Boolean(gradingSubject)}
+            subject={gradingSubject}
+            onOpenChange={(open) => {
+               if (!open) {
+                  setGradingSubjectId(null);
+               }
+            }}
+            onSave={handleSaveSubjectGrading}
+         />
+
          <AlertDialog
             open={Boolean(pendingDeleteSubjectId)}
             onOpenChange={(open) => {
@@ -280,11 +317,3 @@ export function SubjectsSection() {
       </>
    );
 }
-
-
-
-
-
-
-
-

@@ -1,6 +1,10 @@
 ﻿import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
 import { defaultEduData } from "@/data/default-edu-data";
 import { storageKeys } from "@/services/app-data-bootstrap-service";
+import {
+   createDefaultSubjectGradingScheme,
+   normalizeSubjectGradingScheme,
+} from "@/lib/grading-schemes";
 import type {
    AttendanceRecord,
    ClassSession,
@@ -114,6 +118,7 @@ function sanitizeSubject(raw: unknown): Subject | null {
          typeof input.blockDurationMinutes === "number" && input.blockDurationMinutes > 0
             ? Math.round(input.blockDurationMinutes)
             : 40,
+      gradingScheme: normalizeSubjectGradingScheme(input.gradingScheme),
       studentCount: input.studentCount,
       planProgress: input.planProgress,
    };
@@ -256,6 +261,7 @@ export function createSubject(input: {
    course: string;
    periodFormat: Subject["periodFormat"];
    blockDurationMinutes?: number;
+   gradingScheme?: Subject["gradingScheme"];
 }) {
    const next: Subject = {
       id: `sub-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
@@ -267,6 +273,9 @@ export function createSubject(input: {
          typeof input.blockDurationMinutes === "number" && input.blockDurationMinutes > 0
             ? Math.round(input.blockDurationMinutes)
             : 40,
+      gradingScheme: normalizeSubjectGradingScheme(
+         input.gradingScheme ?? createDefaultSubjectGradingScheme(),
+      ),
       studentCount: 0,
       planProgress: 0,
    };
@@ -327,6 +336,29 @@ export function deleteInstitution(institutionId: string) {
    persistInstitutions();
    persistSubjects();
    persistContentItems();
+   return true;
+}
+
+export function updateSubjectGradingScheme(subjectId: string, gradingScheme: Subject["gradingScheme"]) {
+   const subjectIndex = subjects.findIndex((subject) => subject.id === subjectId);
+   if (subjectIndex < 0) {
+      return false;
+   }
+
+   const normalizedGradingScheme = normalizeSubjectGradingScheme(
+      gradingScheme ?? createDefaultSubjectGradingScheme(),
+   );
+
+   subjects = subjects.map((subject) =>
+      subject.id === subjectId
+         ? {
+              ...subject,
+              gradingScheme: normalizedGradingScheme,
+           }
+         : subject,
+   );
+
+   persistSubjects();
    return true;
 }
 
@@ -433,4 +465,12 @@ export function getInstitutionRepository(institutionId: string) {
 }
 
 export type InstitutionRepository = ReturnType<typeof getInstitutionRepository>;
+
+
+
+
+
+
+
+
 

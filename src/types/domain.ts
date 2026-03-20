@@ -1,4 +1,4 @@
-export type Institution = {
+﻿export type Institution = {
    id: string;
    name: string;
    address: string;
@@ -13,11 +13,55 @@ export type Subject = {
    course: string;
    periodFormat: AcademicPeriodFormat;
    blockDurationMinutes?: number;
+   gradingScheme?: SubjectGradingScheme;
    studentCount: number;
    planProgress: number;
 };
 
 export type AcademicPeriodFormat = "trimestral" | "cuatrimestral";
+export type GradeScale = "numeric-10" | "numeric-100";
+export type GradeRounding = "none" | "nearest" | "up";
+
+export type SubjectGradingWeights = {
+   exams: number;
+   practice: number;
+   activities: number;
+   participation: number;
+};
+
+export type SubjectRubricTargetType =
+   | "evaluacion"
+   | "practica"
+   | "teorico-practica";
+
+export type SubjectRubricEvaluativeFormat =
+   | "cualquiera"
+   | "oral"
+   | "escrito"
+   | "actividad-practica"
+   | "otro";
+
+export type SubjectRubricCriterion = {
+   id: string;
+   name: string;
+   weight: number;
+};
+
+export type SubjectRubric = {
+   id: string;
+   name: string;
+   targetType: SubjectRubricTargetType;
+   evaluativeFormat: SubjectRubricEvaluativeFormat;
+   criteria: SubjectRubricCriterion[];
+};
+
+export type SubjectGradingScheme = {
+   scale: GradeScale;
+   passingScore: number;
+   rounding: GradeRounding;
+   weights: SubjectGradingWeights;
+   rubrics: SubjectRubric[];
+};
 
 export type TeachingAssignment = {
    id: string;
@@ -211,4 +255,6 @@ export type ClassroomRecord = {
    notes?: string;
    performanceEntries: ClassroomPerformanceEntry[];
 };
+
+
 

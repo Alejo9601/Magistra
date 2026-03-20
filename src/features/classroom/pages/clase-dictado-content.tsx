@@ -61,6 +61,7 @@ export function ClaseDictadoContent() {
 
    const performance = useClasePerformance({
       cls,
+      subject,
       classStudents,
       subjectActivities,
       subjectAssessments,
@@ -163,6 +164,15 @@ export function ClaseDictadoContent() {
                      performanceNote={performance.performanceNote}
                      editingPerformanceKey={performance.editingPerformanceKey}
                      performanceEntries={performanceEntries}
+                     availableRubrics={performance.availableRubrics}
+                     useRubricMode={performance.useRubricMode}
+                     selectedRubricId={performance.selectedRubricId}
+                     rubricCriterionSelections={performance.rubricCriterionSelections}
+                     rubricComputedScore={performance.rubricComputedScore}
+                     onUseRubricModeChange={performance.setUseRubricMode}
+                     onSelectedRubricChange={performance.setSelectedRubricId}
+                     onRubricCriterionChange={performance.setRubricCriterionSelection}
+                     onApplyRubricScore={performance.applyRubricScore}
                      onPerformanceStudentChange={performance.setPerformanceStudentId}
                      onPerformanceReferenceChange={performance.setPerformanceReferenceLabel}
                      onPerformanceScoreChange={performance.setPerformanceScore}
@@ -204,4 +214,7 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
+
+
+
 

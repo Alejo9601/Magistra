@@ -6,17 +6,24 @@ import {
    parseActivityChecklist,
    performanceEntryKey,
 } from "@/features/classroom/utils";
+import {
+   mapPercentToScale,
+   normalizeSubjectGradingScheme,
+   rubricLevelPresets,
+} from "@/lib/grading-schemes";
 import type {
    Assessment,
    ClassSession,
    ClassroomPerformanceEntry,
    ClassroomPerformanceKind,
    Student,
+   Subject,
    SubjectActivity,
 } from "@/types";
 
 type UseClasePerformanceParams = {
    cls: ClassSession;
+   subject: Subject;
    classStudents: Student[];
    subjectActivities: SubjectActivity[];
    subjectAssessments: Assessment[];
@@ -27,6 +34,7 @@ type UseClasePerformanceParams = {
 
 export function useClasePerformance({
    cls,
+   subject,
    classStudents,
    subjectActivities,
    subjectAssessments,
@@ -41,6 +49,16 @@ export function useClasePerformance({
    const [performanceNote, setPerformanceNote] = useState("");
    const [performanceReferenceLabel, setPerformanceReferenceLabel] = useState("");
    const [editingPerformanceKey, setEditingPerformanceKey] = useState<string | null>(null);
+   const [selectedRubricId, setSelectedRubricId] = useState("");
+   const [useRubricMode, setUseRubricMode] = useState(false);
+   const [rubricCriterionSelections, setRubricCriterionSelections] = useState<
+      Record<string, string>
+   >({});
+
+   const gradingScheme = useMemo(
+      () => normalizeSubjectGradingScheme(subject.gradingScheme),
+      [subject.gradingScheme],
+   );
 
    const linkedActivityTitles = useMemo(
       () =>
@@ -100,11 +118,90 @@ export function useClasePerformance({
 
    const defaultPerformanceKind: ClassroomPerformanceKind =
       cls.type === "evaluacion"
-         ? cls.evaluativeFormat === "actividad-practica" ||
-           cls.evaluativeFormat === "trabajo-practico-evaluativo"
+         ? cls.evaluativeFormat === "actividad-practica"
             ? "practice_work"
             : "exam"
-         : "activity";
+         : cls.type === "practica" || cls.type === "teorico-practica"
+            ? "practice_work"
+            : "activity";
+
+   const compatibleRubrics = useMemo(
+      () =>
+         gradingScheme.rubrics.filter((rubric) => {
+            if (cls.type === "evaluacion") {
+               if (rubric.targetType !== "evaluacion") {
+                  return false;
+               }
+               return (
+                  rubric.evaluativeFormat === "cualquiera" ||
+                  rubric.evaluativeFormat === (cls.evaluativeFormat ?? "otro")
+               );
+            }
+            if (cls.type === "practica") {
+               return rubric.targetType === "practica";
+            }
+            if (cls.type === "teorico-practica") {
+               return (
+                  rubric.targetType === "teorico-practica" || rubric.targetType === "practica"
+               );
+            }
+            return false;
+         }),
+      [cls.evaluativeFormat, cls.type, gradingScheme.rubrics],
+   );
+
+   const availableRubrics = useMemo(
+      () =>
+         compatibleRubrics.length > 0
+            ? compatibleRubrics
+            : gradingScheme.rubrics,
+      [compatibleRubrics, gradingScheme.rubrics],
+   );
+
+   const selectedRubric = useMemo(
+      () => availableRubrics.find((rubric) => rubric.id === selectedRubricId) ?? null,
+      [availableRubrics, selectedRubricId],
+   );
+
+   const rubricComputed = useMemo(() => {
+      if (!selectedRubric) {
+         return { score: null as number | null, summary: "" };
+      }
+
+      const totalWeight = selectedRubric.criteria.reduce(
+         (acc, criterion) => acc + criterion.weight,
+         0,
+      );
+      if (totalWeight <= 0) {
+         return { score: null as number | null, summary: "" };
+      }
+
+      let weightedPercent = 0;
+      const summaryParts: string[] = [];
+      for (const criterion of selectedRubric.criteria) {
+         const levelValue = rubricCriterionSelections[criterion.id];
+         if (!levelValue) {
+            return { score: null as number | null, summary: "" };
+         }
+         const level = rubricLevelPresets.find((entry) => entry.value === levelValue);
+         if (!level) {
+            return { score: null as number | null, summary: "" };
+         }
+         weightedPercent += (level.scorePercent * criterion.weight) / totalWeight;
+         summaryParts.push(`${criterion.name}: ${level.label}`);
+      }
+
+      const score = mapPercentToScale(
+         weightedPercent,
+         gradingScheme.scale,
+         gradingScheme.rounding,
+      );
+
+      return {
+         score,
+         summary: `${selectedRubric.name}: ${summaryParts.join(" | ")}`,
+      };
+   }, [gradingScheme.rounding, gradingScheme.scale, rubricCriterionSelections, selectedRubric]);
 
    useEffect(() => {
       if (!performanceStudentId && classStudents.length > 0) {
@@ -130,6 +227,33 @@ export function useClasePerformance({
       performanceReferenceLabel,
       performanceReferenceOptions,
    ]);
+
+   useEffect(() => {
+      if (availableRubrics.length === 0) {
+         setSelectedRubricId("");
+         setRubricCriterionSelections({});
+         setUseRubricMode(false);
+         return;
+      }
+      setUseRubricMode((prev) => prev || availableRubrics.length > 0);
+      if (!availableRubrics.some((rubric) => rubric.id === selectedRubricId)) {
+         setSelectedRubricId(availableRubrics[0].id);
+      }
+   }, [availableRubrics, selectedRubricId]);
+
+   useEffect(() => {
+      if (!selectedRubric) {
+         setRubricCriterionSelections({});
+         return;
+      }
+      setRubricCriterionSelections((prev) => {
+         const next: Record<string, string> = {};
+         for (const criterion of selectedRubric.criteria) {
+            next[criterion.id] = prev[criterion.id] ?? "";
+         }
+         return next;
+      });
+   }, [selectedRubric]);
 
    const syncAssessmentGradesLoaded = useCallback(
       (
@@ -209,6 +333,21 @@ export function useClasePerformance({
       setEditingPerformanceKey(null);
    }, [activityReferenceOptions, defaultPerformanceKind, examReferenceOptions]);
 
+   const applyRubricScore = useCallback(() => {
+      if (rubricComputed.score === null || !selectedRubric) {
+         toast.error("Completa los niveles de todos los criterios de la rúbrica.");
+         return;
+      }
+      setPerformanceScore(String(rubricComputed.score));
+      setPerformanceNote((prev) => {
+         if (!prev.trim()) {
+            return rubricComputed.summary;
+         }
+         return prev;
+      });
+      toast.success("Nota calculada desde la rúbrica.");
+   }, [rubricComputed.score, rubricComputed.summary, selectedRubric]);
+
    const handleSavePerformance = useCallback(() => {
       const studentId = performanceStudentId;
       const scoreText = performanceScore.trim();
@@ -216,7 +355,11 @@ export function useClasePerformance({
          toast.error("Selecciona un alumno.");
          return;
       }
-      if (!scoreText) {
+
+      const resolvedScoreText = useRubricMode
+         ? scoreText || (rubricComputed.score !== null ? String(rubricComputed.score) : "")
+         : scoreText;
+      if (!resolvedScoreText) {
          toast.error("Ingresa una nota o valor.");
          return;
       }
@@ -226,9 +369,15 @@ export function useClasePerformance({
       }
 
       const numericPattern = /^-?\d+([.,]\d+)?$/;
-      const normalizedScore: number | string = numericPattern.test(scoreText)
-         ? Number(scoreText.replace(",", "."))
-         : scoreText;
+      const normalizedScore: number | string = numericPattern.test(resolvedScoreText)
+         ? Number(resolvedScoreText.replace(",", "."))
+         : resolvedScoreText;
+
+      const resolvedNote = performanceNote.trim().length > 0
+         ? performanceNote.trim()
+         : useRubricMode
+            ? rubricComputed.summary || undefined
+            : undefined;
 
       const nextEntry: ClassroomPerformanceEntry = {
          studentId,
@@ -240,7 +389,7 @@ export function useClasePerformance({
                   ? normalizeExamReference(performanceReferenceLabel)
                   : performanceReferenceLabel.trim()
                : undefined,
-         note: performanceNote.trim().length > 0 ? performanceNote.trim() : undefined,
+         note: resolvedNote,
       };
 
       const nextEntries = [
@@ -264,7 +413,10 @@ export function useClasePerformance({
       performanceScore,
       performanceStudentId,
       resetPerformanceForm,
+      rubricComputed.score,
+      rubricComputed.summary,
       setPerformanceEntries,
+      useRubricMode,
       syncAssessmentGradesLoaded,
    ]);
 
@@ -326,5 +478,24 @@ export function useClasePerformance({
       handleEditPerformance,
       handleDeletePerformance,
       studentNameById,
+      availableRubrics,
+      useRubricMode,
+      setUseRubricMode,
+      selectedRubricId,
+      rubricCriterionSelections,
+      rubricComputedScore: rubricComputed.score,
+      setSelectedRubricId,
+      setRubricCriterionSelection: (criterionId: string, value: string) =>
+         setRubricCriterionSelections((prev) => ({ ...prev, [criterionId]: value })),
+      applyRubricScore,
    };
 }
+
+
+
+
+
+
+
+
+
