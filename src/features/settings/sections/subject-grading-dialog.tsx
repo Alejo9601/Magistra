@@ -81,7 +81,7 @@ export function SubjectGradingDialog({
       setDraft((prev) => ({
          ...prev,
          rubrics: prev.rubrics.map((rubric) =>
-            rubric.id === rubricId ? normalizeRubric({ ...rubric, ...patch }) : rubric,
+            rubric.id === rubricId ? { ...rubric, ...patch } : rubric,
          ),
       }));
    };
@@ -432,3 +432,4 @@ export function SubjectGradingDialog({
       </Dialog>
    );
 }
+
