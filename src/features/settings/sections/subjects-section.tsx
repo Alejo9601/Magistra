@@ -27,8 +27,8 @@ import {
    blockDurationOptions,
    periodFormatOptions,
    SubjectCreateDialog,
-} from "@/features/settings/sections/subject-create-dialog";
-import { SubjectGradingDialog } from "@/features/settings/sections/subject-grading-dialog";
+} from "@/features/settings/components/subject-create-dialog";
+import { SubjectGradingDialog } from "@/features/settings/components/subject-grading-dialog";
 import { useClassroomContext } from "@/features/classroom";
 import { useStudentsContext } from "@/features/students";
 import { useAssessmentsContext } from "@/features/assessments";
@@ -317,3 +317,4 @@ export function SubjectsSection() {
       </>
    );
 }
+
