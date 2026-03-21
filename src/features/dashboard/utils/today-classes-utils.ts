@@ -23,7 +23,7 @@ export function formatAgendaState(classDateMs: number, nowMs: number, status: st
       return "Finalizada";
    }
    if (classDateMs <= nowMs) {
-      return "En curso";
+      return "Pendiente de cierre";
    }
    return "Pendiente";
 }
@@ -39,3 +39,4 @@ export function computeAttendancePct(statuses: Array<"P" | "A" | "T" | "J">) {
    }, 0);
    return Math.round((attendedWeight / statuses.length) * 100);
 }
+
