@@ -1,7 +1,10 @@
-﻿import { Badge } from "@/components/ui/badge";
+﻿import { Link } from "react-router-dom";
+import { Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { TabsContent } from "@/components/ui/tabs";
 import { MonthlyClassesCollapsibleTable } from "@/components/monthly-classes-collapsible-table";
 import { TableCell } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import type { ClassSession } from "@/types";
 
 type GroupDetailPlanningTabProps = {
@@ -14,12 +17,13 @@ export function GroupDetailPlanningTab({ groupClasses }: GroupDetailPlanningTabP
          <MonthlyClassesCollapsibleTable
             classes={groupClasses}
             emptyMessage="No hay clases planificadas para este grupo."
-            tableClassName="min-w-[560px]"
+            tableClassName="min-w-[640px]"
             columns={[
                { label: "Fecha", className: "text-xs" },
                { label: "Tema", className: "text-xs" },
                { label: "Tipo", className: "text-xs" },
                { label: "Estado", className: "text-xs" },
+               { label: "Acciones", className: "text-xs text-right" },
             ]}
             renderCells={(cls) => {
                const dateObj = new Date(cls.date + "T12:00:00");
@@ -55,6 +59,18 @@ export function GroupDetailPlanningTab({ groupClasses }: GroupDetailPlanningTabP
                                 ? "Finalizada"
                                 : "Sin planificar"}
                         </Badge>
+                     </TableCell>
+                     <TableCell>
+                        <div className="flex justify-end">
+                           {cls.status === "sin-planificar" ? (
+                              <Button asChild size="sm" variant="outline" className="h-7 text-[11px]">
+                                 <Link to={`/planificacion?classId=${cls.id}&status=sin-planificar`}>
+                                    <Sparkles className="mr-1 size-3.5" />
+                                    Planificar
+                                 </Link>
+                              </Button>
+                           ) : null}
+                        </div>
                      </TableCell>
                   </>
                );

@@ -37,6 +37,7 @@ export function PlanificacionContent() {
       useActivitiesContext();
    const isMobile = useIsMobile();
    const [searchParams] = useSearchParams();
+   const entryClassId = searchParams.get("classId");
    const today = new Date();
 
    const [view, setView] = useState<ViewMode>("calendar");
@@ -63,6 +64,7 @@ export function PlanificacionContent() {
       undefined,
    );
    const [selectedDayDate, setSelectedDayDate] = useState<string | null>(null);
+   const [hasHandledEntryClass, setHasHandledEntryClass] = useState(false);
    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
    const planningPrefsStorageKey = useMemo(
       () => `aula.planning.list.preferences.${activeInstitution}`,
@@ -156,6 +158,20 @@ export function PlanificacionContent() {
       setSelectedDayDate(null);
       openEditModal(id);
    };
+
+   useEffect(() => {
+      if (hasHandledEntryClass || !entryClassId) {
+         return;
+      }
+
+      const exists = classes.some((classSession) => classSession.id === entryClassId);
+      if (!exists) {
+         return;
+      }
+
+      setHasHandledEntryClass(true);
+      openEditModal(entryClassId, { allowPlanned: true });
+   }, [classes, entryClassId, hasHandledEntryClass]);
 
    const replanClass = (id: string, options?: { fromDayDetails?: boolean }) => {
       const targetClass = classes.find((classSession) => classSession.id === id);
@@ -342,6 +358,8 @@ export function PlanificacionContent() {
       </div>
    );
 }
+
+
 
 
 
