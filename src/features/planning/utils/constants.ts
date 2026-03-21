@@ -3,17 +3,29 @@
 export const classTypeLabels: Record<ClassSession["type"], string> = {
    teorica: "Teorica",
    practica: "Practica",
-   oral: "Oral",
+   oral: "Evaluativa (Oral)",
    "teorico-practica": "Teorica/Practica",
    evaluacion: "Evaluativa",
    repaso: "Repaso",
    recuperatorio: "Recuperatorio",
 };
 
+export const planningTypeFilterOptions: Array<{
+   value: Exclude<ClassSession["type"], "oral">;
+   label: string;
+}> = [
+   { value: "teorica", label: classTypeLabels.teorica },
+   { value: "teorico-practica", label: classTypeLabels["teorico-practica"] },
+   { value: "practica", label: classTypeLabels.practica },
+   { value: "evaluacion", label: classTypeLabels.evaluacion },
+   { value: "repaso", label: classTypeLabels.repaso },
+   { value: "recuperatorio", label: classTypeLabels.recuperatorio },
+];
+
 export const classTypeColors: Record<ClassSession["type"], string> = {
    teorica: "bg-info/20 text-info-foreground border border-info/45",
    practica: "status-ok",
-   oral: "bg-info/20 text-info-foreground border border-info/45",
+   oral: "status-critical",
    "teorico-practica": "status-warning",
    evaluacion: "status-critical",
    repaso: "status-warning",
@@ -46,4 +58,3 @@ export function getStatusColor(status: ClassSession["status"]) {
    if (status === "sin-planificar") return "status-warning";
    return "status-ok";
 }
-

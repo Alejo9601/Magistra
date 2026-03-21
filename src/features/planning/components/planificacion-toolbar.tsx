@@ -8,6 +8,7 @@ import {
    SelectValue,
 } from "@/components/ui/select";
 import type { StatusFilter, TypeFilter, ViewMode } from "@/features/planning/types";
+import { planningTypeFilterOptions } from "@/features/planning/utils/constants";
 
 type Props = {
    view: ViewMode;
@@ -22,7 +23,6 @@ type Props = {
    onStatusFilterChange: (value: StatusFilter) => void;
    typeFilter: TypeFilter;
    onTypeFilterChange: (value: TypeFilter) => void;
-   classTypeLabels: Record<string, string>;
    visibleClassesCount: number;
 };
 
@@ -39,7 +39,6 @@ export function PlanificacionToolbar({
    onStatusFilterChange,
    typeFilter,
    onTypeFilterChange,
-   classTypeLabels,
    visibleClassesCount,
 }: Props) {
    return (
@@ -120,14 +119,14 @@ export function PlanificacionToolbar({
             </Select>
 
             <Select value={typeFilter} onValueChange={(value) => onTypeFilterChange(value as TypeFilter)}>
-               <SelectTrigger className="h-8 w-full text-xs sm:w-[170px]">
+               <SelectTrigger className="h-8 w-full text-xs sm:w-[190px]">
                   <SelectValue placeholder="Tipo" />
                </SelectTrigger>
                <SelectContent>
                   <SelectItem value="all">Todos los tipos</SelectItem>
-                  {Object.entries(classTypeLabels).map(([value, label]) => (
-                     <SelectItem key={value} value={value}>
-                        {label}
+                  {planningTypeFilterOptions.map((option) => (
+                     <SelectItem key={option.value} value={option.value}>
+                        {option.label}
                      </SelectItem>
                   ))}
                </SelectContent>

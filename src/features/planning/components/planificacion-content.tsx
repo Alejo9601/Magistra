@@ -12,7 +12,7 @@ import { PlanificacionToolbar } from "@/features/planning/components/planificaci
 import { PlanningCalendarView } from "@/features/planning/components/planning-calendar-view";
 import { PlanningClassesList } from "@/features/planning/components/planning-classes-list";
 import { PlanningModals } from "@/features/planning/components/planning-modals";
-import { classTypeLabels, monthNames } from "@/features/planning/utils/constants";
+import { monthNames } from "@/features/planning/utils/constants";
 import { syncClassLinkedRecords } from "@/features/planning/utils/sync-class-linked-records";
 import type {
    ClassFormInput,
@@ -261,7 +261,8 @@ export function PlanificacionContent() {
             setStatusFilter(parsed.statusFilter);
          }
          if (parsed.typeFilter) {
-            setTypeFilter(parsed.typeFilter);
+            const normalizedTypeFilter = parsed.typeFilter === "oral" ? "evaluacion" : parsed.typeFilter;
+            setTypeFilter(normalizedTypeFilter);
          }
          if (parsed.view) {
             setView(parsed.view);
@@ -299,9 +300,7 @@ export function PlanificacionContent() {
             statusFilter={statusFilter}
             onStatusFilterChange={setStatusFilter}
             typeFilter={typeFilter}
-            onTypeFilterChange={setTypeFilter}
-            classTypeLabels={classTypeLabels}
-            visibleClassesCount={visibleClassesCount}
+            onTypeFilterChange={setTypeFilter}            visibleClassesCount={visibleClassesCount}
          />
 
          <div className="flex-1 min-h-0">
@@ -358,6 +357,12 @@ export function PlanificacionContent() {
       </div>
    );
 }
+
+
+
+
+
+
 
 
 
