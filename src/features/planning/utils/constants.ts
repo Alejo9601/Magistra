@@ -1,4 +1,4 @@
-import type { ClassSession } from "@/lib/edu-repository";
+﻿import type { ClassSession } from "@/types";
 
 export const classTypeLabels: Record<ClassSession["type"], string> = {
    teorica: "Teorica",
@@ -46,3 +46,4 @@ export function getStatusColor(status: ClassSession["status"]) {
    if (status === "sin-planificar") return "status-warning";
    return "status-ok";
 }
+
