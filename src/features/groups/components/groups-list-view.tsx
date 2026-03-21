@@ -1,6 +1,7 @@
-﻿import { Building2, Users } from "lucide-react";
+﻿import { Building2, Plus, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 
 type GroupsListItem = {
    id: string;
@@ -15,16 +16,20 @@ type GroupsListItem = {
 export function GroupsListView({
    groups,
    onSelect,
+   onAddSubject,
 }: {
    groups: GroupsListItem[];
    onSelect: (subjectId: string) => void;
+   onAddSubject: () => void;
 }) {
    return (
       <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:p-6">
-         <div className="mb-6">
-            <p className="text-sm text-muted-foreground">
-               Todos tus grupos activos
-            </p>
+         <div className="mb-6 flex items-start justify-between gap-3">
+            <p className="text-sm text-muted-foreground">Todos tus grupos activos</p>
+            <Button size="sm" className="text-xs" onClick={onAddSubject}>
+               <Plus className="mr-1.5 size-3.5" />
+               Agregar materia
+            </Button>
          </div>
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {groups.map((group) => (
@@ -36,12 +41,8 @@ export function GroupsListView({
                   <CardContent className="p-5">
                      <div className="flex items-start justify-between mb-3">
                         <div>
-                           <h3 className="text-sm font-semibold text-foreground">
-                              {group.name}
-                           </h3>
-                           <p className="text-xs text-muted-foreground">
-                              {group.course}
-                           </p>
+                           <h3 className="text-sm font-semibold text-foreground">{group.name}</h3>
+                           <p className="text-xs text-muted-foreground">{group.course}</p>
                         </div>
                         <div
                            className="flex size-8 items-center justify-center rounded-lg"
@@ -63,9 +64,7 @@ export function GroupsListView({
                      </div>
                      <div>
                         <div className="flex items-center justify-between mb-1">
-                           <span className="text-[10px] text-muted-foreground">
-                              Planificacion
-                           </span>
+                           <span className="text-[10px] text-muted-foreground">Planificacion</span>
                            <span className="text-[10px] font-medium text-foreground">
                               {group.planProgress}%
                            </span>
@@ -79,5 +78,3 @@ export function GroupsListView({
       </div>
    );
 }
-
-

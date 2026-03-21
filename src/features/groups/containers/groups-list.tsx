@@ -7,9 +7,11 @@ import { GroupsListView } from "@/features/groups/components";
 
 export function GroupsList({
    onSelect,
+   onAddSubject,
    activeInstitution,
 }: {
    onSelect: (assignmentId: string) => void;
+   onAddSubject: () => void;
    activeInstitution: string;
 }) {
    const groups = getAssignmentsByInstitution(activeInstitution)
@@ -31,6 +33,5 @@ export function GroupsList({
       })
       .filter((group): group is NonNullable<typeof group> => group !== null);
 
-   return <GroupsListView groups={groups} onSelect={onSelect} />;
+   return <GroupsListView groups={groups} onSelect={onSelect} onAddSubject={onAddSubject} />;
 }
-
