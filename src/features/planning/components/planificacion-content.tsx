@@ -2,7 +2,7 @@
 import { getAssignmentIdBySubjectId } from "@/lib/edu-repository";
 import { useAssessmentsContext } from "@/features/assessments";
 import { useActivitiesContext } from "@/features/activities";
-import { useInstitutionContext } from "@/features/institution";
+import { matchesInstitutionScope, useInstitutionContext } from "@/features/institution";
 import { usePlanningContext } from "@/features/planning";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -74,7 +74,8 @@ export function PlanificacionContent() {
    );
 
    const scopedClasses = classes.filter(
-      (classSession) => classSession.institutionId === activeInstitution,
+      (classSession) =>
+      matchesInstitutionScope(classSession.institutionId, activeInstitution),
    );
 
    const filteredClasses = scopedClasses.filter((classSession) => {
@@ -341,6 +342,8 @@ export function PlanificacionContent() {
       </div>
    );
 }
+
+
 
 
 

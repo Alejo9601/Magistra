@@ -1,3 +1,5 @@
+﻿import { isAllInstitutionsScope } from "@/features/institution";
+
 type AssignmentRef = {
    id: string;
    institutionId: string;
@@ -13,8 +15,13 @@ type ResolveAssignmentIdParams = {
 export function resolveInstitutionId(
    activeInstitution: string,
    initialInstitutionId?: string,
+   fallbackInstitutionId?: string,
 ) {
-   return initialInstitutionId ?? activeInstitution;
+   const resolvedInstitutionId = initialInstitutionId ?? activeInstitution;
+   if (!isAllInstitutionsScope(resolvedInstitutionId)) {
+      return resolvedInstitutionId;
+   }
+   return fallbackInstitutionId ?? "";
 }
 
 export function resolveAssignmentIdForInstitution({

@@ -1,6 +1,7 @@
 ﻿import type { TodayAlert } from "@/features/dashboard/components/today-classes-alerts-card";
 import { getAssignmentById, getAssignmentIdBySubjectId, getSubjectById } from "@/lib/edu-repository";
 import type { Assessment, SubjectActivity } from "@/types";
+import { isAllInstitutionsScope } from "@/features/institution";
 
 type AttendanceStatus = "P" | "A" | "T" | "J";
 
@@ -171,6 +172,7 @@ export function buildTodayDisplayedAlerts({
             assessment.date >= todayStr &&
             assessment.date <= tomorrowStr &&
             (assessment.status === "draft" || assessment.status === "scheduled") &&
+            isAllInstitutionsScope(activeInstitution) ||
             (assignment?.institutionId ?? activeInstitution) === activeInstitution
          );
       })
@@ -215,4 +217,6 @@ export function buildTodayDisplayedAlerts({
       ? criticalAlerts.slice(0, 4)
       : sortedAlerts.slice(0, 2);
 }
+
+
 

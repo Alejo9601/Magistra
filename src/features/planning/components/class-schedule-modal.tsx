@@ -74,7 +74,15 @@ export function ClassScheduleModal({
    }) => number;
 }) {
    const isInstitutionLocked = true;
-   const institutionId = resolveInstitutionId(activeInstitution, initialInstitutionId);
+   const fallbackInstitutionId =
+      (initialAssignmentId ? getAssignmentById(initialAssignmentId)?.institutionId : undefined) ??
+      initialInstitutionId ??
+      institutions[0]?.id;
+   const institutionId = resolveInstitutionId(
+      activeInstitution,
+      initialInstitutionId,
+      fallbackInstitutionId,
+   );
    const availableAssignments = getAssignmentsByInstitution(institutionId);
 
    const resolvedInitialAssignmentId = useMemo(
@@ -326,14 +334,3 @@ export function ClassScheduleModal({
       </>
    );
 }
-
-
-
-
-
-
-
-
-
-
-

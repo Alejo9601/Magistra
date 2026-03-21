@@ -12,7 +12,7 @@ import {
    SelectValue,
 } from "@/components/ui/select";
 import { contentItems, institutions } from "@/lib/edu-repository";
-import { useInstitutionContext } from "@/features/institution";
+import { ALL_INSTITUTIONS_VALUE, useInstitutionContext } from "@/features/institution";
 import { ResourceCard, UploadResourceDialog } from "@/features/resources/components";
 import { useResourcesData } from "@/features/resources/hooks";
 import type { ResourceFilterType } from "@/features/resources/types";
@@ -56,7 +56,9 @@ export function ResourcesContent() {
             <div className="flex items-center gap-2">
                <Filter className="size-3.5 text-muted-foreground" />
                <Badge variant="secondary" className="h-8 rounded-md px-2.5">
-                  {institutions.find((i) => i.id === activeInstitution)?.name}
+                  {activeInstitution === ALL_INSTITUTIONS_VALUE
+                     ? "Todas las instituciones"
+                     : institutions.find((i) => i.id === activeInstitution)?.name}
                </Badge>
                <Select
                   value={filterType}
@@ -105,3 +107,5 @@ export function ResourcesContent() {
       </div>
    );
 }
+
+

@@ -233,6 +233,10 @@ function persistContentItems() {
    writeJsonToStorage(storageKeys.contentItems, contentItems);
 }
 
+function isAllInstitutionsScopeId(institutionId: string) {
+   return institutionId === "all";
+}
+
 rebuildDerivedCollections();
 
 export function getAssignmentIdBySubjectId(subjectId: string) {
@@ -249,6 +253,9 @@ export function getAssignmentById(id: string) {
 }
 
 export function getAssignmentsByInstitution(institutionId: string) {
+   if (isAllInstitutionsScopeId(institutionId)) {
+      return teachingAssignments.filter((assignment) => assignment.active);
+   }
    return teachingAssignments.filter(
       (assignment) =>
          assignment.institutionId === institutionId && assignment.active,
@@ -387,6 +394,9 @@ export function getStudentsByAssignment(assignmentId: string) {
 }
 
 export function getSubjectsByInstitution(institutionId: string) {
+   if (isAllInstitutionsScopeId(institutionId)) {
+      return subjects;
+   }
    return subjects.filter((s) => s.institutionId === institutionId);
 }
 
@@ -417,6 +427,9 @@ export function getClassesByAssignment(assignmentId: string) {
 }
 
 export function getClassesByInstitution(institutionId: string) {
+   if (isAllInstitutionsScopeId(institutionId)) {
+      return classSessions;
+   }
    return classSessions.filter((c) => c.institutionId === institutionId);
 }
 
@@ -425,6 +438,9 @@ export function getContentBySubject(subjectId: string) {
 }
 
 export function getContentByInstitution(institutionId: string) {
+   if (isAllInstitutionsScopeId(institutionId)) {
+      return contentItems;
+   }
    return contentItems.filter((c) => c.institutionId === institutionId);
 }
 
@@ -445,17 +461,24 @@ export function getInstitutionRepository(institutionId: string) {
          ),
       getClasses: () =>
          classSessions.filter(
-            (classSession) => classSession.institutionId === institutionId,
+            (classSession) =>
+               isAllInstitutionsScopeId(institutionId) ||
+               classSession.institutionId === institutionId,
          ),
       getContent: () =>
-         contentItems.filter((content) => content.institutionId === institutionId),
+         contentItems.filter(
+            (content) =>
+               isAllInstitutionsScopeId(institutionId) ||
+               content.institutionId === institutionId,
+         ),
       getSubjectsMap: () =>
          new Map(scopedSubjects.map((subject) => [subject.id, subject])),
       getUpcomingClasses: (fromDate: string) =>
          classSessions
             .filter(
                (classSession) =>
-                  classSession.institutionId === institutionId &&
+                  (isAllInstitutionsScopeId(institutionId) ||
+                     classSession.institutionId === institutionId) &&
                   classSession.date >= fromDate,
             )
             .sort((a, b) =>
@@ -465,12 +488,3 @@ export function getInstitutionRepository(institutionId: string) {
 }
 
 export type InstitutionRepository = ReturnType<typeof getInstitutionRepository>;
-
-
-
-
-
-
-
-
-

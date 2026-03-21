@@ -13,6 +13,7 @@ import {
    getSuggestedDashboardTasks,
 } from "@/features/dashboard/utils/dashboard-derived";
 import { getTodayStr } from "@/features/dashboard/utils/constants";
+import { matchesInstitutionScope } from "@/features/institution";
 
 export function PendingTasks({ activeInstitution }: { activeInstitution: string }) {
    const { tasks, toggleTask } = useDashboardContext();
@@ -23,14 +24,15 @@ export function PendingTasks({ activeInstitution }: { activeInstitution: string 
    const { activities } = useActivitiesContext();
 
    const scopedTasks = tasks.filter(
-      (task) => task.institutionId === activeInstitution,
+      (task) => matchesInstitutionScope(task.institutionId, activeInstitution),
    );
 
    const todayStr = getTodayStr();
    const scopedSubjects = getSubjectsByInstitution(activeInstitution);
    const scopedStudents = getStudentsByInstitution(activeInstitution);
    const scopedClasses = classes.filter(
-      (classSession) => classSession.institutionId === activeInstitution,
+      (classSession) =>
+         matchesInstitutionScope(classSession.institutionId, activeInstitution),
    );
 
    const liveAtRiskStudents = getAtRiskStudentsFromLiveData(
@@ -82,7 +84,7 @@ export function PendingTasks({ activeInstitution }: { activeInstitution: string 
                ))}
                {scopedTasks.length === 0 && (
                   <p className="text-xs text-muted-foreground py-2">
-                     No hay tareas manuales para esta institucion.
+                     No hay tareas manuales para el alcance seleccionado.
                   </p>
                )}
             </div>
@@ -105,4 +107,6 @@ export function PendingTasks({ activeInstitution }: { activeInstitution: string 
       </Card>
    );
 }
+
+
 

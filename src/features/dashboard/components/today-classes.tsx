@@ -12,6 +12,7 @@ import { getThresholdsForInstitution } from "@/features/dashboard/utils/constant
 import { useDashboardDateRange } from "@/features/dashboard/hooks";
 import { usePlanningContext } from "@/features/planning";
 import { useStudentsContext } from "@/features/students";
+import { matchesInstitutionScope } from "@/features/institution";
 import { getSubjectsByInstitution } from "@/lib/edu-repository";
 
 const NEAR_START_WINDOW_MS = 60 * 60 * 1000;
@@ -32,7 +33,7 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
             .filter(
                (classSession) =>
                   classSession.date === todayStr &&
-                  classSession.institutionId === activeInstitution,
+                  matchesInstitutionScope(classSession.institutionId, activeInstitution),
             )
             .sort((a, b) => a.time.localeCompare(b.time)),
       [activeInstitution, classes, todayStr],
@@ -40,7 +41,9 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
    const scopedClasses = useMemo(
       () =>
          classes
-            .filter((classSession) => classSession.institutionId === activeInstitution)
+            .filter((classSession) =>
+               matchesInstitutionScope(classSession.institutionId, activeInstitution),
+            )
             .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)),
       [activeInstitution, classes],
    );
@@ -112,3 +115,7 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
       </div>
    );
 }
+
+
+
+

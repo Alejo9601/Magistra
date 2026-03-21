@@ -21,6 +21,14 @@ describe("resolveInstitutionId", () => {
    it("uses initial institution when provided", () => {
       expect(resolveInstitutionId("inst-a", "inst-b")).toBe("inst-b");
    });
+
+   it("falls back when active institution scope is all", () => {
+      expect(resolveInstitutionId("all", undefined, "inst-a")).toBe("inst-a");
+   });
+
+   it("returns empty string when scope is all and fallback is unavailable", () => {
+      expect(resolveInstitutionId("all")).toBe("");
+   });
 });
 
 describe("resolveAssignmentIdForInstitution", () => {
@@ -87,4 +95,3 @@ describe("resolveAssignmentIdForInstitution", () => {
       ).toBe("");
    });
 });
-

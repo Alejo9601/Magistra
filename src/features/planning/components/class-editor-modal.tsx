@@ -13,7 +13,10 @@ import {
    getSubjectById,
    institutions,
 } from "@/lib/edu-repository";
-import { resolveAssignmentIdForInstitution } from "@/features/planning/utils/institution-context-guards";
+import {
+   resolveAssignmentIdForInstitution,
+   resolveInstitutionId,
+} from "@/features/planning/utils/institution-context-guards";
 import type { ClassFormInput } from "@/features/planning/types";
 import { ClassMetaFields } from "@/features/planning/components/class-meta-fields";
 import { ClassEditorFooterActions } from "@/features/planning/components/class-editor-footer-actions";
@@ -52,7 +55,11 @@ export function ClassEditorModal({
    const isScheduledSlotLocked = Boolean(
       initialClass && initialClass.date && initialClass.time,
    );
-   const institutionId = activeInstitution;
+   const institutionId = resolveInstitutionId(
+      activeInstitution,
+      initialClass?.institutionId,
+      institutions[0]?.id,
+   );
    const today = new Date();
    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
    const [assignmentId, setAssignmentId] = useState("");
@@ -103,7 +110,11 @@ export function ClassEditorModal({
       }
    };
    const reset = () => {
-      const nextInstitution = activeInstitution;
+      const nextInstitution = resolveInstitutionId(
+         activeInstitution,
+         initialClass?.institutionId,
+         institutions[0]?.id,
+      );
       const candidateAssignmentId =
          initialClass?.assignmentId ??
          (initialClass?.subjectId
@@ -263,6 +274,8 @@ export function ClassEditorModal({
       </Dialog>
    );
 }
+
+
 
 
 

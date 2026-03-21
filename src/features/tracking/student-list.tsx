@@ -15,6 +15,7 @@ import {
 import { useStudentsContext } from "@/features/students";
 import { usePlanningContext } from "@/features/planning";
 import { useClassroomContext } from "@/features/classroom";
+import { matchesInstitutionScope } from "@/features/institution";
 
 type RiskLevel = "high" | "medium" | "low" | "no-data";
 
@@ -62,7 +63,8 @@ export function StudentList({
 
    const studentStats = useMemo(() => {
       const classesInInstitution = classes.filter(
-         (classSession) => classSession.institutionId === activeInstitution,
+         (classSession) =>
+         matchesInstitutionScope(classSession.institutionId, activeInstitution),
       );
       const output = new Map<
          string,
@@ -275,7 +277,7 @@ export function StudentList({
 
                                  <p className="text-xs font-medium text-foreground">
                                     {isInstitutionEmpty
-                                       ? "Aun no hay alumnos para esta institucion."
+                                       ? "Aun no hay alumnos para el alcance seleccionado."
                                        : isSearchEmpty
                                          ? "No hay alumnos que coincidan con tu busqueda."
                                          : isFilterEmpty
@@ -302,6 +304,8 @@ export function StudentList({
       </div>
    );
 }
+
+
 
 
 

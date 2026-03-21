@@ -21,6 +21,7 @@ import {
 import { institutions, subjects } from "@/lib/edu-repository";
 import { contentTypeLabels } from "@/features/resources/utils";
 import { toast } from "sonner";
+import { matchesInstitutionScope } from "@/features/institution";
 
 export function UploadResourceDialog({
    open,
@@ -88,7 +89,7 @@ export function UploadResourceDialog({
                         </SelectTrigger>
                         <SelectContent>
                            {subjects
-                              .filter((s) => s.institutionId === activeInstitution)
+                              .filter((s) => matchesInstitutionScope(s.institutionId, activeInstitution))
                               .map((s) => (
                                  <SelectItem key={s.id} value={s.id}>
                                     {s.name} ({s.course})
@@ -145,6 +146,8 @@ export function UploadResourceDialog({
       </Dialog>
    );
 }
+
+
 
 
 

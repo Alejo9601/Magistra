@@ -1,4 +1,5 @@
 ﻿import { useMemo } from "react";
+import { matchesInstitutionScope } from "@/features/institution";
 import type { ContentItem } from "@/types";
 
 type UseResourcesDataParams = {
@@ -21,7 +22,7 @@ export function useResourcesData({
          const matchesSearch =
             item.name.toLowerCase().includes(normalizedSearch) ||
             item.description.toLowerCase().includes(normalizedSearch);
-         const matchesInstitution = item.institutionId === activeInstitution;
+         const matchesInstitution = matchesInstitutionScope(item.institutionId, activeInstitution);
          const matchesType = filterType === "all" || item.type === filterType;
          return matchesSearch && matchesInstitution && matchesType;
       });
@@ -29,3 +30,5 @@ export function useResourcesData({
 
    return { filtered };
 }
+
+

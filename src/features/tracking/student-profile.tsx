@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+﻿import { useMemo } from "react";
 import { Calendar, Star, ShieldAlert, ArrowLeft, MessageSquare } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import {
 import { useStudentsContext } from "@/features/students";
 import { usePlanningContext } from "@/features/planning";
 import { useClassroomContext } from "@/features/classroom";
+import { matchesInstitutionScope } from "@/features/institution";
 
 export function StudentProfile({
    studentId,
@@ -38,13 +39,15 @@ export function StudentProfile({
    const studentSubjects = (scopedSubjectId ? [scopedSubjectId] : student.subjectIds)
       .map((sid) => getSubjectById(sid))
       .filter((subject) => Boolean(subject))
-      .filter((subject) => subject?.institutionId === activeInstitution);
+      .filter((subject) =>
+      subject && matchesInstitutionScope(subject.institutionId, activeInstitution),
+   );
    const firstSubject = studentSubjects[0] || getSubjectById(student.subjectIds[0]);
    const inst = firstSubject ? getInstitutionById(firstSubject.institutionId) : null;
 
    const attendanceEntries = useMemo(() => {
       const relevantClasses = classes.filter((classSession) => {
-         if (classSession.institutionId !== activeInstitution) {
+         if (!matchesInstitutionScope(classSession.institutionId, activeInstitution)) {
             return false;
          }
          if (!scopedSubjectId) {
@@ -355,3 +358,5 @@ export function StudentProfile({
       </div>
    );
 }
+
+

@@ -17,6 +17,7 @@ import {
    getWeekDaysFromToday,
 } from "@/features/dashboard/utils/constants";
 import { usePlanningContext } from "@/features/planning";
+import { matchesInstitutionScope } from "@/features/institution";
 
 export function WeekTimeline({ activeInstitution }: { activeInstitution: string }) {
    const { classes } = usePlanningContext();
@@ -32,7 +33,7 @@ export function WeekTimeline({ activeInstitution }: { activeInstitution: string 
             .filter(
                (classSession) =>
                   classSession.date === selectedDate &&
-                  classSession.institutionId === activeInstitution,
+                  matchesInstitutionScope(classSession.institutionId, activeInstitution),
             )
             .sort((a, b) => a.time.localeCompare(b.time)),
       [activeInstitution, classes, selectedDate],
@@ -50,7 +51,9 @@ export function WeekTimeline({ activeInstitution }: { activeInstitution: string 
                   {weekDays.map(({ date, label }) => {
                      const isToday = date === todayStr;
                      const dayClasses = classes.filter(
-                        (c) => c.date === date && c.institutionId === activeInstitution,
+                        (c) =>
+                           c.date === date &&
+                           matchesInstitutionScope(c.institutionId, activeInstitution),
                      );
                      return (
                         <button
@@ -165,4 +168,8 @@ export function WeekTimeline({ activeInstitution }: { activeInstitution: string 
       </div>
    );
 }
+
+
+
+
 

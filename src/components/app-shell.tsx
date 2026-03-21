@@ -11,9 +11,13 @@ import {
    SelectItem,
    SelectTrigger,
 } from "@/components/ui/select";
-import { Building2 } from "lucide-react";
+import { Building2, Globe2 } from "lucide-react";
 import { institutions } from "@/lib/edu-repository";
-import { useInstitutionContext } from "@/features/institution";
+import {
+   ALL_INSTITUTIONS_VALUE,
+   isAllInstitutionsScope,
+   useInstitutionContext,
+} from "@/features/institution";
 
 function shortenInstitutionName(name: string, maxLength: number) {
    if (name.length <= maxLength) {
@@ -30,8 +34,11 @@ export function AppShell({
    title?: string;
 }) {
    const { activeInstitution, setActiveInstitution } = useInstitutionContext();
-   const currentInst =
-      institutions.find((i) => i.id === activeInstitution) || institutions[0];
+   const isAllInstitutions = isAllInstitutionsScope(activeInstitution);
+   const currentInst = institutions.find((i) => i.id === activeInstitution) || institutions[0];
+   const selectorLabel = isAllInstitutions
+      ? "Todas las instituciones"
+      : currentInst?.name ?? "Institución";
 
    return (
       <SidebarProvider>
@@ -48,27 +55,31 @@ export function AppShell({
                   )}
                </div>
                <div className="ml-2 flex min-w-0 max-w-[60vw] items-center gap-2 sm:ml-auto sm:max-w-none sm:gap-3">
-                  <Select
-                     value={activeInstitution}
-                     onValueChange={setActiveInstitution}
-                  >
+                  <Select value={activeInstitution} onValueChange={setActiveInstitution}>
                      <SelectTrigger className="h-8 w-full max-w-[60vw] text-xs sm:w-auto sm:max-w-none">
                         <div className="flex items-center gap-2">
-                           <Building2
-                              className="size-3.5"
-                              style={{ color: currentInst.color }}
-                           />
-                           <span className="truncate" title={currentInst.name}>
+                           {isAllInstitutions ? (
+                              <Globe2 className="size-3.5 text-primary" />
+                           ) : (
+                              <Building2
+                                 className="size-3.5"
+                                 style={{ color: currentInst?.color }}
+                              />
+                           )}
+                           <span className="truncate" title={selectorLabel}>
                               <span className="sm:hidden">
-                                 {shortenInstitutionName(currentInst.name, 16)}
+                                 {shortenInstitutionName(selectorLabel, 16)}
                               </span>
                               <span className="hidden sm:inline">
-                                 {shortenInstitutionName(currentInst.name, 28)}
+                                 {shortenInstitutionName(selectorLabel, 28)}
                               </span>
                            </span>
                         </div>
                      </SelectTrigger>
                      <SelectContent className="surface-card">
+                        <SelectItem value={ALL_INSTITUTIONS_VALUE}>
+                           <span className="text-xs">Todas las instituciones</span>
+                        </SelectItem>
                         {institutions.map((inst) => (
                            <SelectItem key={inst.id} value={inst.id}>
                               <span className="text-xs">{inst.name}</span>
@@ -87,4 +98,3 @@ export function AppShell({
       </SidebarProvider>
    );
 }
-

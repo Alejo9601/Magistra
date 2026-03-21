@@ -21,6 +21,7 @@ import { useStudentsContext } from "@/features/students";
 import { useClassroomContext } from "@/features/classroom";
 import { useAssessmentsContext } from "@/features/assessments";
 import { useActivitiesContext } from "@/features/activities";
+import { isAllInstitutionsScope, matchesInstitutionScope } from "@/features/institution";
 
 function statusClasses(level: SemaphoreLevel) {
    if (level === "red") {
@@ -57,16 +58,19 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
    const { getRecord } = useClassroomContext();
    const { assessments } = useAssessmentsContext();
    const { activities } = useActivitiesContext();
-   const thresholds = getThresholdsForInstitution(activeInstitution);
+   const thresholds = getThresholdsForInstitution(
+      isAllInstitutionsScope(activeInstitution) ? "" : activeInstitution,
+   );
    const todayStr = getTodayStr();
 
    const scopedSubjects = getSubjectsByInstitution(activeInstitution);
    const scopedStudents = getStudentsByInstitution(activeInstitution);
    const scopedClasses = classes.filter(
-      (classSession) => classSession.institutionId === activeInstitution,
+      (classSession) =>
+         matchesInstitutionScope(classSession.institutionId, activeInstitution),
    );
    const scopedTasks = tasks.filter(
-      (task) => task.institutionId === activeInstitution,
+      (task) => matchesInstitutionScope(task.institutionId, activeInstitution),
    );
 
    const liveAtRiskStudents = getAtRiskStudentsFromLiveData(
@@ -238,7 +242,7 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
                   </div>
                   {topAtRiskStudents.length === 0 ? (
                      <p className="mt-1 text-[10px] text-muted-foreground">
-                        Sin alumnos en riesgo en esta institucion.
+                        Sin alumnos en riesgo en el alcance seleccionado.
                      </p>
                   ) : (
                      <div className="mt-1.5 space-y-1">
@@ -264,4 +268,6 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
       </div>
    );
 }
+
+
 

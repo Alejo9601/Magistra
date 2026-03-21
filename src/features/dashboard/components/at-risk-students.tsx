@@ -6,6 +6,7 @@ import { useStudentsContext } from "@/features/students";
 import { usePlanningContext } from "@/features/planning";
 import { useClassroomContext } from "@/features/classroom";
 import { getAtRiskStudentsFromLiveData } from "@/features/dashboard/utils/dashboard-derived";
+import { matchesInstitutionScope } from "@/features/institution";
 
 function computeAttendancePct(
    studentId: string,
@@ -37,7 +38,8 @@ export function AtRiskStudents({ activeInstitution }: { activeInstitution: strin
 
    const institutionStudents = getStudentsByInstitution(activeInstitution);
    const institutionClasses = classes.filter(
-      (classSession) => classSession.institutionId === activeInstitution,
+      (classSession) =>
+         matchesInstitutionScope(classSession.institutionId, activeInstitution),
    );
 
    const atRisk = getAtRiskStudentsFromLiveData(
@@ -105,4 +107,6 @@ export function AtRiskStudents({ activeInstitution }: { activeInstitution: strin
       </Card>
    );
 }
+
+
 
