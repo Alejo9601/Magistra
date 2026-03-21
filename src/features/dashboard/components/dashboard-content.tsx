@@ -31,14 +31,14 @@ export function DashboardContent() {
          </div>
 
          <div className="mt-6">
+            <WeekTimeline activeInstitution={activeInstitution} />
+         </div>
+
+         <div className="mt-6">
             <h2 className="text-sm font-semibold text-foreground mb-3">
                Estado operativo
             </h2>
             <QuickStats activeInstitution={activeInstitution} />
-         </div>
-
-         <div className="mt-6">
-            <WeekTimeline activeInstitution={activeInstitution} />
          </div>
 
          <div className="mt-6">
@@ -47,4 +47,3 @@ export function DashboardContent() {
       </div>
    );
 }
-
