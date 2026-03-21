@@ -14,7 +14,7 @@ import { usePlanningContext } from "@/features/planning";
 import { useStudentsContext } from "@/features/students";
 import { getSubjectsByInstitution } from "@/lib/edu-repository";
 
-
+const NEAR_START_WINDOW_MS = 60 * 60 * 1000;
 
 export function TodayClasses({ activeInstitution }: { activeInstitution: string }) {
    const { classes } = usePlanningContext();
@@ -46,11 +46,27 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
    );
    const totalSubjects = getSubjectsByInstitution(activeInstitution).length;
 
-   const nextTodayClass = todayClasses.find(
+   const overdueTodayClass = todayClasses.find(
+      (classSession) =>
+         classSession.status !== "finalizada" &&
+         classDateTimeMs(classSession.date, classSession.time) < nowMs,
+   );
+   const upcomingTodayClass = todayClasses.find(
       (classSession) =>
          classSession.status !== "finalizada" &&
          classDateTimeMs(classSession.date, classSession.time) >= nowMs,
    );
+
+   const prioritizeUpcomingToday =
+      Boolean(overdueTodayClass) &&
+      Boolean(upcomingTodayClass) &&
+      classDateTimeMs(upcomingTodayClass!.date, upcomingTodayClass!.time) - nowMs <=
+         NEAR_START_WINDOW_MS;
+
+   const nextTodayClass = prioritizeUpcomingToday
+      ? upcomingTodayClass
+      : overdueTodayClass ?? upcomingTodayClass;
+
    const nextUpcomingClass = scopedClasses.find(
       (classSession) =>
          classSession.status !== "finalizada" &&
@@ -96,16 +112,3 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
       </div>
    );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -18,12 +18,23 @@ export function TodayClassesNextCard({
    totalSubjects: number;
    nowMs: number;
 }) {
+   const classCardTargetMs = classCardTarget
+      ? classDateTimeMs(classCardTarget.date, classCardTarget.time)
+      : null;
+
+   const title =
+      isNextToday && classCardTarget && classCardTarget.status !== "finalizada" && classCardTargetMs !== null && classCardTargetMs <= nowMs
+         ? "Clase de hoy pendiente de cierre"
+         : isNextToday
+            ? "Proxima clase de hoy"
+            : "Proxima clase";
+
    return (
       <Card className="app-panel xl:col-span-2 py-0 overflow-hidden">
          <div className="h-1 bg-primary/70" />
          <CardContent className="p-4">
             <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-               {isNextToday ? "Proxima clase de hoy" : "Proxima clase"}
+               {title}
             </p>
             {classCardTarget ? (
                <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-3 md:gap-4">
@@ -109,4 +120,3 @@ export function TodayClassesNextCard({
       </Card>
    );
 }
-
