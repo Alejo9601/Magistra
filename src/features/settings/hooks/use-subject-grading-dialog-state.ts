@@ -1,36 +1,30 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import {
    createDefaultRubricCriterion,
-   createDefaultSubjectGradingScheme,
    createDefaultSubjectRubric,
    normalizeSubjectGradingScheme,
 } from "@/lib/grading-schemes";
 import type { Subject, SubjectGradingScheme, SubjectRubric } from "@/types";
-import { normalizeRubric, toNumber, type WeightKey } from "@/features/settings/utils/subject-grading-dialog.utils";
+import {
+   normalizeRubric,
+   toNumber,
+   type WeightKey,
+} from "@/features/settings/utils/subject-grading-dialog.utils";
 
 type UseSubjectGradingDialogStateProps = {
-   open: boolean;
    subject: Subject | null;
    onOpenChange: (open: boolean) => void;
    onSave: (subjectId: string, gradingScheme: SubjectGradingScheme) => void;
 };
 
 export function useSubjectGradingDialogState({
-   open,
    subject,
    onOpenChange,
    onSave,
 }: UseSubjectGradingDialogStateProps) {
-   const [draft, setDraft] = useState<SubjectGradingScheme>(
-      createDefaultSubjectGradingScheme(),
+   const [draft, setDraft] = useState<SubjectGradingScheme>(() =>
+      normalizeSubjectGradingScheme(subject?.gradingScheme),
    );
-
-   useEffect(() => {
-      if (!open) {
-         return;
-      }
-      setDraft(normalizeSubjectGradingScheme(subject?.gradingScheme));
-   }, [open, subject]);
 
    const totalWeight = useMemo(
       () =>

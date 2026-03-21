@@ -274,6 +274,7 @@ export function SubjectsSection() {
          />
 
          <SubjectGradingDialog
+            key={gradingSubject?.id ?? "none"}
             open={Boolean(gradingSubject)}
             subject={gradingSubject}
             onOpenChange={(open) => {
@@ -317,4 +318,7 @@ export function SubjectsSection() {
       </>
    );
 }
+
+
+
 

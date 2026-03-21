@@ -35,7 +35,6 @@ export function SubjectGradingDialog({
       removeCriterion,
       handleSave,
    } = useSubjectGradingDialogState({
-      open,
       subject,
       onOpenChange,
       onSave,
@@ -105,3 +104,8 @@ export function SubjectGradingDialog({
       </Dialog>
    );
 }
+
+
+
+
+

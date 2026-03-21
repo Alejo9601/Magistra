@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { AlertOctagon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -104,15 +104,14 @@ function RangeField({
    );
 }
 
-export function OperativeThresholdsSection() {
-   const { activeInstitution } = useInstitutionContext();
-   const activeInstitutionName = getInstitutionById(activeInstitution)?.name;
-   const defaults = getThresholdsForInstitution(activeInstitution);
-   const [form, setForm] = useState<ThresholdForm>(toFormValues(defaults));
-
-   useEffect(() => {
-      setForm(toFormValues(defaults));
-   }, [activeInstitution]);
+function OperativeThresholdsForm({
+   institutionId,
+   defaults,
+}: {
+   institutionId: string;
+   defaults: OperativeThresholds;
+}) {
+   const [form, setForm] = useState<ThresholdForm>(() => toFormValues(defaults));
 
    const onReset = () => {
       setForm(toFormValues(DEFAULT_THRESHOLDS));
@@ -145,7 +144,7 @@ export function OperativeThresholdsSection() {
          return;
       }
 
-      saveInstitutionOperativeThresholds(activeInstitution, {
+      saveInstitutionOperativeThresholds(institutionId, {
          atRiskPctWarning: nextThresholds.atRiskPctWarning!,
          atRiskPctCritical: nextThresholds.atRiskPctCritical!,
          pendingWarning: nextThresholds.pendingWarning!,
@@ -158,6 +157,96 @@ export function OperativeThresholdsSection() {
    };
 
    return (
+      <CardContent className="pt-0 space-y-3">
+         <RangeField
+            title="Alumnos en riesgo"
+            description="Que porcentaje de alumnos en riesgo activa alerta y estado critico."
+            unit="%"
+            warningValue={form.atRiskPctWarning}
+            criticalValue={form.atRiskPctCritical}
+            onWarningChange={(value) =>
+               setForm((prev) => ({ ...prev, atRiskPctWarning: value }))
+            }
+            onCriticalChange={(value) =>
+               setForm((prev) => ({ ...prev, atRiskPctCritical: value }))
+            }
+         />
+
+         <RangeField
+            title="Tareas pendientes"
+            description="Cantidad de tareas pendientes para pasar a alerta/critico."
+            unit="cant"
+            warningValue={form.pendingWarning}
+            criticalValue={form.pendingCritical}
+            onWarningChange={(value) =>
+               setForm((prev) => ({ ...prev, pendingWarning: value }))
+            }
+            onCriticalChange={(value) =>
+               setForm((prev) => ({ ...prev, pendingCritical: value }))
+            }
+         />
+
+         <RangeField
+            title="Clases sin planificar (proximos 7 dias)"
+            description="Porcentaje de clases sin planificar que escala el semaforo."
+            unit="%"
+            warningValue={form.unplannedPctWarning}
+            criticalValue={form.unplannedPctCritical}
+            onWarningChange={(value) =>
+               setForm((prev) => ({ ...prev, unplannedPctWarning: value }))
+            }
+            onCriticalChange={(value) =>
+               setForm((prev) => ({ ...prev, unplannedPctCritical: value }))
+            }
+         />
+
+         <div className="rounded-lg border border-border/70 p-3">
+            <p className="text-xs font-semibold text-foreground">
+               Temporizador critico para clase sin planificar
+            </p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+               Si una clase sin planificar inicia en esta ventana o menos, pasa a critico.
+            </p>
+            <div className="mt-2 max-w-[220px] relative">
+               <Input
+                  className="h-8 pr-14 text-xs"
+                  type="number"
+                  min="1"
+                  value={form.unplannedClassCriticalHours}
+                  onChange={(event) =>
+                     setForm((prev) => ({
+                        ...prev,
+                        unplannedClassCriticalHours: event.target.value,
+                     }))
+                  }
+               />
+               <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+                  horas
+               </span>
+            </div>
+         </div>
+
+         <div className="flex items-center gap-2 pt-1">
+            <Button size="sm" className="text-xs" onClick={onSave}>
+               Guardar reglas
+            </Button>
+            <Button variant="outline" size="sm" className="text-xs" onClick={onReset}>
+               Usar predeterminadas
+            </Button>
+         </div>
+      </CardContent>
+   );
+}
+
+export function OperativeThresholdsSection() {
+   const { activeInstitution } = useInstitutionContext();
+   const activeInstitutionName = getInstitutionById(activeInstitution)?.name;
+   const defaults = useMemo(
+      () => getThresholdsForInstitution(activeInstitution),
+      [activeInstitution],
+   );
+
+   return (
       <Card>
          <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -168,86 +257,12 @@ export function OperativeThresholdsSection() {
                Configura alertas para: {activeInstitutionName ?? activeInstitution}
             </p>
          </CardHeader>
-         <CardContent className="pt-0 space-y-3">
-            <RangeField
-               title="Alumnos en riesgo"
-               description="Que porcentaje de alumnos en riesgo activa alerta y estado critico."
-               unit="%"
-               warningValue={form.atRiskPctWarning}
-               criticalValue={form.atRiskPctCritical}
-               onWarningChange={(value) =>
-                  setForm((prev) => ({ ...prev, atRiskPctWarning: value }))
-               }
-               onCriticalChange={(value) =>
-                  setForm((prev) => ({ ...prev, atRiskPctCritical: value }))
-               }
-            />
 
-            <RangeField
-               title="Tareas pendientes"
-               description="Cantidad de tareas pendientes para pasar a alerta/critico."
-               unit="cant"
-               warningValue={form.pendingWarning}
-               criticalValue={form.pendingCritical}
-               onWarningChange={(value) =>
-                  setForm((prev) => ({ ...prev, pendingWarning: value }))
-               }
-               onCriticalChange={(value) =>
-                  setForm((prev) => ({ ...prev, pendingCritical: value }))
-               }
-            />
-
-            <RangeField
-               title="Clases sin planificar (proximos 7 dias)"
-               description="Porcentaje de clases sin planificar que escala el semaforo."
-               unit="%"
-               warningValue={form.unplannedPctWarning}
-               criticalValue={form.unplannedPctCritical}
-               onWarningChange={(value) =>
-                  setForm((prev) => ({ ...prev, unplannedPctWarning: value }))
-               }
-               onCriticalChange={(value) =>
-                  setForm((prev) => ({ ...prev, unplannedPctCritical: value }))
-               }
-            />
-
-            <div className="rounded-lg border border-border/70 p-3">
-               <p className="text-xs font-semibold text-foreground">
-                  Temporizador critico para clase sin planificar
-               </p>
-               <p className="mt-0.5 text-[11px] text-muted-foreground">
-                  Si una clase sin planificar inicia en esta ventana o menos, pasa a critico.
-               </p>
-               <div className="mt-2 max-w-[220px] relative">
-                  <Input
-                     className="h-8 pr-14 text-xs"
-                     type="number"
-                     min="1"
-                     value={form.unplannedClassCriticalHours}
-                     onChange={(event) =>
-                        setForm((prev) => ({
-                           ...prev,
-                           unplannedClassCriticalHours: event.target.value,
-                        }))
-                     }
-                  />
-                  <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
-                     horas
-                  </span>
-               </div>
-            </div>
-
-            <div className="flex items-center gap-2 pt-1">
-               <Button size="sm" className="text-xs" onClick={onSave}>
-                  Guardar reglas
-               </Button>
-               <Button variant="outline" size="sm" className="text-xs" onClick={onReset}>
-                  Usar predeterminadas
-               </Button>
-            </div>
-         </CardContent>
+         <OperativeThresholdsForm
+            key={activeInstitution}
+            institutionId={activeInstitution}
+            defaults={defaults}
+         />
       </Card>
    );
 }
-
-
