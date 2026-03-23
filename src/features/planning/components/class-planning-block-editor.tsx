@@ -32,7 +32,6 @@ export function ClassPlanningBlockEditor({
    block,
    planBlocksSeparately,
    classCharacterOptions,
-   evaluativeFormatOptions,
    onUpdateBlock,
 }: Props) {
    return (
@@ -77,18 +76,9 @@ export function ClassPlanningBlockEditor({
                      const nextType = value as Exclude<ClassSession["type"], "oral">;
                      onUpdateBlock(block.order, {
                         type: nextType,
-                        evaluativeFormat:
-                           nextType === "evaluacion"
-                              ? block.evaluativeFormat
-                              : undefined,
-                        evaluationName:
-                           nextType === "evaluacion"
-                              ? block.evaluationName
-                              : undefined,
-                        evaluationDescription:
-                           nextType === "evaluacion"
-                              ? block.evaluationDescription
-                              : undefined,
+                        evaluativeFormat: undefined,
+                        evaluationName: undefined,
+                        evaluationDescription: undefined,
                         practiceActivityName:
                            nextType === "practica" || nextType === "teorico-practica"
                               ? block.practiceActivityName
@@ -141,61 +131,7 @@ export function ClassPlanningBlockEditor({
                   </div>
                </>
             )}
-
-            {block.type === "evaluacion" && (
-               <>
-                  <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Nombre de la evaluacion</Label>
-                     <Input
-                        className="h-9 text-xs"
-                        value={block.evaluationName ?? ""}
-                        onChange={(event) =>
-                           onUpdateBlock(block.order, {
-                              evaluationName: event.target.value,
-                           })
-                        }
-                     />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Tipo de evaluacion</Label>
-                     <Select
-                        value={block.evaluativeFormat || undefined}
-                        onValueChange={(value) =>
-                           onUpdateBlock(block.order, {
-                              evaluativeFormat:
-                                 value as NonNullable<ClassSession["evaluativeFormat"]>,
-                           })
-                        }
-                     >
-                        <SelectTrigger className="h-9 text-xs">
-                           <SelectValue placeholder="Seleccionar tipo evaluativo..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                           {evaluativeFormatOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                 {option.label}
-                              </SelectItem>
-                           ))}
-                        </SelectContent>
-                     </Select>
-                  </div>
-                  <div className="flex flex-col gap-1.5 sm:col-span-2">
-                     <Label className="text-xs">Descripcion</Label>
-                     <Textarea
-                        className="text-xs min-h-[70px] resize-none"
-                        value={block.evaluationDescription ?? ""}
-                        onChange={(event) =>
-                           onUpdateBlock(block.order, {
-                              evaluationDescription: event.target.value,
-                           })
-                        }
-                     />
-                  </div>
-               </>
-            )}
          </div>
       </div>
    );
 }
-
-

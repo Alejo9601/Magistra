@@ -41,6 +41,10 @@ type UseGroupDetailActionsParams = {
       type: ActivityType;
       status?: ActivityStatus;
       description?: string;
+      esEvaluable?: boolean;
+      rubricaId?: string;
+      fechaInicio?: string;
+      fechaFin?: string;
    }) => unknown;
    removeAssessment: (id: string) => void;
    removeActivity: (id: string) => void;
@@ -84,6 +88,10 @@ export function useGroupDetailActions({
    const [newActivityStatus, setNewActivityStatus] =
       useState<ActivityStatus>("planned");
    const [newActivityDescription, setNewActivityDescription] = useState("");
+   const [newActivityEvaluable, setNewActivityEvaluable] = useState(false);
+   const [newActivityRubricaId, setNewActivityRubricaId] = useState("");
+   const [newActivityFechaInicio, setNewActivityFechaInicio] = useState("");
+   const [newActivityFechaFin, setNewActivityFechaFin] = useState("");
    const [pendingDelete, setPendingDelete] = useState<GroupPendingDelete | null>(null);
 
    const resetStudentForm = () => {
@@ -109,6 +117,10 @@ export function useGroupDetailActions({
       setNewActivityType("practica");
       setNewActivityStatus("planned");
       setNewActivityDescription("");
+      setNewActivityEvaluable(false);
+      setNewActivityRubricaId("");
+      setNewActivityFechaInicio("");
+      setNewActivityFechaFin("");
    };
 
    const submitStudent = () => {
@@ -193,6 +205,10 @@ export function useGroupDetailActions({
          type: newActivityType,
          status: newActivityStatus,
          description: newActivityDescription,
+         esEvaluable: newActivityEvaluable,
+         rubricaId: newActivityEvaluable ? newActivityRubricaId : undefined,
+         fechaInicio: newActivityFechaInicio || undefined,
+         fechaFin: newActivityFechaFin || undefined,
       });
       setAddActivityOpen(false);
       resetActivityForm();
@@ -252,6 +268,14 @@ export function useGroupDetailActions({
       setNewActivityStatus,
       newActivityDescription,
       setNewActivityDescription,
+      newActivityEvaluable,
+      setNewActivityEvaluable,
+      newActivityRubricaId,
+      setNewActivityRubricaId,
+      newActivityFechaInicio,
+      setNewActivityFechaInicio,
+      newActivityFechaFin,
+      setNewActivityFechaFin,
       pendingDelete,
       setPendingDelete,
       resetStudentForm,
@@ -263,4 +287,3 @@ export function useGroupDetailActions({
       confirmDelete,
    };
 }
-

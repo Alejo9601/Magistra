@@ -74,6 +74,14 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
       setNewActivityStatus,
       newActivityDescription,
       setNewActivityDescription,
+      newActivityEvaluable,
+      setNewActivityEvaluable,
+      newActivityRubricaId,
+      setNewActivityRubricaId,
+      newActivityFechaInicio,
+      setNewActivityFechaInicio,
+      newActivityFechaFin,
+      setNewActivityFechaFin,
       pendingDelete,
       setPendingDelete,
       resetStudentForm,
@@ -261,16 +269,21 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
             title={newActivityTitle}
             type={newActivityType}
             status={newActivityStatus}
+            esEvaluable={newActivityEvaluable}
+            rubricaId={newActivityRubricaId}
+            fechaInicio={newActivityFechaInicio}
+            fechaFin={newActivityFechaFin}
             description={newActivityDescription}
             onTitleChange={setNewActivityTitle}
             onTypeChange={setNewActivityType}
             onStatusChange={setNewActivityStatus}
+            onEsEvaluableChange={setNewActivityEvaluable}
+            onRubricaIdChange={setNewActivityRubricaId}
+            onFechaInicioChange={setNewActivityFechaInicio}
+            onFechaFinChange={setNewActivityFechaFin}
             onDescriptionChange={setNewActivityDescription}
             onSubmit={submitActivity}
          />
       </div>
    );
 }
-
-
-

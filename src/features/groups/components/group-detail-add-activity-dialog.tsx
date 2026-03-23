@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { ActivityStatus, ActivityType } from "@/types";
 
@@ -14,10 +15,18 @@ type GroupDetailAddActivityDialogProps = {
    title: string;
    type: ActivityType;
    status: ActivityStatus;
+   esEvaluable: boolean;
+   rubricaId: string;
+   fechaInicio: string;
+   fechaFin: string;
    description: string;
    onTitleChange: (value: string) => void;
    onTypeChange: (value: ActivityType) => void;
    onStatusChange: (value: ActivityStatus) => void;
+   onEsEvaluableChange: (value: boolean) => void;
+   onRubricaIdChange: (value: string) => void;
+   onFechaInicioChange: (value: string) => void;
+   onFechaFinChange: (value: string) => void;
    onDescriptionChange: (value: string) => void;
    onSubmit: () => void;
 };
@@ -30,10 +39,18 @@ export function GroupDetailAddActivityDialog({
    title,
    type,
    status,
+   esEvaluable,
+   rubricaId,
+   fechaInicio,
+   fechaFin,
    description,
    onTitleChange,
    onTypeChange,
    onStatusChange,
+   onEsEvaluableChange,
+   onRubricaIdChange,
+   onFechaInicioChange,
+   onFechaFinChange,
    onDescriptionChange,
    onSubmit,
 }: GroupDetailAddActivityDialogProps) {
@@ -53,14 +70,14 @@ export function GroupDetailAddActivityDialog({
                </div>
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Caracter</Label>
+                     <Label className="text-xs">Tipo</Label>
                      <Select value={type} onValueChange={(value) => onTypeChange(value as ActivityType)}>
                         <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
                         <SelectContent>
                            <SelectItem value="practica">Practica</SelectItem>
-                           <SelectItem value="tarea">Tarea</SelectItem>
                            <SelectItem value="examen">Examen</SelectItem>
                            <SelectItem value="proyecto">Proyecto</SelectItem>
+                           <SelectItem value="tarea">Tarea</SelectItem>
                         </SelectContent>
                      </Select>
                   </div>
@@ -77,6 +94,38 @@ export function GroupDetailAddActivityDialog({
                      </Select>
                   </div>
                </div>
+
+               <label className="flex items-center gap-2 text-xs text-foreground">
+                  <Checkbox
+                     checked={esEvaluable}
+                     onCheckedChange={(checked) => onEsEvaluableChange(Boolean(checked))}
+                  />
+                  Es evaluable
+               </label>
+
+               {esEvaluable ? (
+                  <div className="flex flex-col gap-1.5">
+                     <Label className="text-xs">Rubrica (opcional)</Label>
+                     <Input
+                        className="h-9 text-xs"
+                        placeholder="ID de rubrica"
+                        value={rubricaId}
+                        onChange={(event) => onRubricaIdChange(event.target.value)}
+                     />
+                  </div>
+               ) : null}
+
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                     <Label className="text-xs">Fecha inicio</Label>
+                     <Input className="h-9 text-xs" type="date" value={fechaInicio} onChange={(event) => onFechaInicioChange(event.target.value)} />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                     <Label className="text-xs">Fecha fin</Label>
+                     <Input className="h-9 text-xs" type="date" value={fechaFin} onChange={(event) => onFechaFinChange(event.target.value)} />
+                  </div>
+               </div>
+
                <div className="flex flex-col gap-1.5">
                   <Label className="text-xs">Descripcion (opcional)</Label>
                   <Textarea className="text-xs min-h-[80px] resize-none" placeholder="Objetivos, consigna y criterios..." value={description} onChange={(event) => onDescriptionChange(event.target.value)} />
@@ -94,5 +143,3 @@ export function GroupDetailAddActivityDialog({
       </Dialog>
    );
 }
-
-

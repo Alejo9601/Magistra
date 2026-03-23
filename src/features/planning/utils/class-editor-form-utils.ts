@@ -7,7 +7,6 @@ export const classCharacterOptions: Array<{
    { value: "teorica", label: "Teorica" },
    { value: "practica", label: "Practica" },
    { value: "teorico-practica", label: "Teorica/Practica" },
-   { value: "evaluacion", label: "Evaluativa" },
 ];
 
 export const evaluativeFormatOptions: Array<{
@@ -23,8 +22,8 @@ export const evaluativeFormatOptions: Array<{
 export function normalizeClassType(
    value: ClassSession["type"] | "oral" | "",
 ): ClassSession["type"] | "" {
-   if (value === "oral") {
-      return "evaluacion";
+   if (value === "oral" || value === "evaluacion" || value === "repaso" || value === "recuperatorio") {
+      return "teorico-practica";
    }
    return value as ClassSession["type"] | "";
 }
@@ -102,11 +101,7 @@ export function deriveBlocksFromClass(
                       topic: initialClass?.topic ?? "",
                       subtopics: initialClass?.subtopics ?? [],
                       type: initialType,
-                      evaluativeFormat:
-                         initialType === "evaluacion"
-                            ? (normalizeEvaluativeFormat(initialClass?.evaluativeFormat ?? "") ||
-                               undefined)
-                            : undefined,
+                      evaluativeFormat: normalizeEvaluativeFormat(initialClass?.evaluativeFormat ?? "") || undefined,
                       practiceActivityName:
                          initialType === "practica" || initialType === "teorico-practica"
                             ? initialClass?.practiceActivityName
@@ -115,14 +110,8 @@ export function deriveBlocksFromClass(
                          initialType === "practica" || initialType === "teorico-practica"
                             ? initialClass?.practiceActivityDescription
                             : undefined,
-                      evaluationName:
-                         initialType === "evaluacion"
-                            ? initialClass?.evaluationName
-                            : undefined,
-                      evaluationDescription:
-                         initialType === "evaluacion"
-                            ? initialClass?.evaluationDescription
-                            : undefined,
+                      evaluationName: initialClass?.evaluationName,
+                      evaluationDescription: initialClass?.evaluationDescription,
                    }
                  : createEmptyBlock(index + 1),
            );
@@ -159,11 +148,7 @@ export function resolveClassDataFromBlocks(normalizedBlocks: ClassBlock[]) {
       (item) => item !== resolvedTopic,
    );
 
-   const resolvedType = primaryBlock?.type ?? "teorica";
-   const resolvedEvaluativeFormat =
-      resolvedType === "evaluacion"
-         ? (primaryBlock?.evaluativeFormat as EvaluativeFormat | undefined)
-         : undefined;
+   const resolvedType = normalizeClassType(primaryBlock?.type ?? "teorica") || "teorica";
    const resolvedPracticeActivityName =
       resolvedType === "practica" || resolvedType === "teorico-practica"
          ? primaryBlock?.practiceActivityName?.trim() || undefined
@@ -172,26 +157,16 @@ export function resolveClassDataFromBlocks(normalizedBlocks: ClassBlock[]) {
       resolvedType === "practica" || resolvedType === "teorico-practica"
          ? primaryBlock?.practiceActivityDescription?.trim() || undefined
          : undefined;
-   const resolvedEvaluationName =
-      resolvedType === "evaluacion"
-         ? primaryBlock?.evaluationName?.trim() || undefined
-         : undefined;
-   const resolvedEvaluationDescription =
-      resolvedType === "evaluacion"
-         ? primaryBlock?.evaluationDescription?.trim() || undefined
-         : undefined;
 
    return {
       hasBlockContent,
       resolvedTopic,
       resolvedSubtopics,
       resolvedType,
-      resolvedEvaluativeFormat,
+      resolvedEvaluativeFormat: undefined as EvaluativeFormat | undefined,
       resolvedPracticeActivityName,
       resolvedPracticeActivityDescription,
-      resolvedEvaluationName,
-      resolvedEvaluationDescription,
+      resolvedEvaluationName: undefined as string | undefined,
+      resolvedEvaluationDescription: undefined as string | undefined,
    };
 }
-
-
