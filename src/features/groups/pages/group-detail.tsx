@@ -10,9 +10,7 @@ import type { GroupDetailProps } from "@/features/groups/types";
 import {
    GroupDetailActivitiesTab,
    GroupDetailAddActivityDialog,
-   GroupDetailAddAssessmentDialog,
    GroupDetailAddStudentDialog,
-   GroupDetailAssessmentsTab,
    GroupDetailDeleteDialog,
    GroupDetailPlanningTab,
    GroupDetailStudentsTab,
@@ -20,14 +18,11 @@ import {
 import { useGroupDetailActions, useGroupDetailData } from "@/features/groups/hooks";
 import { useStudentsContext } from "@/features/students";
 import { useClassroomContext } from "@/features/classroom";
-import { useAssessmentsContext } from "@/features/assessments";
 import { useActivitiesContext } from "@/features/activities";
 
 export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
    const { getStudentsByAssignment, addStudent } = useStudentsContext();
    const { getRecord } = useClassroomContext();
-   const { getAssessmentsByAssignment, addAssessment, removeAssessment } =
-      useAssessmentsContext();
    const { getActivitiesByAssignment, addActivity, removeActivity } =
       useActivitiesContext();
 
@@ -36,8 +31,6 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
    const {
       addStudentOpen,
       setAddStudentOpen,
-      addAssessmentOpen,
-      setAddAssessmentOpen,
       addActivityOpen,
       setAddActivityOpen,
       studentSearch,
@@ -52,20 +45,6 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
       setNewEmail,
       newObservations,
       setNewObservations,
-      newAssessmentTitle,
-      setNewAssessmentTitle,
-      newAssessmentEvaluativeFormat,
-      setNewAssessmentEvaluativeFormat,
-      newAssessmentDate,
-      setNewAssessmentDate,
-      newAssessmentStatus,
-      setNewAssessmentStatus,
-      newAssessmentWeight,
-      setNewAssessmentWeight,
-      newAssessmentMaxScore,
-      setNewAssessmentMaxScore,
-      newAssessmentDescription,
-      setNewAssessmentDescription,
       newActivityTitle,
       setNewActivityTitle,
       newActivityType,
@@ -85,25 +64,22 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
       pendingDelete,
       setPendingDelete,
       resetStudentForm,
-      resetAssessmentForm,
       resetActivityForm,
       submitStudent,
-      submitAssessment,
       submitActivity,
       confirmDelete,
    } = useGroupDetailActions({
       assignmentId,
       groupStudents,
       addStudent,
-      addAssessment,
+      addAssessment: () => undefined,
       addActivity,
-      removeAssessment,
+      removeAssessment: () => undefined,
       removeActivity,
    });
 
    const {
       groupClasses,
-      groupAssessments,
       filteredStudents,
       groupActivities,
       attendanceByStudent,
@@ -114,7 +90,6 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
       studentSearch,
       groupStudents,
       getRecord,
-      getAssessmentsByAssignment,
       getActivitiesByAssignment,
    });
 
@@ -147,9 +122,6 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
                   <TabsTrigger value="planificacion" className="text-xs">
                      Planificacion
                   </TabsTrigger>
-                  <TabsTrigger value="evaluaciones" className="text-xs">
-                     Evaluaciones
-                  </TabsTrigger>
                   <TabsTrigger value="actividades" className="text-xs">
                      Actividades
                   </TabsTrigger>
@@ -168,20 +140,6 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
             />
 
             <GroupDetailPlanningTab groupClasses={groupClasses} />
-
-            <GroupDetailAssessmentsTab
-               groupAssessments={groupAssessments}
-               groupClasses={groupClasses}
-               studentsCount={groupStudents.length}
-               onAddAssessment={() => setAddAssessmentOpen(true)}
-               onDeleteAssessment={(id, title) =>
-                  setPendingDelete({
-                     kind: "assessment",
-                     id,
-                     title,
-                  })
-               }
-            />
 
             <GroupDetailActivitiesTab
                groupActivities={groupActivities}
@@ -227,33 +185,6 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
             onEmailChange={setNewEmail}
             onObservationsChange={setNewObservations}
             onSubmit={submitStudent}
-         />
-
-         <GroupDetailAddAssessmentDialog
-            open={addAssessmentOpen}
-            onOpenChange={(open) => {
-               setAddAssessmentOpen(open);
-               if (!open) {
-                  resetAssessmentForm();
-               }
-            }}
-            subjectName={subject.name}
-            section={assignment.section}
-            title={newAssessmentTitle}
-            evaluativeFormat={newAssessmentEvaluativeFormat}
-            date={newAssessmentDate}
-            status={newAssessmentStatus}
-            weight={newAssessmentWeight}
-            maxScore={newAssessmentMaxScore}
-            description={newAssessmentDescription}
-            onTitleChange={setNewAssessmentTitle}
-            onEvaluativeFormatChange={setNewAssessmentEvaluativeFormat}
-            onDateChange={setNewAssessmentDate}
-            onStatusChange={setNewAssessmentStatus}
-            onWeightChange={setNewAssessmentWeight}
-            onMaxScoreChange={setNewAssessmentMaxScore}
-            onDescriptionChange={setNewAssessmentDescription}
-            onSubmit={submitAssessment}
          />
 
          <GroupDetailAddActivityDialog

@@ -24,6 +24,14 @@ type GroupDetailActivitiesTabProps = {
    onDeleteActivity: (activityId: string, title: string) => void;
 };
 
+function formatDate(value?: string) {
+   if (!value) return "-";
+   return new Date(`${value}T12:00:00`).toLocaleDateString("es-AR", {
+      day: "2-digit",
+      month: "short",
+   });
+}
+
 export function GroupDetailActivitiesTab({
    groupActivities,
    onAddActivity,
@@ -39,12 +47,13 @@ export function GroupDetailActivitiesTab({
          </div>
          <Card className="mt-2">
             <CardContent className="p-0">
-               <Table className="min-w-[760px]">
+               <Table className="min-w-[880px]">
                   <TableHeader>
                      <TableRow>
                         <TableHead className="text-xs">Actividad</TableHead>
                         <TableHead className="text-xs">Tipo</TableHead>
-                        <TableHead className="text-xs">Clase relacionada</TableHead>
+                        <TableHead className="text-xs">Evaluable</TableHead>
+                        <TableHead className="text-xs">Fecha</TableHead>
                         <TableHead className="text-xs">Estado</TableHead>
                         <TableHead className="text-xs">Clases vinculadas</TableHead>
                         <TableHead className="text-xs text-right">Acciones</TableHead>
@@ -67,6 +76,19 @@ export function GroupDetailActivitiesTab({
                               <Badge variant="secondary" className="text-[10px] capitalize">
                                  {activityTypeLabel[activity.type]}
                               </Badge>
+                           </TableCell>
+                           <TableCell>
+                              {activity.esEvaluable ? (
+                                 <Badge className="border-0 text-[10px] bg-primary/10 text-primary">
+                                    Si
+                                 </Badge>
+                              ) : (
+                                 <span className="text-xs text-muted-foreground">No</span>
+                              )}
+                           </TableCell>
+                           <TableCell className="text-xs text-muted-foreground">
+                              {formatDate(activity.fechaInicio)}
+                              {activity.fechaFin ? ` - ${formatDate(activity.fechaFin)}` : ""}
                            </TableCell>
                            <TableCell>
                               <Badge
@@ -93,7 +115,7 @@ export function GroupDetailActivitiesTab({
                      ))}
                      {groupActivities.length === 0 && (
                         <TableRow>
-                           <TableCell colSpan={5} className="text-center py-8">
+                           <TableCell colSpan={7} className="text-center py-8">
                               <BookOpen className="size-8 text-muted-foreground/30 mx-auto mb-2" />
                               <p className="text-xs text-muted-foreground">No hay actividades registradas</p>
                               <Button variant="outline" size="sm" className="mt-3 text-xs" onClick={onAddActivity}>

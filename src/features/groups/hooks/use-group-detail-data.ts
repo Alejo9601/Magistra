@@ -1,13 +1,12 @@
 ﻿import { useMemo } from "react";
 import { getClassesByAssignment } from "@/lib/edu-repository";
-import type { Assessment, ClassroomRecord, Student, SubjectActivity } from "@/types";
+import type { ClassroomRecord, Student, SubjectActivity } from "@/types";
 
 type UseGroupDetailDataParams = {
    assignmentId: string;
    studentSearch: string;
    groupStudents: Student[];
    getRecord: (classId: string) => ClassroomRecord;
-   getAssessmentsByAssignment: (assignmentId: string) => Assessment[];
    getActivitiesByAssignment: (assignmentId: string) => SubjectActivity[];
 };
 
@@ -16,18 +15,9 @@ export function useGroupDetailData({
    studentSearch,
    groupStudents,
    getRecord,
-   getAssessmentsByAssignment,
    getActivitiesByAssignment,
 }: UseGroupDetailDataParams) {
    const groupClasses = useMemo(() => getClassesByAssignment(assignmentId), [assignmentId]);
-
-   const groupAssessments = useMemo(
-      () =>
-         [...getAssessmentsByAssignment(assignmentId)].sort((a, b) =>
-            a.date.localeCompare(b.date),
-         ),
-      [assignmentId, getAssessmentsByAssignment],
-   );
 
    const filteredStudents = useMemo(() => {
       const query = studentSearch.trim().toLowerCase();
@@ -90,7 +80,6 @@ export function useGroupDetailData({
 
    return {
       groupClasses,
-      groupAssessments,
       filteredStudents,
       groupActivities,
       attendanceByStudent,
@@ -98,4 +87,3 @@ export function useGroupDetailData({
       atRiskCount,
    };
 }
-
