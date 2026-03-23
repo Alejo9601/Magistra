@@ -4,6 +4,7 @@ import type {
    AssessmentStatus,
    AssessmentType,
    ActivityStatus,
+   ActivityType,
    ClassStatus,
    EvaluativeFormat,
    SubjectActivity,
@@ -69,8 +70,12 @@ type ActivityPatchInput = {
    assignmentId?: string;
    title?: string;
    description?: string;
-   type?: "homework" | "classwork" | "project";
+   type?: ActivityType;
    status?: ActivityStatus;
+   esEvaluable?: boolean;
+   rubricaId?: string;
+   fechaInicio?: string;
+   fechaFin?: string;
    linkedClassIds?: string[];
 };
 
@@ -78,8 +83,12 @@ type NewActivityInput = {
    assignmentId: string;
    title: string;
    description?: string;
-   type?: "homework" | "classwork" | "project";
+   type?: ActivityType;
    status?: ActivityStatus;
+   esEvaluable?: boolean;
+   rubricaId?: string;
+   fechaInicio?: string;
+   fechaFin?: string;
    linkedClassIds?: string[];
 };
 
@@ -164,7 +173,9 @@ export function syncClassLinkedRecords({
       updateActivity(existingActivity.id, {
          assignmentId: effectiveAssignmentId,
          title: activityTitle,
-         type: "classwork",
+         type: "practica",
+         esEvaluable: true,
+         fechaInicio: payload.date,
          status: mapClassStatusToActivityStatus(payload.status),
          linkedClassIds: Array.from(
             new Set([...existingActivity.linkedClassIds, effectiveClassId]),
@@ -176,8 +187,13 @@ export function syncClassLinkedRecords({
    addActivity({
       assignmentId: effectiveAssignmentId,
       title: activityTitle,
-      type: "classwork",
+      type: "practica",
+      esEvaluable: true,
+      fechaInicio: payload.date,
       status: mapClassStatusToActivityStatus(payload.status),
       linkedClassIds: [effectiveClassId],
    });
 }
+
+
+

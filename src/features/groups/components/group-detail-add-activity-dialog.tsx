@@ -48,19 +48,19 @@ export function GroupDetailAddActivityDialog({
             </DialogHeader>
             <div className="grid grid-cols-1 gap-4 py-2">
                <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs">Titulo</Label>
+                  <Label className="text-xs">Nombre de la actividad</Label>
                   <Input className="h-9 text-xs" placeholder="Ej: Guia de ejercicios de funciones" value={title} onChange={(event) => onTitleChange(event.target.value)} />
                </div>
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Tipo</Label>
+                     <Label className="text-xs">Caracter</Label>
                      <Select value={type} onValueChange={(value) => onTypeChange(value as ActivityType)}>
                         <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                           <SelectItem value="classwork">En clase</SelectItem>
-                           <SelectItem value="homework">Tarea</SelectItem>
-                           <SelectItem value="lab">Laboratorio</SelectItem>
-                           <SelectItem value="project">Proyecto</SelectItem>
+                           <SelectItem value="practica">Practica</SelectItem>
+                           <SelectItem value="tarea">Tarea</SelectItem>
+                           <SelectItem value="examen">Examen</SelectItem>
+                           <SelectItem value="proyecto">Proyecto</SelectItem>
                         </SelectContent>
                      </Select>
                   </div>
@@ -94,3 +94,5 @@ export function GroupDetailAddActivityDialog({
       </Dialog>
    );
 }
+
+

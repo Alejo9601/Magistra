@@ -18,6 +18,10 @@ type NewActivityInput = {
    description?: string;
    type?: ActivityType;
    status?: ActivityStatus;
+   esEvaluable?: boolean;
+   rubricaId?: string;
+   fechaInicio?: string;
+   fechaFin?: string;
    linkedClassIds?: string[];
 };
 
@@ -27,6 +31,10 @@ type UpdateActivityInput = {
    description?: string;
    type?: ActivityType;
    status?: ActivityStatus;
+   esEvaluable?: boolean;
+   rubricaId?: string;
+   fechaInicio?: string;
+   fechaFin?: string;
    linkedClassIds?: string[];
 };
 
@@ -71,13 +79,18 @@ export function ActivitiesProvider({
          if (!assignment) {
             throw new Error("Assignment not found for activity creation.");
          }
+         const today = new Date().toISOString().slice(0, 10);
          const nextActivity: SubjectActivity = {
             id: createActivityId(),
             subjectId: assignment.subjectId,
             assignmentId: assignment.id,
             title: input.title.trim(),
             description: input.description?.trim() || undefined,
-            type: input.type ?? "classwork",
+            type: input.type ?? "practica",
+            esEvaluable: input.esEvaluable ?? (input.type === "examen"),
+            rubricaId: input.rubricaId?.trim() || undefined,
+            fechaInicio: input.fechaInicio ?? today,
+            fechaFin: input.fechaFin,
             status: input.status ?? "draft",
             linkedClassIds: input.linkedClassIds ?? [],
          };
@@ -101,6 +114,10 @@ export function ActivitiesProvider({
                           patch.description === undefined
                              ? activity.description
                              : patch.description.trim() || undefined,
+                       rubricaId:
+                          patch.rubricaId === undefined
+                             ? activity.rubricaId
+                             : patch.rubricaId.trim() || undefined,
                     }
                   : activity,
             ),

@@ -8,6 +8,11 @@ import type {
    Student,
 } from "@/types";
 import type { GroupPendingDelete } from "@/features/groups/types";
+import {
+   evaluativeClassTypeLabel,
+   inferEvaluativeTypeFromTitle,
+   type PrimaryEvaluativeFormat,
+} from "@/features/groups/utils/group-detail-utils";
 
 type UseGroupDetailActionsParams = {
    assignmentId: string;
@@ -41,6 +46,12 @@ type UseGroupDetailActionsParams = {
    removeActivity: (id: string) => void;
 };
 
+function assessmentTypeFromEvaluativeFormat(
+   evaluativeFormat: PrimaryEvaluativeFormat,
+): AssessmentType {
+   return evaluativeFormat === "actividad-practica" ? "practice_work" : "exam";
+}
+
 export function useGroupDetailActions({
    assignmentId,
    groupStudents,
@@ -60,7 +71,8 @@ export function useGroupDetailActions({
    const [newEmail, setNewEmail] = useState("");
    const [newObservations, setNewObservations] = useState("");
    const [newAssessmentTitle, setNewAssessmentTitle] = useState("");
-   const [newAssessmentType, setNewAssessmentType] = useState<AssessmentType>("exam");
+   const [newAssessmentEvaluativeFormat, setNewAssessmentEvaluativeFormat] =
+      useState<PrimaryEvaluativeFormat>("escrito");
    const [newAssessmentDate, setNewAssessmentDate] = useState("");
    const [newAssessmentStatus, setNewAssessmentStatus] =
       useState<AssessmentStatus>("draft");
@@ -68,7 +80,7 @@ export function useGroupDetailActions({
    const [newAssessmentMaxScore, setNewAssessmentMaxScore] = useState("10");
    const [newAssessmentDescription, setNewAssessmentDescription] = useState("");
    const [newActivityTitle, setNewActivityTitle] = useState("");
-   const [newActivityType, setNewActivityType] = useState<ActivityType>("classwork");
+   const [newActivityType, setNewActivityType] = useState<ActivityType>("practica");
    const [newActivityStatus, setNewActivityStatus] =
       useState<ActivityStatus>("planned");
    const [newActivityDescription, setNewActivityDescription] = useState("");
@@ -84,7 +96,7 @@ export function useGroupDetailActions({
 
    const resetAssessmentForm = () => {
       setNewAssessmentTitle("");
-      setNewAssessmentType("exam");
+      setNewAssessmentEvaluativeFormat("escrito");
       setNewAssessmentDate("");
       setNewAssessmentStatus("draft");
       setNewAssessmentWeight("1");
@@ -94,7 +106,7 @@ export function useGroupDetailActions({
 
    const resetActivityForm = () => {
       setNewActivityTitle("");
-      setNewActivityType("classwork");
+      setNewActivityType("practica");
       setNewActivityStatus("planned");
       setNewActivityDescription("");
    };
@@ -150,11 +162,16 @@ export function useGroupDetailActions({
          return;
       }
 
+      const rawTitle = newAssessmentTitle.trim();
+      const inferredType = inferEvaluativeTypeFromTitle(rawTitle);
+      const formatLabel = evaluativeClassTypeLabel[newAssessmentEvaluativeFormat];
+      const normalizedTitle = inferredType ? rawTitle : `${formatLabel}: ${rawTitle}`;
+
       addAssessment({
          assignmentId,
-         title: newAssessmentTitle,
+         title: normalizedTitle,
          date: newAssessmentDate,
-         type: newAssessmentType,
+         type: assessmentTypeFromEvaluativeFormat(newAssessmentEvaluativeFormat),
          status: newAssessmentStatus,
          weight,
          maxScore,
@@ -215,8 +232,8 @@ export function useGroupDetailActions({
       setNewObservations,
       newAssessmentTitle,
       setNewAssessmentTitle,
-      newAssessmentType,
-      setNewAssessmentType,
+      newAssessmentEvaluativeFormat,
+      setNewAssessmentEvaluativeFormat,
       newAssessmentDate,
       setNewAssessmentDate,
       newAssessmentStatus,
@@ -246,3 +263,4 @@ export function useGroupDetailActions({
       confirmDelete,
    };
 }
+

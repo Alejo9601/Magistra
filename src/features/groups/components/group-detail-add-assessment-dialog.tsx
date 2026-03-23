@@ -4,7 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { AssessmentStatus, AssessmentType } from "@/types";
+import type { AssessmentStatus } from "@/types";
+import {
+   primaryEvaluativeFormatOptions,
+   type PrimaryEvaluativeFormat,
+} from "@/features/groups/utils/group-detail-utils";
 
 type GroupDetailAddAssessmentDialogProps = {
    open: boolean;
@@ -12,14 +16,14 @@ type GroupDetailAddAssessmentDialogProps = {
    subjectName: string;
    section: string;
    title: string;
-   type: AssessmentType;
+   evaluativeFormat: PrimaryEvaluativeFormat;
    date: string;
    status: AssessmentStatus;
    weight: string;
    maxScore: string;
    description: string;
    onTitleChange: (value: string) => void;
-   onTypeChange: (value: AssessmentType) => void;
+   onEvaluativeFormatChange: (value: PrimaryEvaluativeFormat) => void;
    onDateChange: (value: string) => void;
    onStatusChange: (value: AssessmentStatus) => void;
    onWeightChange: (value: string) => void;
@@ -34,14 +38,14 @@ export function GroupDetailAddAssessmentDialog({
    subjectName,
    section,
    title,
-   type,
+   evaluativeFormat,
    date,
    status,
    weight,
    maxScore,
    description,
    onTitleChange,
-   onTypeChange,
+   onEvaluativeFormatChange,
    onDateChange,
    onStatusChange,
    onWeightChange,
@@ -60,7 +64,7 @@ export function GroupDetailAddAssessmentDialog({
             </DialogHeader>
             <div className="grid grid-cols-1 gap-4 py-2">
                <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs">Titulo</Label>
+                  <Label className="text-xs">Nombre de la evaluacion</Label>
                   <Input
                      className="h-9 text-xs"
                      placeholder="Ej: Parcial 1 - Algebra"
@@ -70,14 +74,17 @@ export function GroupDetailAddAssessmentDialog({
                </div>
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Tipo</Label>
-                     <Select value={type} onValueChange={(value) => onTypeChange(value as AssessmentType)}>
+                     <Label className="text-xs">Tipo de evaluacion</Label>
+                     <Select value={evaluativeFormat} onValueChange={(value) => onEvaluativeFormatChange(value as PrimaryEvaluativeFormat)}>
                         <SelectTrigger className="h-9 text-xs">
                            <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                           <SelectItem value="exam">Examen</SelectItem>
-                           <SelectItem value="practice_work">Trabajo practico</SelectItem>
+                           {primaryEvaluativeFormatOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                 {option.label}
+                              </SelectItem>
+                           ))}
                         </SelectContent>
                      </Select>
                   </div>

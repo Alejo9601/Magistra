@@ -1,5 +1,6 @@
 ﻿import {
    classSessions,
+   evaluations,
    getAssignmentIdBySubjectId,
    getSubjectIdByAssignmentId,
 } from "@/lib/edu-repository";
@@ -13,13 +14,17 @@ import type {
 const ACTIVITIES_STORAGE_KEY = "aula.activities";
 export type { ActivityStatus, ActivityType, SubjectActivity };
 
-function isActivityType(value: unknown): value is ActivityType {
-   return (
-      value === "classwork" ||
-      value === "homework" ||
-      value === "lab" ||
-      value === "project"
-   );
+function normalizeLegacyActivityType(value: unknown): ActivityType | null {
+   if (value === "practica" || value === "examen" || value === "proyecto" || value === "tarea") {
+      return value;
+   }
+   if (value === "classwork") return "practica";
+   if (value === "homework") return "tarea";
+   if (value === "project") return "proyecto";
+   if (value === "lab") return "practica";
+   if (value === "practice_work") return "practica";
+   if (value === "exam") return "examen";
+   return null;
 }
 
 function isActivityStatus(value: unknown): value is ActivityStatus {
@@ -31,15 +36,29 @@ function isActivityStatus(value: unknown): value is ActivityStatus {
    );
 }
 
+function sanitizeDate(value: unknown): string | null {
+   if (typeof value !== "string") {
+      return null;
+   }
+   return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
+}
+
 function sanitizeActivity(raw: unknown): SubjectActivity | null {
    if (!raw || typeof raw !== "object") {
       return null;
    }
-   const input = raw as Partial<SubjectActivity>;
+   const input = raw as Partial<SubjectActivity> & {
+      esEvaluable?: unknown;
+      rubricaId?: unknown;
+      fechaInicio?: unknown;
+      fechaFin?: unknown;
+   };
+
+   const normalizedType = normalizeLegacyActivityType(input.type);
    if (
       typeof input.id !== "string" ||
       typeof input.title !== "string" ||
-      !isActivityType(input.type) ||
+      !normalizedType ||
       !isActivityStatus(input.status) ||
       !Array.isArray(input.linkedClassIds)
    ) {
@@ -64,6 +83,18 @@ function sanitizeActivity(raw: unknown): SubjectActivity | null {
       return null;
    }
 
+   const firstLinkedClassId = input.linkedClassIds.find((id): id is string => typeof id === "string");
+   const fallbackStartDate = firstLinkedClassId
+      ? classSessions.find((classSession) => classSession.id === firstLinkedClassId)?.date
+      : undefined;
+   const fechaInicio =
+      sanitizeDate(input.fechaInicio) ??
+      fallbackStartDate ??
+      classSessions.find((classSession) =>
+         classSession.subjectId === resolvedSubjectId,
+      )?.date ??
+      new Date().toISOString().slice(0, 10);
+
    return {
       id: input.id,
       subjectId: resolvedSubjectId,
@@ -71,7 +102,14 @@ function sanitizeActivity(raw: unknown): SubjectActivity | null {
       title: input.title,
       description:
          typeof input.description === "string" ? input.description : undefined,
-      type: input.type,
+      type: normalizedType,
+      esEvaluable:
+         typeof input.esEvaluable === "boolean"
+            ? input.esEvaluable
+            : normalizedType === "examen",
+      rubricaId: typeof input.rubricaId === "string" ? input.rubricaId : undefined,
+      fechaInicio,
+      fechaFin: sanitizeDate(input.fechaFin) ?? undefined,
       status: input.status,
       linkedClassIds: input.linkedClassIds.filter(
          (id): id is string => typeof id === "string",
@@ -100,7 +138,8 @@ function titleCase(value: string) {
 }
 
 function seedActivities(): SubjectActivity[] {
-   const grouped = new Map<string, { subjectId: string; assignmentId: string; linkedClassIds: string[] }>();
+   const grouped = new Map<string, { subjectId: string; assignmentId: string; linkedClassIds: string[]; fechaInicio: string }>();
+
    classSessions.forEach((classSession) => {
       parseActivityLines(classSession.activities).forEach((title) => {
          const normalizedTitle = title.toLowerCase();
@@ -119,22 +158,40 @@ function seedActivities(): SubjectActivity[] {
             assignmentId,
             subjectId: classSession.subjectId,
             linkedClassIds: [classSession.id],
+            fechaInicio: classSession.date,
          });
       });
    });
 
-   return Array.from(grouped.entries()).map(([key, entry], index) => {
+   const seededFromClasses = Array.from(grouped.entries()).map(([key, entry], index) => {
       const [, normalizedTitle] = key.split("|");
       return {
          id: `act-seed-${index + 1}`,
          subjectId: entry.subjectId,
          assignmentId: entry.assignmentId,
          title: titleCase(normalizedTitle),
-         type: "classwork",
-         status: "planned",
+         type: "practica" as ActivityType,
+         esEvaluable: false,
+         fechaInicio: entry.fechaInicio,
+         status: "planned" as ActivityStatus,
          linkedClassIds: entry.linkedClassIds,
       };
    });
+
+   const seededFromEvaluations = evaluations.map((evaluation, index) => ({
+      id: `act-eval-seed-${index + 1}`,
+      subjectId: evaluation.subjectId,
+      assignmentId: getAssignmentIdBySubjectId(evaluation.subjectId),
+      title: evaluation.name,
+      type: evaluation.type === "tp" ? ("practica" as ActivityType) : ("examen" as ActivityType),
+      esEvaluable: true,
+      fechaInicio: evaluation.date,
+      fechaFin: evaluation.date,
+      status: "assigned" as ActivityStatus,
+      linkedClassIds: [],
+   }));
+
+   return [...seededFromClasses, ...seededFromEvaluations];
 }
 
 export function loadActivities() {

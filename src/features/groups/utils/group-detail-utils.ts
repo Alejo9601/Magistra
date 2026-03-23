@@ -1,5 +1,17 @@
 ﻿import type { ActivityStatus, ActivityType, AssessmentType } from "@/types";
 
+export type PrimaryEvaluativeFormat = "oral" | "escrito" | "actividad-practica" | "otro";
+
+export const primaryEvaluativeFormatOptions: Array<{
+   value: PrimaryEvaluativeFormat;
+   label: string;
+}> = [
+   { value: "escrito", label: "Escrito" },
+   { value: "oral", label: "Oral" },
+   { value: "actividad-practica", label: "Actividad Practica" },
+   { value: "otro", label: "Otro" },
+];
+
 export const evaluativeClassTypeLabel: Record<string, string> = {
    oral: "Oral",
    escrito: "Escrito",
@@ -26,10 +38,10 @@ export function inferEvaluativeTypeFromTitle(title: string) {
 }
 
 export const activityTypeLabel: Record<ActivityType, string> = {
-   classwork: "En clase",
-   homework: "Tarea",
-   lab: "Laboratorio",
-   project: "Proyecto",
+   practica: "Practica",
+   examen: "Examen",
+   proyecto: "Proyecto",
+   tarea: "Tarea",
 };
 
 export const activityStatusLabel: Record<ActivityStatus, string> = {
@@ -45,3 +57,5 @@ export const activityStatusBadgeClass: Record<ActivityStatus, string> = {
    assigned: "bg-info/10 text-info",
    completed: "bg-success/10 text-success",
 };
+
+

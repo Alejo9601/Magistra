@@ -1,4 +1,4 @@
-import type { ClassBlock, ClassSession } from "@/types";
+﻿import type { ClassBlock, ClassSession } from "@/types";
 import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
 
 const PLANNING_STORAGE_KEY = "aula.planning.classes";
@@ -11,15 +11,19 @@ function isClassStatus(value: unknown): value is ClassSession["status"] {
    );
 }
 
-function isClassType(value: unknown): value is Exclude<ClassSession["type"], "oral"> {
-   return (
-      value === "teorica" ||
-      value === "practica" ||
-      value === "teorico-practica" ||
+function normalizeLegacyClassType(value: unknown): Exclude<ClassSession["type"], "oral"> | null {
+   if (value === "teorica" || value === "practica" || value === "teorico-practica") {
+      return value;
+   }
+   if (
       value === "evaluacion" ||
+      value === "oral" ||
       value === "repaso" ||
       value === "recuperatorio"
-   );
+   ) {
+      return "teorico-practica";
+   }
+   return null;
 }
 
 function isEvaluativeFormat(
@@ -37,7 +41,6 @@ function isEvaluativeFormat(
    );
 }
 
-
 function sanitizePositiveMinutes(value: unknown): number | undefined {
    if (typeof value !== "number" || Number.isNaN(value) || value <= 0) {
       return undefined;
@@ -50,14 +53,13 @@ function sanitizeBlock(raw: unknown): ClassBlock | null {
       return null;
    }
    const input = raw as Partial<ClassBlock>;
-   const rawType = (raw as { type?: unknown }).type;
-   const normalizedType = rawType === "oral" ? "evaluacion" : rawType;
+   const normalizedType = normalizeLegacyClassType((raw as { type?: unknown }).type);
 
    if (
       typeof input.order !== "number" ||
       typeof input.topic !== "string" ||
       !Array.isArray(input.subtopics) ||
-      !isClassType(normalizedType)
+      !normalizedType
    ) {
       return null;
    }
@@ -101,8 +103,7 @@ function sanitizeClassSession(raw: unknown): ClassSession | null {
    }
 
    const input = raw as Partial<ClassSession> & { type?: string };
-   const rawType = input.type;
-   const normalizedType = rawType === "oral" ? "evaluacion" : rawType;
+   const normalizedType = normalizeLegacyClassType(input.type);
 
    if (
       typeof input.id !== "string" ||
@@ -112,7 +113,7 @@ function sanitizeClassSession(raw: unknown): ClassSession | null {
       typeof input.time !== "string" ||
       typeof input.topic !== "string" ||
       !Array.isArray(input.subtopics) ||
-      !isClassType(normalizedType) ||
+      !normalizedType ||
       !isClassStatus(input.status)
    ) {
       return null;
@@ -144,14 +145,9 @@ function sanitizeClassSession(raw: unknown): ClassSession | null {
       ),
       type: normalizedType,
       status: input.status,
-      evaluativeFormat:
-         normalizedType === "evaluacion"
-            ? isEvaluativeFormat(input.evaluativeFormat)
-               ? input.evaluativeFormat
-               : rawType === "oral"
-                  ? "oral"
-                  : undefined
-            : undefined,
+      evaluativeFormat: isEvaluativeFormat(input.evaluativeFormat)
+         ? input.evaluativeFormat
+         : undefined,
       practiceActivityName:
          typeof input.practiceActivityName === "string" &&
          input.practiceActivityName.trim().length > 0

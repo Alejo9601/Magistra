@@ -224,7 +224,7 @@ export type Assessment = {
    gradesLoaded: number;
 };
 
-export type ActivityType = "classwork" | "homework" | "lab" | "project";
+export type ActivityType = "practica" | "examen" | "proyecto" | "tarea";
 export type ActivityStatus = "draft" | "planned" | "assigned" | "completed";
 
 export type SubjectActivity = {
@@ -234,6 +234,10 @@ export type SubjectActivity = {
    title: string;
    description?: string;
    type: ActivityType;
+   esEvaluable: boolean;
+   rubricaId?: string;
+   fechaInicio: string;
+   fechaFin?: string;
    status: ActivityStatus;
    linkedClassIds: string[];
 };
@@ -255,6 +259,12 @@ export type ClassroomRecord = {
    notes?: string;
    performanceEntries: ClassroomPerformanceEntry[];
 };
+
+
+
+
+
+
 
 
 

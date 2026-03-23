@@ -1,4 +1,4 @@
-export const defaultEduData = {
+﻿export const defaultEduData = {
    institutions: [
       { id: "inst-1", name: "Colegio San Martin", address: "Av. Libertador 1250, Buenos Aires", level: "Secundaria", color: "#4F46E5" },
       { id: "inst-2", name: "Instituto Belgrano", address: "Calle Belgrano 540, CABA", level: "Secundaria", color: "#0891B2" },
@@ -32,7 +32,7 @@ export const defaultEduData = {
       { id: "cls-4", subjectId: "sub-4", institutionId: "inst-3", date: "2026-02-27", time: "18:00", topic: "Espacios vectoriales", subtopics: ["Subespacios", "Combinacion lineal"], type: "teorica", status: "planificada", activities: "Clase magistral con demostraciones." },
       { id: "cls-5", subjectId: "sub-1", institutionId: "inst-1", date: "2026-02-28", time: "08:00", topic: "Sistemas de ecuaciones", subtopics: ["Metodo de sustitucion", "Metodo de igualacion"], type: "practica", status: "planificada" },
       { id: "cls-6", subjectId: "sub-5", institutionId: "inst-3", date: "2026-02-28", time: "16:00", topic: "Integrales dobles", subtopics: ["Regiones tipo I y II"], type: "teorica", status: "sin-planificar" },
-      { id: "cls-7", subjectId: "sub-3", institutionId: "inst-2", date: "2026-03-02", time: "14:00", topic: "Identidades trigonometricas", subtopics: ["Angulo doble"], type: "evaluacion", status: "planificada" },
+      { id: "cls-7", subjectId: "sub-3", institutionId: "inst-2", date: "2026-03-02", time: "14:00", topic: "Identidades trigonometricas", subtopics: ["Angulo doble"], type: "teorico-practica", status: "planificada" },
       { id: "cls-8", subjectId: "sub-1", institutionId: "inst-1", date: "2026-03-03", time: "08:00", topic: "Inecuaciones", subtopics: ["Intervalos", "Valor absoluto"], type: "teorica", status: "planificada" },
       { id: "cls-9", subjectId: "sub-2", institutionId: "inst-1", date: "2026-03-03", time: "10:30", topic: "Trabajo y energia", subtopics: ["Energia cinetica", "Energia potencial"], type: "teorica", status: "sin-planificar" },
       { id: "cls-10", subjectId: "sub-4", institutionId: "inst-3", date: "2026-03-04", time: "18:00", topic: "Transformaciones lineales", subtopics: ["Nucleo", "Imagen"], type: "practica", status: "planificada" },
@@ -69,3 +69,4 @@ export const defaultEduData = {
       avatar: "AM",
    },
 };
+

@@ -54,8 +54,8 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
       setNewObservations,
       newAssessmentTitle,
       setNewAssessmentTitle,
-      newAssessmentType,
-      setNewAssessmentType,
+      newAssessmentEvaluativeFormat,
+      setNewAssessmentEvaluativeFormat,
       newAssessmentDate,
       setNewAssessmentDate,
       newAssessmentStatus,
@@ -232,14 +232,14 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
             subjectName={subject.name}
             section={assignment.section}
             title={newAssessmentTitle}
-            type={newAssessmentType}
+            evaluativeFormat={newAssessmentEvaluativeFormat}
             date={newAssessmentDate}
             status={newAssessmentStatus}
             weight={newAssessmentWeight}
             maxScore={newAssessmentMaxScore}
             description={newAssessmentDescription}
             onTitleChange={setNewAssessmentTitle}
-            onTypeChange={setNewAssessmentType}
+            onEvaluativeFormatChange={setNewAssessmentEvaluativeFormat}
             onDateChange={setNewAssessmentDate}
             onStatusChange={setNewAssessmentStatus}
             onWeightChange={setNewAssessmentWeight}
@@ -271,3 +271,6 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
       </div>
    );
 }
+
+
+
