@@ -64,6 +64,8 @@ export function PlanificacionContent() {
       undefined,
    );
    const [selectedDayDate, setSelectedDayDate] = useState<string | null>(null);
+   const [classDetailOpen, setClassDetailOpen] = useState(false);
+   const [detailClassId, setDetailClassId] = useState<string | null>(null);
    const [hasHandledEntryClass, setHasHandledEntryClass] = useState(false);
    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
    const planningPrefsStorageKey = useMemo(
@@ -140,6 +142,16 @@ export function PlanificacionContent() {
       setModalOpen(true);
    };
 
+   const openClassDetail = (id: string) => {
+      setDetailClassId(id);
+      setClassDetailOpen(true);
+   };
+
+   const closeClassDetail = () => {
+      setClassDetailOpen(false);
+      setDetailClassId(null);
+   };
+
    const openEditModal = (id: string, options?: { allowPlanned?: boolean }) => {
       const targetClass = classes.find((classSession) => classSession.id === id);
       if (!targetClass) {
@@ -154,6 +166,7 @@ export function PlanificacionContent() {
       setPrefillDate(undefined);
       setModalOpen(true);
    };
+
    const openEditModalFromDayDetails = (id: string) => {
       setSelectedDayDate(null);
       openEditModal(id);
@@ -170,7 +183,7 @@ export function PlanificacionContent() {
       }
 
       setHasHandledEntryClass(true);
-      openEditModal(entryClassId, { allowPlanned: true });
+      openClassDetail(entryClassId);
    }, [classes, entryClassId, hasHandledEntryClass]);
 
    const replanClass = (id: string, options?: { fromDayDetails?: boolean }) => {
@@ -203,6 +216,20 @@ export function PlanificacionContent() {
             ? `Clase duplicada: ${source.date} -> ${duplicated.date}`
             : "Clase duplicada para la semana siguiente.",
       );
+   };
+
+   const handleEditFromClassDetail = (id: string) => {
+      closeClassDetail();
+      openEditModal(id, { allowPlanned: true });
+   };
+
+   const handleReplanFromClassDetail = (id: string) => {
+      closeClassDetail();
+      replanClass(id);
+   };
+
+   const handleDuplicateFromClassDetail = (id: string) => {
+      onDuplicate(id);
    };
 
    const onSave = (payload: ClassFormInput, mode: "draft" | "publish") => {
@@ -300,7 +327,8 @@ export function PlanificacionContent() {
             statusFilter={statusFilter}
             onStatusFilterChange={setStatusFilter}
             typeFilter={typeFilter}
-            onTypeFilterChange={setTypeFilter}            visibleClassesCount={visibleClassesCount}
+            onTypeFilterChange={setTypeFilter}
+            visibleClassesCount={visibleClassesCount}
          />
 
          <div className="flex-1 min-h-0">
@@ -318,7 +346,7 @@ export function PlanificacionContent() {
                   onTouchEnd={handleCalendarTouchEnd}
                   onOpenDayDetails={setSelectedDayDate}
                   onCreateClass={openCreateModal}
-                  onEditClass={openEditModal}
+                  onOpenClassDetail={openClassDetail}
                />
             ) : (
                <PlanningClassesList
@@ -330,6 +358,7 @@ export function PlanificacionContent() {
                      setTypeFilter("all");
                   }}
                   onCreateClass={() => openCreateModal()}
+                  onOpenDetail={openClassDetail}
                   onOpenEdit={openEditModal}
                   onReplan={(id) => replanClass(id)}
                   onDuplicate={onDuplicate}
@@ -353,45 +382,17 @@ export function PlanificacionContent() {
             onEditFromDayDetails={openEditModalFromDayDetails}
             onReplanFromDayDetails={(id) => replanClass(id, { fromDayDetails: true })}
             onDuplicate={onDuplicate}
+            classDetailOpen={classDetailOpen}
+            detailClassId={detailClassId}
+            onCloseClassDetail={closeClassDetail}
+            onOpenClassDetailFromDay={openClassDetail}
+            onEditFromClassDetail={handleEditFromClassDetail}
+            onReplanFromClassDetail={handleReplanFromClassDetail}
+            onDuplicateFromClassDetail={handleDuplicateFromClassDetail}
          />
       </div>
    );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

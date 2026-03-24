@@ -1,6 +1,7 @@
 ﻿import { ClassEditorModal } from "@/features/planning/components/class-editor-modal";
 import { ClassScheduleModal } from "@/features/planning/components/class-schedule-modal";
 import { DayClassesDialog } from "@/features/planning/components/day-classes-dialog";
+import { ClassDetailDialog } from "@/features/planning/components/class-detail-dialog";
 import type { ClassFormInput } from "@/features/planning/types";
 import type { ClassSession } from "@/types";
 
@@ -20,6 +21,13 @@ export function PlanningModals({
    onEditFromDayDetails,
    onReplanFromDayDetails,
    onDuplicate,
+   classDetailOpen,
+   detailClassId,
+   onCloseClassDetail,
+   onOpenClassDetailFromDay,
+   onEditFromClassDetail,
+   onReplanFromClassDetail,
+   onDuplicateFromClassDetail,
 }: {
    modalOpen: boolean;
    setModalOpen: (open: boolean) => void;
@@ -46,6 +54,13 @@ export function PlanningModals({
    onEditFromDayDetails: (id: string) => void;
    onReplanFromDayDetails: (id: string) => void;
    onDuplicate: (id: string) => void;
+   classDetailOpen: boolean;
+   detailClassId: string | null;
+   onCloseClassDetail: () => void;
+   onOpenClassDetailFromDay: (id: string) => void;
+   onEditFromClassDetail: (id: string) => void;
+   onReplanFromClassDetail: (id: string) => void;
+   onDuplicateFromClassDetail: (id: string) => void;
 }) {
    return (
       <>
@@ -69,11 +84,24 @@ export function PlanningModals({
             selectedDayDate={selectedDayDate}
             selectedDayClasses={selectedDayClasses}
             onClose={onCloseDayDetails}
+            onOpenClassDetail={onOpenClassDetailFromDay}
             onEditClass={onEditFromDayDetails}
             onReplanClass={onReplanFromDayDetails}
             onDuplicate={onDuplicate}
          />
+
+         <ClassDetailDialog
+            open={classDetailOpen}
+            classId={detailClassId}
+            onOpenChange={(open) => {
+               if (!open) {
+                  onCloseClassDetail();
+               }
+            }}
+            onEditClass={onEditFromClassDetail}
+            onReplanClass={onReplanFromClassDetail}
+            onDuplicateClass={onDuplicateFromClassDetail}
+         />
       </>
    );
 }
-

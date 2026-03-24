@@ -26,6 +26,7 @@ export function DayClassesDialog({
    selectedDayDate,
    selectedDayClasses,
    onClose,
+   onOpenClassDetail,
    onEditClass,
    onReplanClass,
    onDuplicate,
@@ -33,6 +34,7 @@ export function DayClassesDialog({
    selectedDayDate: string | null;
    selectedDayClasses: ClassSession[];
    onClose: () => void;
+   onOpenClassDetail: (id: string) => void;
    onEditClass: (id: string) => void;
    onReplanClass: (id: string) => void;
    onDuplicate: (id: string) => void;
@@ -90,10 +92,13 @@ export function DayClassesDialog({
                               </Badge>
                            </div>
                            <div className="mt-3 flex items-center gap-1">
-                              <Button variant="ghost" size="icon" className="size-7" asChild>
-                                 <Link to={`/clase/${cls.id}`}>
-                                    <Eye className="size-3.5" />
-                                 </Link>
+                              <Button
+                                 variant="ghost"
+                                 size="icon"
+                                 className="size-7"
+                                 onClick={() => onOpenClassDetail(cls.id)}
+                              >
+                                 <Eye className="size-3.5" />
                               </Button>
                               <Button variant="ghost" size="icon" className="size-7" asChild>
                                  <Link to={`/clase/${cls.id}/dictado`}>
@@ -139,4 +144,3 @@ export function DayClassesDialog({
       </Dialog>
    );
 }
-

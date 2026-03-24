@@ -17,15 +17,28 @@ import { Link, useParams } from "react-router-dom";
 import { useStudentsContext } from "@/features/students";
 import { Button } from "@/components/ui/button";
 import { useClassroomContext } from "@/features/classroom";
+import { Copy, Edit3, RotateCcw } from "lucide-react";
 
-export function ClaseDetailContent() {
+export function ClaseDetailContent({
+   classId,
+   embedded = false,
+   onEditClass,
+   onReplanClass,
+   onDuplicateClass,
+}: {
+   classId?: string;
+   embedded?: boolean;
+   onEditClass?: (id: string) => void;
+   onReplanClass?: (id: string) => void;
+   onDuplicateClass?: (id: string) => void;
+}) {
    const params = useParams();
-   const classId = params.id as string;
+   const resolvedClassId = classId ?? (params.id as string);
    const { getStudentsByAssignment } = useStudentsContext();
-   const { classes, markClassAsTaught, updateClassNotes } = usePlanningContext();
+   const { classes, markClassAsTaught, updateClassNotes, updateClass, duplicateClass } = usePlanningContext();
    const { getRecord, setAttendance: saveAttendance } = useClassroomContext();
 
-   const cls = classes.find((classSession) => classSession.id === classId);
+   const cls = classes.find((classSession) => classSession.id === resolvedClassId);
 
    const assignmentId = cls
       ? cls.assignmentId ?? getAssignmentIdBySubjectId(cls.subjectId)
@@ -35,7 +48,7 @@ export function ClaseDetailContent() {
    const classStudents = assignmentId ? getStudentsByAssignment(assignmentId) : [];
 
    const attendanceFromRecord = useMemo<Record<string, AttendanceStatus>>(() => {
-      const record = getRecord(classId);
+      const record = getRecord(resolvedClassId);
       const nextAttendance = Object.fromEntries(
          classStudents.map((student) => [
             student.id,
@@ -43,7 +56,7 @@ export function ClaseDetailContent() {
          ]),
       );
       return nextAttendance;
-   }, [classId, classStudents, getRecord]);
+   }, [resolvedClassId, classStudents, getRecord]);
 
    const [attendance, setAttendance] =
       useState<Record<string, AttendanceStatus>>(attendanceFromRecord);
@@ -60,17 +73,59 @@ export function ClaseDetailContent() {
    }
 
    const notes = notesDraftByClassId[cls.id] ?? cls.notes ?? "";
+   const isFinalized = cls.status === "finalizada";
+
+   const handleReplan = () => {
+      if (onReplanClass) {
+         onReplanClass(cls.id);
+         return;
+      }
+      if (cls.status === "planificada") {
+         updateClass(cls.id, { status: "sin-planificar" });
+         toast.success("Clase replanificada.");
+      }
+   };
+
+   const handleDuplicate = () => {
+      if (onDuplicateClass) {
+         onDuplicateClass(cls.id);
+         return;
+      }
+      const duplicated = duplicateClass(cls.id);
+      if (duplicated) {
+         toast.success("Clase duplicada para la semana siguiente.");
+      }
+   };
 
    return (
-      <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:p-6">
+      <div className={embedded ? "w-full p-1" : "mx-auto w-full max-w-7xl px-3 py-4 sm:p-6"}>
          <ClassDetailHeader
             topic={cls.topic}
             subjectName={subject.name}
             course={subject.course}
+            showBack={!embedded}
          />
-         <div className="mb-4">
+         <div className="mb-4 flex flex-wrap gap-2">
             <Button asChild variant="outline" size="sm" className="text-xs">
                <Link to={`/clase/${cls.id}/dictado`}>Abrir vista de dictado</Link>
+            </Button>
+            <Button
+               variant="outline"
+               size="sm"
+               className="text-xs"
+               onClick={() => (onEditClass ? onEditClass(cls.id) : undefined)}
+               disabled={!onEditClass}
+            >
+               <Edit3 className="mr-1.5 size-3.5" />
+               Editar
+            </Button>
+            <Button variant="outline" size="sm" className="text-xs" onClick={handleReplan}>
+               <RotateCcw className="mr-1.5 size-3.5" />
+               Replanificar
+            </Button>
+            <Button variant="outline" size="sm" className="text-xs" onClick={handleDuplicate}>
+               <Copy className="mr-1.5 size-3.5" />
+               Duplicar
             </Button>
          </div>
 
@@ -94,6 +149,7 @@ export function ClaseDetailContent() {
                      updateClassNotes(cls.id, notes);
                      toast.success("Notas guardadas");
                   }}
+                  lockedMessage={isFinalized ? undefined : "No hay notas para esta clase aun."}
                />
             </div>
 
@@ -106,6 +162,8 @@ export function ClaseDetailContent() {
                      saveAttendance(cls.id, attendance);
                      toast.success("Asistencia guardada correctamente");
                   }}
+                  disabled={!isFinalized}
+                  lockedMessage={isFinalized ? undefined : "Asistencia no computada."}
                />
             </div>
          </div>

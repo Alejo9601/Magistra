@@ -142,18 +142,22 @@ export function ClassDetailHeader({
    topic,
    subjectName,
    course,
+   showBack = true,
 }: {
    topic: string;
    subjectName: string;
    course: string;
+   showBack?: boolean;
 }) {
    return (
       <div className="flex items-center gap-3 mb-6">
-         <Button variant="ghost" size="icon" className="size-8" asChild>
-            <Link to="/planificacion">
-               <ArrowLeft className="size-4" />
-            </Link>
-         </Button>
+         {showBack ? (
+            <Button variant="ghost" size="icon" className="size-8" asChild>
+               <Link to="/planificacion">
+                  <ArrowLeft className="size-4" />
+               </Link>
+            </Button>
+         ) : null}
          <div>
             <h1 className="text-xl font-bold text-foreground">{topic}</h1>
             <p className="text-sm text-muted-foreground">

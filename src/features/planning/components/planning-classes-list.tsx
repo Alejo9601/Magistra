@@ -23,6 +23,7 @@ type PlanningClassesListProps = {
    monthsStateStorageKey: string;
    onClearFilters: () => void;
    onCreateClass: () => void;
+   onOpenDetail: (id: string) => void;
    onOpenEdit: (id: string) => void;
    onReplan: (id: string) => void;
    onDuplicate: (id: string) => void;
@@ -34,6 +35,7 @@ export function PlanningClassesList({
    monthsStateStorageKey,
    onClearFilters,
    onCreateClass,
+   onOpenDetail,
    onOpenEdit,
    onReplan,
    onDuplicate,
@@ -144,12 +146,10 @@ export function PlanningClassesList({
                            variant="ghost"
                            size="icon"
                            className="size-7"
-                           asChild
                            title="Ver detalle de clase"
+                           onClick={() => onOpenDetail(cls.id)}
                         >
-                           <Link to={`/clase/${cls.id}`}>
-                              <Eye className="size-3.5" />
-                           </Link>
+                           <Eye className="size-3.5" />
                         </Button>
                         <Button
                            variant="ghost"
@@ -255,12 +255,10 @@ export function PlanningClassesList({
                               variant="ghost"
                               size="icon"
                               className="size-7"
-                              asChild
                               title="Ver detalle de clase"
+                              onClick={() => onOpenDetail(cls.id)}
                            >
-                              <Link to={`/clase/${cls.id}`}>
-                                 <Eye className="size-3.5" />
-                              </Link>
+                              <Eye className="size-3.5" />
                            </Button>
                            <Button
                               variant="ghost"
@@ -312,4 +310,3 @@ export function PlanningClassesList({
       </div>
    );
 }
-

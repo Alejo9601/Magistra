@@ -24,7 +24,7 @@ type PlanningCalendarViewProps = {
    onTouchEnd: (event: TouchEvent<HTMLDivElement>) => void;
    onOpenDayDetails: (dateStr: string) => void;
    onCreateClass: (dateStr: string) => void;
-   onEditClass: (id: string) => void;
+   onOpenClassDetail: (id: string) => void;
 };
 
 export function PlanningCalendarView({
@@ -40,7 +40,7 @@ export function PlanningCalendarView({
    onTouchEnd,
    onOpenDayDetails,
    onCreateClass,
-   onEditClass,
+   onOpenClassDetail,
 }: PlanningCalendarViewProps) {
    return (
       <Card className="w-full">
@@ -177,13 +177,7 @@ export function PlanningCalendarView({
                                        return (
                                           <button
                                              key={cls.id}
-                                             onClick={() => {
-                                                if (cls.status === "planificada") {
-                                                   onOpenDayDetails(dateStr);
-                                                   return;
-                                                }
-                                                onEditClass(cls.id);
-                                             }}
+                                             onClick={() => onOpenClassDetail(cls.id)}
                                              className={`w-full cursor-pointer text-left rounded px-1 py-0.5 text-[10px] font-medium truncate ${isPastDate ? "opacity-85" : ""}`}
                                              style={{
                                                 backgroundColor: (inst?.color ?? "#4F46E5") + "15",
