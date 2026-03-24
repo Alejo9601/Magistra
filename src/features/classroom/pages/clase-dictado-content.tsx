@@ -76,6 +76,7 @@ export function ClaseDictadoContent() {
    const [newActivityDescription, setNewActivityDescription] = useState("");
    const [newActivityEvaluable, setNewActivityEvaluable] = useState(false);
    const [closeDialogOpen, setCloseDialogOpen] = useState(false);
+   const [attendanceLockedByFinalized, setAttendanceLockedByFinalized] = useState(false);
    const [activityBaseline, setActivityBaseline] = useState<{
       classId: string;
       linkedActivityIds: string[];
@@ -170,6 +171,10 @@ export function ClaseDictadoContent() {
          linkedActivityIds: linkedActivities.map((activity) => activity.id),
       });
    }, [activityBaseline.classId, cls.id, linkedActivities]);
+
+   useEffect(() => {
+      setAttendanceLockedByFinalized(isFinalized);
+   }, [cls.id, isFinalized]);
 
    const closeAnalysis = useMemo(() => {
       const plannedSubtopics = cls.subtopics.map((item) => item.trim()).filter(Boolean);
@@ -434,11 +439,27 @@ export function ClaseDictadoContent() {
                   attendance={attendanceWithDefaults}
                   setAttendance={(attendance) => setAttendance(cls.id, attendance)}
                   onSave={() => toast.success("Asistencia guardada.")}
-                  disabled={isFinalized}
-                  lockedMessage={
-                     isFinalized ? "Asistencia cerrada: la clase ya esta finalizada." : undefined
-                  }
+                  disabled={attendanceLockedByFinalized}
                />
+               {attendanceLockedByFinalized ? (
+                  <div className="rounded-md border border-dashed border-border/70 bg-muted/25 p-3 text-center">
+                     <p className="text-xs text-muted-foreground">
+                        Asistencia no editable: la clase ya esta finalizada.
+                     </p>
+                     <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="mt-2 text-xs"
+                        onClick={() => {
+                           setAttendanceLockedByFinalized(false);
+                           toast.warning("Edicion manual de asistencia habilitada para clase finalizada.");
+                        }}
+                     >
+                        Editar asistencia igualmente
+                     </Button>
+                  </div>
+               ) : null}
 
                <Card>
                   <CardHeader className="pb-3">
@@ -766,6 +787,7 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
+
 
 
 
