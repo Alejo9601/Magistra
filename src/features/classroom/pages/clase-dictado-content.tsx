@@ -107,6 +107,18 @@ export function ClaseDictadoContent() {
       [cls.id, subjectActivities],
    );
 
+   const linkedActivitiesSummary = useMemo(() => {
+      const total = linkedActivities.length;
+      const evaluables = linkedActivities.filter((activity) => activity.esEvaluable).length;
+      const completed = linkedActivities.filter((activity) => activity.status === "completed").length;
+      return {
+         total,
+         evaluables,
+         completed,
+         pending: total - completed,
+      };
+   }, [linkedActivities]);
+
    const filteredUnlinkedActivities = useMemo(() => {
       const unlinked = subjectActivities.filter(
          (activity) => !activity.linkedClassIds.includes(cls.id),
@@ -422,6 +434,10 @@ export function ClaseDictadoContent() {
                   attendance={attendanceWithDefaults}
                   setAttendance={(attendance) => setAttendance(cls.id, attendance)}
                   onSave={() => toast.success("Asistencia guardada.")}
+                  disabled={isFinalized}
+                  lockedMessage={
+                     isFinalized ? "Asistencia cerrada: la clase ya esta finalizada." : undefined
+                  }
                />
 
                <Card>
@@ -429,24 +445,48 @@ export function ClaseDictadoContent() {
                      <CardTitle className="text-sm font-semibold">Actividades</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3 pt-0">
+                     {isFinalized ? (
+                        <div className="rounded-md border border-border/60 bg-muted/30 p-3 space-y-1.5">
+                           <p className="text-xs font-medium text-foreground">
+                              Resumen de actividades
+                           </p>
+                           <p className="text-[11px] text-muted-foreground">
+                              Total: {linkedActivitiesSummary.total}
+                           </p>
+                           <p className="text-[11px] text-muted-foreground">
+                              Evaluables: {linkedActivitiesSummary.evaluables}
+                           </p>
+                           <p className="text-[11px] text-muted-foreground">
+                              Completadas: {linkedActivitiesSummary.completed}
+                           </p>
+                           <p className="text-[11px] text-muted-foreground">
+                              Pendientes: {linkedActivitiesSummary.pending}
+                           </p>
+                        </div>
+                     ) : null}
                      <Button
                         size="sm"
                         className="w-full text-xs"
                         onClick={() => setCreateDialogOpen(true)}
+                        disabled={isFinalized}
                      >
                         Crear nueva actividad
-                     </Button>                     <Button
+                     </Button>
+                     <Button
                         size="sm"
                         variant="outline"
                         className="w-full text-xs"
                         onClick={() => setLinkDialogOpen(true)}
+                        disabled={isFinalized}
                      >
                         Vincular actividad existente
                      </Button>
 
                      {linkedActivities.length === 0 ? (
                         <p className="text-xs text-muted-foreground">
-                           No hay actividades vinculadas a esta clase.
+                           {isFinalized
+                              ? "No hubo actividades vinculadas en esta clase."
+                              : "No hay actividades vinculadas a esta clase."}
                         </p>
                      ) : (
                         <div className="space-y-2">
@@ -471,15 +511,17 @@ export function ClaseDictadoContent() {
                                           Estado: {activity.status}
                                        </p>
                                     </div>
-                                    <Button
-                                       type="button"
-                                       variant="ghost"
-                                       size="sm"
-                                       className="h-7 px-2 text-xs text-destructive hover:text-destructive"
-                                       onClick={() => handleUnlinkActivity(activity.id)}
-                                    >
-                                       Desvincular
-                                    </Button>
+                                    {!isFinalized ? (
+                                       <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                                          onClick={() => handleUnlinkActivity(activity.id)}
+                                       >
+                                          Desvincular
+                                       </Button>
+                                    ) : null}
                                  </div>
                               </div>
                            ))}
@@ -724,4 +766,7 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
+
+
+
 
