@@ -231,6 +231,16 @@ export type Assessment = {
 
 export type ActivityType = "practica" | "examen" | "proyecto" | "tarea";
 export type ActivityStatus = "draft" | "planned" | "assigned" | "completed";
+export type ActivityGradeStatus = "pending" | "complete";
+
+export type ActivityStudentGrade = {
+   studentId: string;
+   score?: number;
+   criteriaScores?: Record<string, number>;
+   criteriaLevels?: Record<string, string>;
+   status: ActivityGradeStatus;
+   updatedAt: string;
+};
 
 export type SubjectActivity = {
    id: string;
@@ -245,6 +255,7 @@ export type SubjectActivity = {
    fechaFin?: string;
    status: ActivityStatus;
    linkedClassIds: string[];
+   grades?: ActivityStudentGrade[];
 };
 
 export type ClassroomPerformanceKind = "activity" | "practice_work" | "exam";
@@ -264,3 +275,4 @@ export type ClassroomRecord = {
    notes?: string;
    performanceEntries: ClassroomPerformanceEntry[];
 };
+

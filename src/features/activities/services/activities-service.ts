@@ -7,6 +7,7 @@
 import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
 import type {
    ActivityStatus,
+   ActivityStudentGrade,
    ActivityType,
    SubjectActivity,
 } from "@/types";
@@ -43,6 +44,64 @@ function sanitizeDate(value: unknown): string | null {
    return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
 }
 
+function sanitizeActivityGrades(raw: unknown): ActivityStudentGrade[] {
+   if (!Array.isArray(raw)) {
+      return [];
+   }
+
+   return raw.reduce<ActivityStudentGrade[]>((acc, item) => {
+      if (!item || typeof item !== "object") {
+         return acc;
+      }
+      const input = item as Partial<ActivityStudentGrade>;
+      if (typeof input.studentId !== "string") {
+         return acc;
+      }
+
+      const score =
+         typeof input.score === "number" && Number.isFinite(input.score)
+            ? Math.max(0, input.score)
+            : undefined;
+
+      const criteriaScores =
+         input.criteriaScores && typeof input.criteriaScores === "object"
+            ? Object.fromEntries(
+                 Object.entries(input.criteriaScores)
+                    .filter(
+                       ([criterionId, value]) =>
+                          typeof criterionId === "string" &&
+                          typeof value === "number" &&
+                          Number.isFinite(value),
+                    )
+                    .map(([criterionId, value]) => [criterionId, Math.max(0, value)]),
+              )
+            : undefined;
+
+      const criteriaLevels =
+         input.criteriaLevels && typeof input.criteriaLevels === "object"
+            ? Object.fromEntries(
+                 Object.entries(input.criteriaLevels).filter(
+                    ([criterionId, value]) =>
+                       typeof criterionId === "string" && typeof value === "string",
+                 ),
+              )
+            : undefined;
+
+      acc.push({
+         studentId: input.studentId,
+         score,
+         criteriaScores,
+         criteriaLevels,
+         status: input.status === "complete" ? "complete" : "pending",
+         updatedAt:
+            typeof input.updatedAt === "string" && input.updatedAt.length > 0
+               ? input.updatedAt
+               : new Date().toISOString(),
+      });
+
+      return acc;
+   }, []);
+}
 function sanitizeActivity(raw: unknown): SubjectActivity | null {
    if (!raw || typeof raw !== "object") {
       return null;
@@ -114,6 +173,7 @@ function sanitizeActivity(raw: unknown): SubjectActivity | null {
       linkedClassIds: input.linkedClassIds.filter(
          (id): id is string => typeof id === "string",
       ),
+      grades: sanitizeActivityGrades((input as { grades?: unknown }).grades),
    };
 }
 
@@ -175,6 +235,7 @@ function seedActivities(): SubjectActivity[] {
          fechaInicio: entry.fechaInicio,
          status: "planned" as ActivityStatus,
          linkedClassIds: entry.linkedClassIds,
+         grades: [],
       };
    });
 
@@ -189,6 +250,7 @@ function seedActivities(): SubjectActivity[] {
       fechaFin: evaluation.date,
       status: "assigned" as ActivityStatus,
       linkedClassIds: [],
+      grades: [],
    }));
 
    return [...seededFromClasses, ...seededFromEvaluations];
@@ -214,3 +276,4 @@ export function saveActivities(activities: SubjectActivity[]) {
 export function createActivityId() {
    return `act-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 }
+

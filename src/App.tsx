@@ -18,6 +18,7 @@ import { ActivitiesProvider } from "@/features/activities";
 import { TeacherProvider } from "@/features/teacher";
 import "@/pages/globals.css";
 import ClaseDictadoPage from "@/pages/clase/[id]/dictado/page";
+import ActivityGradingPage from "@/pages/actividad/[id]/calificar/page";
 
 function App() {
    return (
@@ -61,6 +62,10 @@ function App() {
                                        path="/clase/:id/dictado"
                                        element={<ClaseDictadoPage />}
                                     />
+                                    <Route
+                                       path="/actividad/:id/calificar"
+                                       element={<ActivityGradingPage />}
+                                    />
                                     <Route path="*" element={<Navigate to="/" replace />} />
                                  </Routes>
                               </DashboardProvider>
@@ -77,6 +82,7 @@ function App() {
 }
 
 export default App;
+
 
 
 

@@ -8,7 +8,7 @@ import {
    getAssignmentById,
    getAssignmentIdBySubjectId,
 } from "@/lib/edu-repository";
-import type { ActivityStatus, ActivityType, SubjectActivity } from "@/types";
+import type { ActivityStatus, ActivityStudentGrade, ActivityType, SubjectActivity } from "@/types";
 
 export type { ActivityStatus, ActivityType, SubjectActivity };
 
@@ -23,6 +23,7 @@ type NewActivityInput = {
    fechaInicio?: string;
    fechaFin?: string;
    linkedClassIds?: string[];
+   grades?: ActivityStudentGrade[];
 };
 
 type UpdateActivityInput = {
@@ -36,10 +37,12 @@ type UpdateActivityInput = {
    fechaInicio?: string;
    fechaFin?: string;
    linkedClassIds?: string[];
+   grades?: ActivityStudentGrade[];
 };
 
 type ActivitiesContextValue = {
    activities: SubjectActivity[];
+   getActivityById: (id: string) => SubjectActivity | undefined;
    getActivitiesBySubject: (subjectId: string) => SubjectActivity[];
    getActivitiesByAssignment: (assignmentId: string) => SubjectActivity[];
    addActivity: (input: NewActivityInput) => SubjectActivity;
@@ -65,6 +68,7 @@ export function ActivitiesProvider({
 
    const value: ActivitiesContextValue = {
       activities,
+      getActivityById: (id) => activities.find((activity) => activity.id === id),
       getActivitiesBySubject: (subjectId) =>
          activities.filter((activity) => activity.subjectId === subjectId),
       getActivitiesByAssignment: (assignmentId) =>
@@ -93,6 +97,7 @@ export function ActivitiesProvider({
             fechaFin: input.fechaFin,
             status: input.status ?? "draft",
             linkedClassIds: input.linkedClassIds ?? [],
+            grades: input.grades ?? [],
          };
          setActivities((prev) => [...prev, nextActivity]);
          return nextActivity;

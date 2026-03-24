@@ -7,3 +7,6 @@ export type {
    ActivityType,
    SubjectActivity,
 } from "@/features/activities/context/activities-context";
+
+export { ActivityGradingContent } from "@/features/activities/pages";
+
