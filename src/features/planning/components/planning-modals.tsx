@@ -2,6 +2,7 @@
 import { ClassScheduleModal } from "@/features/planning/components/class-schedule-modal";
 import { DayClassesDialog } from "@/features/planning/components/day-classes-dialog";
 import { ClassDetailDialog } from "@/features/planning/components/class-detail-dialog";
+import { DuplicateClassDialog } from "@/features/planning/components/duplicate-class-dialog";
 import type { ClassFormInput } from "@/features/planning/types";
 import type { ClassSession } from "@/types";
 
@@ -28,6 +29,10 @@ export function PlanningModals({
    onEditFromClassDetail,
    onReplanFromClassDetail,
    onDuplicateFromClassDetail,
+   duplicateDialogOpen,
+   duplicateSourceClass,
+   onCloseDuplicateDialog,
+   onConfirmDuplicate,
 }: {
    modalOpen: boolean;
    setModalOpen: (open: boolean) => void;
@@ -61,6 +66,10 @@ export function PlanningModals({
    onEditFromClassDetail: (id: string) => void;
    onReplanFromClassDetail: (id: string) => void;
    onDuplicateFromClassDetail: (id: string) => void;
+   duplicateDialogOpen: boolean;
+   duplicateSourceClass: ClassSession | null;
+   onCloseDuplicateDialog: () => void;
+   onConfirmDuplicate: () => void;
 }) {
    return (
       <>
@@ -101,6 +110,17 @@ export function PlanningModals({
             onEditClass={onEditFromClassDetail}
             onReplanClass={onReplanFromClassDetail}
             onDuplicateClass={onDuplicateFromClassDetail}
+         />
+
+         <DuplicateClassDialog
+            open={duplicateDialogOpen}
+            sourceClass={duplicateSourceClass}
+            onOpenChange={(open) => {
+               if (!open) {
+                  onCloseDuplicateDialog();
+               }
+            }}
+            onConfirm={onConfirmDuplicate}
          />
       </>
    );

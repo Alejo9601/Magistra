@@ -66,6 +66,7 @@ export function PlanificacionContent() {
    const [selectedDayDate, setSelectedDayDate] = useState<string | null>(null);
    const [classDetailOpen, setClassDetailOpen] = useState(false);
    const [detailClassId, setDetailClassId] = useState<string | null>(null);
+   const [duplicateCandidateId, setDuplicateCandidateId] = useState<string | null>(null);
    const [hasHandledEntryClass, setHasHandledEntryClass] = useState(false);
    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
    const planningPrefsStorageKey = useMemo(
@@ -93,6 +94,10 @@ export function PlanificacionContent() {
    const editingClass = editingClassId
       ? (classes.find((classSession) => classSession.id === editingClassId) ??
         null)
+      : null;
+
+   const duplicateSourceClass = duplicateCandidateId
+      ? classes.find((classSession) => classSession.id === duplicateCandidateId) ?? null
       : null;
 
    const listClasses = [...filteredClasses].sort((a, b) =>
@@ -204,11 +209,23 @@ export function PlanificacionContent() {
       openEditModal(id, { allowPlanned: true });
    };
 
-   const onDuplicate = (id: string) => {
-      const source = classes.find((classSession) => classSession.id === id);
-      const duplicated = duplicateClass(id);
+   const requestDuplicate = (id: string) => {
+      setDuplicateCandidateId(id);
+   };
+
+   const closeDuplicateDialog = () => {
+      setDuplicateCandidateId(null);
+   };
+
+   const confirmDuplicate = () => {
+      if (!duplicateCandidateId) {
+         return;
+      }
+      const source = classes.find((classSession) => classSession.id === duplicateCandidateId);
+      const duplicated = duplicateClass(duplicateCandidateId);
       if (!duplicated) {
          toast.error("No se pudo duplicar la clase.");
+         closeDuplicateDialog();
          return;
       }
       toast.success(
@@ -216,6 +233,7 @@ export function PlanificacionContent() {
             ? `Clase duplicada: ${source.date} -> ${duplicated.date}`
             : "Clase duplicada para la semana siguiente.",
       );
+      closeDuplicateDialog();
    };
 
    const handleEditFromClassDetail = (id: string) => {
@@ -229,7 +247,7 @@ export function PlanificacionContent() {
    };
 
    const handleDuplicateFromClassDetail = (id: string) => {
-      onDuplicate(id);
+      requestDuplicate(id);
    };
 
    const onSave = (payload: ClassFormInput, mode: "draft" | "publish") => {
@@ -361,7 +379,7 @@ export function PlanificacionContent() {
                   onOpenDetail={openClassDetail}
                   onOpenEdit={openEditModal}
                   onReplan={(id) => replanClass(id)}
-                  onDuplicate={onDuplicate}
+                  onDuplicate={requestDuplicate}
                />
             )}
          </div>
@@ -381,7 +399,7 @@ export function PlanificacionContent() {
             onCloseDayDetails={() => setSelectedDayDate(null)}
             onEditFromDayDetails={openEditModalFromDayDetails}
             onReplanFromDayDetails={(id) => replanClass(id, { fromDayDetails: true })}
-            onDuplicate={onDuplicate}
+            onDuplicate={requestDuplicate}
             classDetailOpen={classDetailOpen}
             detailClassId={detailClassId}
             onCloseClassDetail={closeClassDetail}
@@ -389,11 +407,11 @@ export function PlanificacionContent() {
             onEditFromClassDetail={handleEditFromClassDetail}
             onReplanFromClassDetail={handleReplanFromClassDetail}
             onDuplicateFromClassDetail={handleDuplicateFromClassDetail}
+            duplicateDialogOpen={Boolean(duplicateCandidateId)}
+            duplicateSourceClass={duplicateSourceClass}
+            onCloseDuplicateDialog={closeDuplicateDialog}
+            onConfirmDuplicate={confirmDuplicate}
          />
       </div>
    );
 }
-
-
-
-
