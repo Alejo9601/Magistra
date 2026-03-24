@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import {
    getAssignmentIdBySubjectId,
    getInstitutionById,
@@ -63,6 +63,15 @@ export function ClaseDetailContent({
    const [notesDraftByClassId, setNotesDraftByClassId] = useState<
       Record<string, string>
    >({});
+   const [allowFinalizedAttendanceEdit, setAllowFinalizedAttendanceEdit] = useState(false);
+
+   useEffect(() => {
+      setAttendance(attendanceFromRecord);
+   }, [attendanceFromRecord]);
+
+   useEffect(() => {
+      setAllowFinalizedAttendanceEdit(false);
+   }, [resolvedClassId]);
 
    if (!cls || !subject || !inst) {
       return (
@@ -74,6 +83,7 @@ export function ClaseDetailContent({
 
    const notes = notesDraftByClassId[cls.id] ?? cls.notes ?? "";
    const isFinalized = cls.status === "finalizada";
+   const attendanceLockedByFinalized = isFinalized && !allowFinalizedAttendanceEdit;
 
    const handleReplan = () => {
       if (onReplanClass) {
@@ -162,8 +172,29 @@ export function ClaseDetailContent({
                      saveAttendance(cls.id, attendance);
                      toast.success("Asistencia guardada correctamente");
                   }}
-                  disabled={!isFinalized}
-                  lockedMessage={isFinalized ? undefined : "Asistencia no computada."}
+                  disabled={attendanceLockedByFinalized}
+                  lockedMessage={
+                     isFinalized
+                        ? attendanceLockedByFinalized
+                           ? "Clase finalizada. Asistencia cerrada."
+                           : undefined
+                        : "Asistencia no computada."
+                  }
+                  lockedActionLabel={
+                     isFinalized && attendanceLockedByFinalized
+                        ? "Editar asistencia de todos modos"
+                        : undefined
+                  }
+                  onLockedAction={
+                     isFinalized && attendanceLockedByFinalized
+                        ? () => {
+                             setAllowFinalizedAttendanceEdit(true);
+                             toast.warning(
+                                "Estas editando asistencia de una clase finalizada bajo tu responsabilidad.",
+                             );
+                          }
+                        : undefined
+                  }
                />
             </div>
          </div>

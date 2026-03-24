@@ -1,4 +1,4 @@
-﻿import { Info } from "lucide-react";
+﻿import { AlertTriangle, Info } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,8 @@ export function AttendanceCard({
    onSave,
    disabled = false,
    lockedMessage,
+   lockedActionLabel,
+   onLockedAction,
 }: {
    classStudents: Student[];
    attendance: Record<string, AttendanceStatus>;
@@ -20,6 +22,8 @@ export function AttendanceCard({
    onSave: () => void;
    disabled?: boolean;
    lockedMessage?: string;
+   lockedActionLabel?: string;
+   onLockedAction?: () => void;
 }) {
    return (
       <Card>
@@ -33,11 +37,23 @@ export function AttendanceCard({
          </CardHeader>
          <CardContent className="pt-0">
             {lockedMessage ? (
-               <div className="flex min-h-[280px] items-center justify-center rounded-md border border-dashed border-border/70 bg-muted/25 px-3 text-center">
-                  <p className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+               <div className="space-y-3 rounded-md border border-dashed border-border/70 bg-muted/25 p-3 text-center">
+                  <p className="inline-flex items-center justify-center gap-2 text-xs text-muted-foreground">
                      <Info className="size-3.5" />
                      {lockedMessage}
                   </p>
+                  {lockedActionLabel && onLockedAction ? (
+                     <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="text-xs"
+                        onClick={onLockedAction}
+                     >
+                        <AlertTriangle className="mr-1.5 size-3.5" />
+                        {lockedActionLabel}
+                     </Button>
+                  ) : null}
                </div>
             ) : (
                <>
