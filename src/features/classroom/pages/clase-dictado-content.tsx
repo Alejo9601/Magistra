@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
    AlertDialog,
    AlertDialogAction,
@@ -45,6 +46,7 @@ import { ClaseDictadoGradesCard } from "@/features/classroom/components/clase-di
 import { useClasePerformance } from "@/features/classroom/hooks";
 import { evaluativeFormatLabelMap } from "@/features/classroom/utils";
 import type { AttendanceStatus } from "@/features/classroom/types";
+import type { ActivityType } from "@/types";
 
 export function ClaseDictadoContent() {
    const params = useParams();
@@ -60,7 +62,7 @@ export function ClaseDictadoContent() {
       setNotes,
       setPerformanceEntries,
    } = useClassroomContext();
-   const { getActivitiesByAssignment, toggleActivityLink } = useActivitiesContext();
+   const { getActivitiesByAssignment, toggleActivityLink, addActivity } = useActivitiesContext();
    const { getAssessmentsByAssignment, updateAssessment } = useAssessmentsContext();
 
    const [addingSubtopic, setAddingSubtopic] = useState(false);
@@ -68,6 +70,11 @@ export function ClaseDictadoContent() {
    const [linkDialogOpen, setLinkDialogOpen] = useState(false);
    const [linkSearch, setLinkSearch] = useState("");
    const [selectedExistingActivityIds, setSelectedExistingActivityIds] = useState<string[]>([]);
+   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+   const [newActivityTitle, setNewActivityTitle] = useState("");
+   const [newActivityType, setNewActivityType] = useState<ActivityType>("practica");
+   const [newActivityDescription, setNewActivityDescription] = useState("");
+   const [newActivityEvaluable, setNewActivityEvaluable] = useState(false);
    const [closeDialogOpen, setCloseDialogOpen] = useState(false);
    const [activityBaseline, setActivityBaseline] = useState<{
       classId: string;
@@ -268,6 +275,39 @@ export function ClaseDictadoContent() {
       toggleActivityLink(activityId, cls.id);
       toast.success("Actividad desvinculada de la clase.");
    };
+   const resetNewActivityForm = () => {
+      setNewActivityTitle("");
+      setNewActivityType("practica");
+      setNewActivityDescription("");
+      setNewActivityEvaluable(false);
+   };
+
+   const handleCreateActivity = () => {
+      const title = newActivityTitle.trim();
+      if (!title) {
+         toast.error("Completa el nombre de la actividad.");
+         return;
+      }
+      if (!assignmentId) {
+         toast.error("No se pudo identificar el grupo para esta clase.");
+         return;
+      }
+
+      addActivity({
+         assignmentId,
+         title,
+         description: newActivityDescription.trim() || undefined,
+         type: newActivityType,
+         esEvaluable: newActivityEvaluable,
+         status: "assigned",
+         fechaInicio: cls.date,
+         linkedClassIds: [cls.id],
+      });
+
+      setCreateDialogOpen(false);
+      resetNewActivityForm();
+      toast.success("Actividad creada y vinculada a la clase.");
+   };
 
    const handleFinalizeClass = () => {
       if (closeAnalysis.hasInitialSubtopicState && cls.subtopics.length > 0) {
@@ -391,6 +431,12 @@ export function ClaseDictadoContent() {
                   <CardContent className="space-y-3 pt-0">
                      <Button
                         size="sm"
+                        className="w-full text-xs"
+                        onClick={() => setCreateDialogOpen(true)}
+                     >
+                        Crear nueva actividad
+                     </Button>                     <Button
+                        size="sm"
                         variant="outline"
                         className="w-full text-xs"
                         onClick={() => setLinkDialogOpen(true)}
@@ -444,6 +490,86 @@ export function ClaseDictadoContent() {
             </div>
          </div>
 
+         <Dialog
+            open={createDialogOpen}
+            onOpenChange={(open) => {
+               setCreateDialogOpen(open);
+               if (!open) {
+                  resetNewActivityForm();
+               }
+            }}
+         >
+            <DialogContent className="sm:max-w-[520px]">
+               <DialogHeader>
+                  <DialogTitle>Nueva actividad</DialogTitle>
+                  <DialogDescription>
+                     Crea y vincula una actividad para esta clase.
+                  </DialogDescription>
+               </DialogHeader>
+
+               <div className="space-y-3">
+                  <div className="space-y-1.5">
+                     <Label className="text-xs">Nombre de la actividad</Label>
+                     <Input
+                        className="h-9 text-xs"
+                        placeholder="Ej: Trabajo practico de funciones"
+                        value={newActivityTitle}
+                        onChange={(event) => setNewActivityTitle(event.target.value)}
+                     />
+                  </div>
+
+                  <div className="space-y-1.5">
+                     <Label className="text-xs">Tipo</Label>
+                     <Select
+                        value={newActivityType}
+                        onValueChange={(value) => setNewActivityType(value as ActivityType)}
+                     >
+                        <SelectTrigger className="h-9 text-xs">
+                           <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                           <SelectItem value="practica">Practica</SelectItem>
+                           <SelectItem value="examen">Examen</SelectItem>
+                           <SelectItem value="proyecto">Proyecto</SelectItem>
+                           <SelectItem value="tarea">Tarea</SelectItem>
+                        </SelectContent>
+                     </Select>
+                  </div>
+
+                  <label className="flex items-center gap-2 text-xs text-foreground">
+                     <Checkbox
+                        checked={newActivityEvaluable}
+                        onCheckedChange={(checked) => setNewActivityEvaluable(Boolean(checked))}
+                     />
+                     Es evaluable
+                  </label>
+
+                  <div className="space-y-1.5">
+                     <Label className="text-xs">Descripcion (opcional)</Label>
+                     <Textarea
+                        className="text-xs min-h-[80px] resize-none"
+                        placeholder="Consigna, objetivo o notas para la actividad..."
+                        value={newActivityDescription}
+                        onChange={(event) => setNewActivityDescription(event.target.value)}
+                     />
+                  </div>
+               </div>
+
+               <DialogFooter>
+                  <Button
+                     variant="outline"
+                     size="sm"
+                     className="text-xs"
+                     onClick={() => setCreateDialogOpen(false)}
+                  >
+                     Cancelar
+                  </Button>
+                  <Button size="sm" className="text-xs" onClick={handleCreateActivity}>
+                     Crear y vincular
+                  </Button>
+               </DialogFooter>
+            </DialogContent>
+         </Dialog>
          <Dialog
             open={linkDialogOpen}
             onOpenChange={(open) => {
@@ -598,3 +724,4 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
+
