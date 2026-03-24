@@ -10,6 +10,7 @@ import type { ClassroomPerformanceEntry, ClassroomRecord } from "@/types";
 type ClassroomContextValue = {
    getRecord: (classId: string) => ClassroomRecord;
    toggleSubtopic: (classId: string, subtopic: string) => void;
+   setCompletedSubtopics: (classId: string, subtopics: string[]) => void;
    toggleActivity: (classId: string, activity: string) => void;
    setAttendance: (
       classId: string,
@@ -47,6 +48,15 @@ export function ClassroomProvider({ children }: { children: React.ReactNode }) {
             return {
                ...prev,
                [classId]: { ...current, completedSubtopics },
+            };
+         });
+      },
+      setCompletedSubtopics: (classId, subtopics) => {
+         setRecordsByClass((prev) => {
+            const current = prev[classId] ?? createFallbackClassroomRecord();
+            return {
+               ...prev,
+               [classId]: { ...current, completedSubtopics: subtopics },
             };
          });
       },
@@ -118,4 +128,3 @@ export function useClassroomContext() {
    }
    return context;
 }
-

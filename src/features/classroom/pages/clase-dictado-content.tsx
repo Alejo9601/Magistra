@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,6 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import {
+   AlertDialog,
+   AlertDialogAction,
+   AlertDialogCancel,
+   AlertDialogContent,
+   AlertDialogDescription,
+   AlertDialogFooter,
+   AlertDialogHeader,
+   AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
    Dialog,
    DialogContent,
@@ -40,10 +50,16 @@ export function ClaseDictadoContent() {
    const params = useParams();
    const navigate = useNavigate();
    const classId = params.id as string;
-   const { classes, markClassAsTaught, updateClass } = usePlanningContext();
+   const { classes, updateClass } = usePlanningContext();
    const { getStudentsByAssignment } = useStudentsContext();
-   const { getRecord, toggleSubtopic, setAttendance, setNotes, setPerformanceEntries } =
-      useClassroomContext();
+   const {
+      getRecord,
+      toggleSubtopic,
+      setCompletedSubtopics,
+      setAttendance,
+      setNotes,
+      setPerformanceEntries,
+   } = useClassroomContext();
    const { getActivitiesByAssignment, toggleActivityLink } = useActivitiesContext();
    const { getAssessmentsByAssignment, updateAssessment } = useAssessmentsContext();
 
@@ -52,6 +68,11 @@ export function ClaseDictadoContent() {
    const [linkDialogOpen, setLinkDialogOpen] = useState(false);
    const [linkSearch, setLinkSearch] = useState("");
    const [selectedExistingActivityIds, setSelectedExistingActivityIds] = useState<string[]>([]);
+   const [closeDialogOpen, setCloseDialogOpen] = useState(false);
+   const [activityBaseline, setActivityBaseline] = useState<{
+      classId: string;
+      linkedActivityIds: string[];
+   }>({ classId: "", linkedActivityIds: [] });
 
    const cls = classes.find((classSession) => classSession.id === classId);
    const assignmentId = cls
@@ -121,6 +142,73 @@ export function ClaseDictadoContent() {
       month: "short",
    });
 
+   useEffect(() => {
+      if (activityBaseline.classId === cls.id) {
+         return;
+      }
+      setActivityBaseline({
+         classId: cls.id,
+         linkedActivityIds: linkedActivities.map((activity) => activity.id),
+      });
+   }, [activityBaseline.classId, cls.id, linkedActivities]);
+
+   const closeAnalysis = useMemo(() => {
+      const plannedSubtopics = cls.subtopics.map((item) => item.trim()).filter(Boolean);
+      const plannedSubtopicsSet = new Set(plannedSubtopics);
+      const completedSubtopics = record.completedSubtopics;
+
+      const missingSubtopics = plannedSubtopics.filter(
+         (subtopic) => !completedSubtopics.includes(subtopic),
+      );
+      const hasUnplannedCompletedSubtopics = completedSubtopics.some(
+         (subtopic) => !plannedSubtopicsSet.has(subtopic),
+      );
+      const hasInitialSubtopicState =
+         completedSubtopics.length === 0 && !hasUnplannedCompletedSubtopics;
+      const subtopicsModified =
+         hasUnplannedCompletedSubtopics ||
+         (completedSubtopics.length > 0 && missingSubtopics.length > 0);
+
+      const currentLinkedIds = linkedActivities.map((activity) => activity.id);
+      const baselineSet = new Set(activityBaseline.linkedActivityIds);
+      const currentSet = new Set(currentLinkedIds);
+
+      const addedActivities = linkedActivities
+         .filter((activity) => !baselineSet.has(activity.id))
+         .map((activity) => activity.title);
+      const removedActivities = subjectActivities
+         .filter(
+            (activity) => baselineSet.has(activity.id) && !currentSet.has(activity.id),
+         )
+         .map((activity) => activity.title);
+      const activitiesModified = addedActivities.length > 0 || removedActivities.length > 0;
+
+      const hasManualChanges =
+         (record.notes?.trim().length ?? 0) > 0 ||
+         record.completedActivities.length > 0 ||
+         performanceEntries.length > 0;
+
+      const hasChanges = subtopicsModified || activitiesModified || hasManualChanges;
+
+      return {
+         hasChanges,
+         hasInitialSubtopicState,
+         missingSubtopics,
+         coveredSubtopics: plannedSubtopics.filter((subtopic) => !missingSubtopics.includes(subtopic)),
+         addedActivities,
+         removedActivities,
+      };
+   }, [
+      cls.subtopics,
+      activityBaseline.linkedActivityIds,
+      linkedActivities,
+      performanceEntries.length,
+      record.completedActivities.length,
+      record.completedSubtopics,
+      record.notes,
+      subjectActivities,
+   ]);
+
    const handleAddSubtopic = () => {
       const value = newSubtopic.trim();
       if (!value) {
@@ -181,6 +269,25 @@ export function ClaseDictadoContent() {
       toast.success("Actividad desvinculada de la clase.");
    };
 
+   const handleFinalizeClass = () => {
+      if (closeAnalysis.hasInitialSubtopicState && cls.subtopics.length > 0) {
+         setCompletedSubtopics(cls.id, cls.subtopics);
+      }
+
+      setAttendance(cls.id, attendanceWithDefaults);
+      updateClass(cls.id, {
+         status: "finalizada",
+         closureType: closeAnalysis.hasChanges ? "modificada" : "planificada",
+      });
+      setCloseDialogOpen(false);
+
+      toast.success(
+         closeAnalysis.hasChanges
+            ? "Clase finalizada con modificaciones registradas."
+            : "Clase finalizada segun lo planificado.",
+      );
+   };
+
    return (
       <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:p-6">
          <ClaseDictadoHeader
@@ -193,14 +300,11 @@ export function ClaseDictadoContent() {
             onReopenClass={() => {
                updateClass(cls.id, {
                   status: cls.topic.trim().length > 0 ? "planificada" : "sin-planificar",
+                  closureType: undefined,
                });
                toast.success("Clase reabierta. Ya puedes editar y volver a cerrarla.");
             }}
-            onCloseClass={() => {
-               setAttendance(cls.id, attendanceWithDefaults);
-               markClassAsTaught(cls.id);
-               toast.success("Clase finalizada y asistencia registrada.");
-            }}
+            onCloseClass={() => setCloseDialogOpen(true)}
          />
 
          <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
@@ -417,6 +521,80 @@ export function ClaseDictadoContent() {
                </DialogFooter>
             </DialogContent>
          </Dialog>
+
+         <AlertDialog open={closeDialogOpen} onOpenChange={setCloseDialogOpen}>
+            <AlertDialogContent>
+               <AlertDialogHeader>
+                  {closeAnalysis.hasChanges ? (
+                     <>
+                        <AlertDialogTitle>Se detectaron cambios respecto a la planificacion</AlertDialogTitle>
+                        <AlertDialogDescription>
+                           Revisa el resumen y confirma si deseas finalizar con estos cambios.
+                        </AlertDialogDescription>
+                     </>
+                  ) : (
+                     <>
+                        <AlertDialogTitle>La clase coincide con lo planificado</AlertDialogTitle>
+                        <AlertDialogDescription>
+                           Al confirmar, se cerrara la clase y se completaran los subtemas automaticamente.
+                        </AlertDialogDescription>
+                     </>
+                  )}
+               </AlertDialogHeader>
+
+               {closeAnalysis.hasChanges ? (
+                  <div className="space-y-3 text-xs">
+                     <div>
+                        <p className="font-semibold text-foreground">Subtemas</p>
+                        {closeAnalysis.coveredSubtopics.length > 0 ? (
+                           <p className="text-muted-foreground mt-1">
+                              Dictados: {closeAnalysis.coveredSubtopics.join(", ")}
+                           </p>
+                        ) : null}
+                        {closeAnalysis.missingSubtopics.length > 0 ? (
+                           <p className="text-muted-foreground mt-1">
+                              Pendientes: {closeAnalysis.missingSubtopics.join(", ")}
+                           </p>
+                        ) : null}
+                     </div>
+
+                     {(closeAnalysis.addedActivities.length > 0 || closeAnalysis.removedActivities.length > 0) && (
+                        <div>
+                           <p className="font-semibold text-foreground">Actividades</p>
+                           {closeAnalysis.addedActivities.length > 0 ? (
+                              <p className="text-muted-foreground mt-1">
+                                 Agregadas: {closeAnalysis.addedActivities.join(", ")}
+                              </p>
+                           ) : null}
+                           {closeAnalysis.removedActivities.length > 0 ? (
+                              <p className="text-muted-foreground mt-1">
+                                 Quitadas: {closeAnalysis.removedActivities.join(", ")}
+                              </p>
+                           ) : null}
+                        </div>
+                     )}
+                  </div>
+               ) : null}
+
+               <AlertDialogFooter>
+                  {closeAnalysis.hasChanges ? (
+                     <>
+                        <AlertDialogCancel className="text-xs">Revisar</AlertDialogCancel>
+                        <AlertDialogAction className="text-xs" onClick={handleFinalizeClass}>
+                           Confirmar
+                        </AlertDialogAction>
+                     </>
+                  ) : (
+                     <>
+                        <AlertDialogCancel className="text-xs">Cancelar</AlertDialogCancel>
+                        <AlertDialogAction className="text-xs" onClick={handleFinalizeClass}>
+                           Confirmar cierre
+                        </AlertDialogAction>
+                     </>
+                  )}
+               </AlertDialogFooter>
+            </AlertDialogContent>
+         </AlertDialog>
       </div>
    );
 }

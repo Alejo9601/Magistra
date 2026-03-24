@@ -54,7 +54,7 @@ export function ClaseDictadoHeader({
          ) : (
             <Button size="sm" className="text-xs" onClick={onCloseClass}>
                <CheckCircle2 className="size-3.5 mr-1.5" />
-               Cerrar clase de hoy
+               Finalizar clase
             </Button>
          )}
       </div>

@@ -11,6 +11,12 @@ function isClassStatus(value: unknown): value is ClassSession["status"] {
    );
 }
 
+function isClassClosureType(
+   value: unknown,
+): value is NonNullable<ClassSession["closureType"]> {
+   return value === "planificada" || value === "modificada";
+}
+
 function normalizeLegacyClassType(value: unknown): Exclude<ClassSession["type"], "oral"> | null {
    if (value === "teorica" || value === "practica" || value === "teorico-practica") {
       return value;
@@ -157,6 +163,7 @@ function sanitizeClassSession(raw: unknown): ClassSession | null {
       ),
       type: normalizedType,
       status: input.status,
+      closureType: isClassClosureType(input.closureType) ? input.closureType : undefined,
       evaluativeFormat: isEvaluativeFormat(input.evaluativeFormat)
          ? input.evaluativeFormat
          : undefined,

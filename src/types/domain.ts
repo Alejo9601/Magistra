@@ -104,6 +104,8 @@ export type ClassType =
 
 export type ClassStatus = "planificada" | "sin-planificar" | "finalizada";
 
+export type ClassClosureType = "planificada" | "modificada";
+
 export type ClassBlock = {
    order: number;
    topic: string;
@@ -142,6 +144,7 @@ export type ClassSession = {
    subtopics: string[];
    type: ClassType;
    status: ClassStatus;
+   closureType?: ClassClosureType;
    evaluativeFormat?: EvaluativeFormat;
    practiceActivityType?: ActivityType;
    practiceActivityName?: string;
@@ -261,14 +264,3 @@ export type ClassroomRecord = {
    notes?: string;
    performanceEntries: ClassroomPerformanceEntry[];
 };
-
-
-
-
-
-
-
-
-
-
-
