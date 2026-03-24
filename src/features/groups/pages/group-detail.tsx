@@ -1,11 +1,14 @@
 ﻿import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
    getAssignmentById,
    getInstitutionById,
    getSubjectById,
+   updateSubjectGradingScheme,
 } from "@/lib/edu-repository";
+import { createDefaultRubricCriterion, createDefaultSubjectRubric, normalizeSubjectGradingScheme } from "@/lib/grading-schemes";
 import type { GroupDetailProps } from "@/features/groups/types";
 import {
    GroupDetailActivitiesTab,
@@ -19,8 +22,10 @@ import { useGroupDetailActions, useGroupDetailData } from "@/features/groups/hoo
 import { useStudentsContext } from "@/features/students";
 import { useClassroomContext } from "@/features/classroom";
 import { useActivitiesContext } from "@/features/activities";
+import { toast } from "sonner";
 
 export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
+   const navigate = useNavigate();
    const { getStudentsByAssignment, addStudent } = useStudentsContext();
    const { getRecord } = useClassroomContext();
    const { getActivitiesByAssignment, addActivity, removeActivity } =
@@ -99,6 +104,60 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
 
    if (!assignment || !subject || !inst) return null;
 
+   const rubricOptions = (subject.gradingScheme?.rubrics ?? []).map((rubric) => ({
+      id: rubric.id,
+      name: rubric.name,
+   }));
+
+   const handleCreateRubricForActivity = (payload: {
+      name: string;
+      criteria: Array<{ name: string; weight: number }>;
+   }) => {
+      const rubricName = payload.name.trim();
+      const criteria = payload.criteria
+         .map((criterion) => ({
+            name: criterion.name.trim(),
+            weight: Math.max(1, Math.round(criterion.weight)),
+         }))
+         .filter((criterion) => criterion.name.length > 0);
+
+      if (!rubricName) {
+         toast.error("Escribe un nombre para la rubrica.");
+         return;
+      }
+      if (criteria.length === 0) {
+         toast.error("Agrega al menos un criterio valido.");
+         return;
+      }
+
+      const currentScheme = normalizeSubjectGradingScheme(subject.gradingScheme);
+      const nextRubric = createDefaultSubjectRubric({
+         name: rubricName,
+         targetType: "practica",
+         evaluativeFormat: "cualquiera",
+         criteria: criteria.map((criterion) =>
+            createDefaultRubricCriterion({
+               name: criterion.name,
+               weight: criterion.weight,
+            }),
+         ),
+      });
+
+      const updated = updateSubjectGradingScheme(subject.id, {
+         ...currentScheme,
+         rubrics: [...currentScheme.rubrics, nextRubric],
+      });
+
+      if (!updated) {
+         toast.error("No se pudo crear la rubrica.");
+         return;
+      }
+
+      setNewActivityEvaluable(true);
+      setNewActivityRubricaId(nextRubric.id);
+      toast.success("Rubrica creada y seleccionada para la actividad.");
+   };
+
    return (
       <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:p-6">
          <div className="flex items-center gap-3 mb-6">
@@ -144,6 +203,7 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
             <GroupDetailActivitiesTab
                groupActivities={groupActivities}
                onAddActivity={() => setAddActivityOpen(true)}
+               onGradeActivity={(activityId) => navigate(`/actividad/${activityId}/calificar`)}
                onDeleteActivity={(id, title) =>
                   setPendingDelete({
                      kind: "activity",
@@ -202,6 +262,7 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
             status={newActivityStatus}
             esEvaluable={newActivityEvaluable}
             rubricaId={newActivityRubricaId}
+            rubricOptions={rubricOptions}
             fechaInicio={newActivityFechaInicio}
             fechaFin={newActivityFechaFin}
             description={newActivityDescription}
@@ -210,6 +271,7 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
             onStatusChange={setNewActivityStatus}
             onEsEvaluableChange={setNewActivityEvaluable}
             onRubricaIdChange={setNewActivityRubricaId}
+            onCreateRubric={handleCreateRubricForActivity}
             onFechaInicioChange={setNewActivityFechaInicio}
             onFechaFinChange={setNewActivityFechaFin}
             onDescriptionChange={setNewActivityDescription}
@@ -218,3 +280,4 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
       </div>
    );
 }
+

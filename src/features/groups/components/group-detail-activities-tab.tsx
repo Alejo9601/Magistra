@@ -22,6 +22,7 @@ type GroupDetailActivitiesTabProps = {
    groupActivities: SubjectActivity[];
    onAddActivity: () => void;
    onDeleteActivity: (activityId: string, title: string) => void;
+   onGradeActivity: (activityId: string) => void;
 };
 
 function formatDate(value?: string) {
@@ -36,6 +37,7 @@ export function GroupDetailActivitiesTab({
    groupActivities,
    onAddActivity,
    onDeleteActivity,
+   onGradeActivity,
 }: GroupDetailActivitiesTabProps) {
    return (
       <TabsContent value="actividades">
@@ -47,7 +49,7 @@ export function GroupDetailActivitiesTab({
          </div>
          <Card className="mt-2">
             <CardContent className="p-0">
-               <Table className="min-w-[880px]">
+               <Table className="min-w-[980px]">
                   <TableHeader>
                      <TableRow>
                         <TableHead className="text-xs">Actividad</TableHead>
@@ -101,15 +103,26 @@ export function GroupDetailActivitiesTab({
                               {activity.linkedClassIds.length}
                            </TableCell>
                            <TableCell className="text-right">
-                              <Button
-                                 type="button"
-                                 variant="ghost"
-                                 size="icon"
-                                 className="size-7"
-                                 onClick={() => onDeleteActivity(activity.id, activity.title)}
-                              >
-                                 <Trash2 className="size-3.5 text-muted-foreground" />
-                              </Button>
+                              <div className="flex items-center justify-end gap-1.5">
+                                 <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 px-2 text-[11px]"
+                                    onClick={() => onGradeActivity(activity.id)}
+                                 >
+                                    Calificar
+                                 </Button>
+                                 <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-7"
+                                    onClick={() => onDeleteActivity(activity.id, activity.title)}
+                                 >
+                                    <Trash2 className="size-3.5 text-muted-foreground" />
+                                 </Button>
+                              </div>
                            </TableCell>
                         </TableRow>
                      ))}
