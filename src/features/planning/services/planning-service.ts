@@ -1,4 +1,4 @@
-﻿import type { ClassBlock, ClassSession } from "@/types";
+﻿import type { ActivityType, ClassBlock, ClassSession } from "@/types";
 import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
 
 const PLANNING_STORAGE_KEY = "aula.planning.classes";
@@ -24,6 +24,15 @@ function normalizeLegacyClassType(value: unknown): Exclude<ClassSession["type"],
       return "teorico-practica";
    }
    return null;
+}
+
+function isActivityType(value: unknown): value is ActivityType {
+   return (
+      value === "practica" ||
+      value === "examen" ||
+      value === "proyecto" ||
+      value === "tarea"
+   );
 }
 
 function isEvaluativeFormat(
@@ -73,6 +82,9 @@ function sanitizeBlock(raw: unknown): ClassBlock | null {
       type: normalizedType,
       evaluativeFormat: isEvaluativeFormat(input.evaluativeFormat)
          ? input.evaluativeFormat
+         : undefined,
+      practiceActivityType: isActivityType(input.practiceActivityType)
+         ? input.practiceActivityType
          : undefined,
       practiceActivityName:
          typeof input.practiceActivityName === "string" &&
@@ -148,6 +160,9 @@ function sanitizeClassSession(raw: unknown): ClassSession | null {
       evaluativeFormat: isEvaluativeFormat(input.evaluativeFormat)
          ? input.evaluativeFormat
          : undefined,
+      practiceActivityType: isActivityType(input.practiceActivityType)
+         ? input.practiceActivityType
+         : undefined,
       practiceActivityName:
          typeof input.practiceActivityName === "string" &&
          input.practiceActivityName.trim().length > 0
@@ -203,4 +218,3 @@ export function savePlanningClasses(classes: ClassSession[]) {
 export function createPlanningClassId() {
    return `cls-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 }
-

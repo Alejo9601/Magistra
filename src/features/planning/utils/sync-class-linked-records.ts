@@ -104,6 +104,66 @@ type SyncClassLinkedRecordsParams = {
    updateActivity: (id: string, patch: ActivityPatchInput) => void;
 };
 
+function syncOptionalPracticeActivity({
+   payload,
+   effectiveClassId,
+   effectiveAssignmentId,
+   getActivitiesByAssignment,
+   addActivity,
+   updateActivity,
+}: Pick<
+   SyncClassLinkedRecordsParams,
+   | "payload"
+   | "effectiveClassId"
+   | "effectiveAssignmentId"
+   | "getActivitiesByAssignment"
+   | "addActivity"
+   | "updateActivity"
+>) {
+   if (!effectiveAssignmentId) {
+      return;
+   }
+   if (payload.type !== "practica" && payload.type !== "teorico-practica") {
+      return;
+   }
+
+   const activityName = payload.practiceActivityName?.trim();
+   if (!activityName) {
+      return;
+   }
+
+   const existingActivity = getActivitiesByAssignment(effectiveAssignmentId).find(
+      (activity) => activity.linkedClassIds.includes(effectiveClassId),
+   );
+
+   const activityType = payload.practiceActivityType ?? "practica";
+
+   if (existingActivity) {
+      updateActivity(existingActivity.id, {
+         assignmentId: effectiveAssignmentId,
+         title: activityName,
+         description: payload.practiceActivityDescription,
+         type: activityType,
+         fechaInicio: payload.date,
+         status: mapClassStatusToActivityStatus(payload.status),
+         linkedClassIds: Array.from(
+            new Set([...existingActivity.linkedClassIds, effectiveClassId]),
+         ),
+      });
+      return;
+   }
+
+   addActivity({
+      assignmentId: effectiveAssignmentId,
+      title: activityName,
+      description: payload.practiceActivityDescription,
+      type: activityType,
+      fechaInicio: payload.date,
+      status: mapClassStatusToActivityStatus(payload.status),
+      linkedClassIds: [effectiveClassId],
+   });
+}
+
 export function syncClassLinkedRecords({
    payload,
    effectiveClassId,
@@ -115,6 +175,15 @@ export function syncClassLinkedRecords({
    addActivity,
    updateActivity,
 }: SyncClassLinkedRecordsParams) {
+   syncOptionalPracticeActivity({
+      payload,
+      effectiveClassId,
+      effectiveAssignmentId,
+      getActivitiesByAssignment,
+      addActivity,
+      updateActivity,
+   });
+
    if (
       payload.type !== "evaluacion" ||
       !payload.evaluativeFormat ||
@@ -194,6 +263,3 @@ export function syncClassLinkedRecords({
       linkedClassIds: [effectiveClassId],
    });
 }
-
-
-

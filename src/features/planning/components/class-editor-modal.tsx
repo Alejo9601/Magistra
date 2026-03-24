@@ -178,6 +178,7 @@ export function ClassEditorModal({
          resolvedSubtopics,
          resolvedType,
          resolvedEvaluativeFormat,
+         resolvedPracticeActivityType,
          resolvedPracticeActivityName,
          resolvedPracticeActivityDescription,
          resolvedEvaluationName,
@@ -203,6 +204,7 @@ export function ClassEditorModal({
             type: resolvedType,
             status: mode === "publish" ? "planificada" : "sin-planificar",
             evaluativeFormat: resolvedEvaluativeFormat,
+            practiceActivityType: resolvedPracticeActivityType,
             practiceActivityName: resolvedPracticeActivityName,
             practiceActivityDescription: resolvedPracticeActivityDescription,
             evaluationName: resolvedEvaluationName,
@@ -274,6 +276,8 @@ export function ClassEditorModal({
       </Dialog>
    );
 }
+
+
 
 
 

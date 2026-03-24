@@ -1,4 +1,5 @@
-﻿import { Input } from "@/components/ui/input";
+﻿import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
    Select,
@@ -8,7 +9,7 @@ import {
    SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { ClassBlock, ClassSession } from "@/types";
+import type { ActivityType, ClassBlock, ClassSession } from "@/types";
 
 type ClassCharacterOption = {
    value: ClassSession["type"];
@@ -28,12 +29,26 @@ type Props = {
    onUpdateBlock: (order: number, updates: Partial<ClassBlock>) => void;
 };
 
+const activityTypeOptions: Array<{ value: ActivityType; label: string }> = [
+   { value: "practica", label: "Practica" },
+   { value: "examen", label: "Examen" },
+   { value: "proyecto", label: "Proyecto" },
+   { value: "tarea", label: "Tarea" },
+];
+
 export function ClassPlanningBlockEditor({
    block,
    planBlocksSeparately,
    classCharacterOptions,
    onUpdateBlock,
 }: Props) {
+   const isPracticeType =
+      block.type === "practica" || block.type === "teorico-practica";
+   const hasOptionalActivitySection =
+      block.practiceActivityName !== undefined ||
+      block.practiceActivityDescription !== undefined ||
+      block.practiceActivityType !== undefined;
+
    return (
       <div
          className={
@@ -79,6 +94,10 @@ export function ClassPlanningBlockEditor({
                         evaluativeFormat: undefined,
                         evaluationName: undefined,
                         evaluationDescription: undefined,
+                        practiceActivityType:
+                           nextType === "practica" || nextType === "teorico-practica"
+                              ? block.practiceActivityType
+                              : undefined,
                         practiceActivityName:
                            nextType === "practica" || nextType === "teorico-practica"
                               ? block.practiceActivityName
@@ -103,34 +122,94 @@ export function ClassPlanningBlockEditor({
                </Select>
             </div>
 
-            {(block.type === "practica" || block.type === "teorico-practica") && (
-               <>
-                  <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Nombre de la actividad</Label>
-                     <Input
-                        className="h-9 text-xs"
-                        value={block.practiceActivityName ?? ""}
-                        onChange={(event) =>
+            {isPracticeType ? (
+               hasOptionalActivitySection ? (
+                  <>
+                     <div className="flex items-center justify-between sm:col-span-2">
+                        <p className="text-xs font-medium text-foreground">Actividad (opcional)</p>
+                        <Button
+                           type="button"
+                           variant="ghost"
+                           size="sm"
+                           className="h-7 px-2 text-xs"
+                           onClick={() =>
+                              onUpdateBlock(block.order, {
+                                 practiceActivityType: undefined,
+                                 practiceActivityName: undefined,
+                                 practiceActivityDescription: undefined,
+                              })
+                           }
+                        >
+                           Quitar actividad
+                        </Button>
+                     </div>
+                     <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs">Tipo de actividad</Label>
+                        <Select
+                           value={block.practiceActivityType ?? "practica"}
+                           onValueChange={(value) =>
+                              onUpdateBlock(block.order, {
+                                 practiceActivityType: value as ActivityType,
+                              })
+                           }
+                        >
+                           <SelectTrigger className="h-9 text-xs">
+                              <SelectValue placeholder="Seleccionar tipo" />
+                           </SelectTrigger>
+                           <SelectContent>
+                              {activityTypeOptions.map((option) => (
+                                 <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                 </SelectItem>
+                              ))}
+                           </SelectContent>
+                        </Select>
+                     </div>
+                     <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs">Nombre de la actividad</Label>
+                        <Input
+                           className="h-9 text-xs"
+                           value={block.practiceActivityName ?? ""}
+                           onChange={(event) =>
+                              onUpdateBlock(block.order, {
+                                 practiceActivityName: event.target.value,
+                              })
+                           }
+                        />
+                     </div>
+                     <div className="flex flex-col gap-1.5 sm:col-span-2">
+                        <Label className="text-xs">Descripcion</Label>
+                        <Textarea
+                           className="text-xs min-h-[70px] resize-none"
+                           value={block.practiceActivityDescription ?? ""}
+                           onChange={(event) =>
+                              onUpdateBlock(block.order, {
+                                 practiceActivityDescription: event.target.value,
+                              })
+                           }
+                        />
+                     </div>
+                  </>
+               ) : (
+                  <div className="sm:col-span-2">
+                     <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() =>
                            onUpdateBlock(block.order, {
-                              practiceActivityName: event.target.value,
+                              practiceActivityType: "practica",
+                              practiceActivityName: "",
+                              practiceActivityDescription: "",
                            })
                         }
-                     />
+                     >
+                        Agregar actividad (opcional)
+                     </Button>
                   </div>
-                  <div className="flex flex-col gap-1.5 sm:col-span-2">
-                     <Label className="text-xs">Descripcion</Label>
-                     <Textarea
-                        className="text-xs min-h-[70px] resize-none"
-                        value={block.practiceActivityDescription ?? ""}
-                        onChange={(event) =>
-                           onUpdateBlock(block.order, {
-                              practiceActivityDescription: event.target.value,
-                           })
-                        }
-                     />
-                  </div>
-               </>
-            )}
+               )
+            ) : null}
          </div>
       </div>
    );

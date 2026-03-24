@@ -110,6 +110,7 @@ export type ClassBlock = {
    subtopics: string[];
    type: Exclude<ClassType, "oral">;
    evaluativeFormat?: EvaluativeFormat;
+   practiceActivityType?: ActivityType;
    practiceActivityName?: string;
    practiceActivityDescription?: string;
    evaluationName?: string;
@@ -142,6 +143,7 @@ export type ClassSession = {
    type: ClassType;
    status: ClassStatus;
    evaluativeFormat?: EvaluativeFormat;
+   practiceActivityType?: ActivityType;
    practiceActivityName?: string;
    practiceActivityDescription?: string;
    evaluationName?: string;
@@ -259,6 +261,8 @@ export type ClassroomRecord = {
    notes?: string;
    performanceEntries: ClassroomPerformanceEntry[];
 };
+
+
 
 
 

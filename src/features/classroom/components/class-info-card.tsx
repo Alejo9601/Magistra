@@ -12,6 +12,18 @@ import { Button } from "@/components/ui/button";
 import { classTypeLabels } from "@/features/classroom/utils/classroom-constants";
 import type { ClassSession, Institution } from "@/types";
 
+function classStatusLabel(status: ClassSession["status"]) {
+   if (status === "planificada") return "Planificada";
+   if (status === "finalizada") return "Dictada";
+   return "Creada";
+}
+
+function classStatusBadgeClass(status: ClassSession["status"]) {
+   if (status === "planificada") return "bg-primary/10 text-primary";
+   if (status === "finalizada") return "bg-success/10 text-success";
+   return "bg-warning/10 text-warning-foreground";
+}
+
 export function ClassInfoCard({
    cls,
    inst,
@@ -82,14 +94,8 @@ export function ClassInfoCard({
                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
                         Estado
                      </p>
-                     <Badge
-                        className={`border-0 text-[10px] ${cls.status === "planificada" ? "bg-primary/10 text-primary" : cls.status === "finalizada" ? "bg-success/10 text-success" : "bg-warning/10 text-warning-foreground"}`}
-                     >
-                        {cls.status === "planificada"
-                           ? "Planificada"
-                           : cls.status === "finalizada"
-                             ? "Finalizada"
-                             : "Sin planificar"}
+                     <Badge className={`border-0 text-[10px] ${classStatusBadgeClass(cls.status)}`}>
+                        {classStatusLabel(cls.status)}
                      </Badge>
                   </div>
                </div>
@@ -157,6 +163,3 @@ export function ClassDetailHeader({
       </div>
    );
 }
-
-
-

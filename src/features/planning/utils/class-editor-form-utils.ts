@@ -1,4 +1,4 @@
-﻿import type { ClassBlock, ClassSession, EvaluativeFormat } from "@/types";
+﻿import type { ActivityType, ClassBlock, ClassSession, EvaluativeFormat } from "@/types";
 
 export const classCharacterOptions: Array<{
    value: ClassSession["type"];
@@ -7,6 +7,16 @@ export const classCharacterOptions: Array<{
    { value: "teorica", label: "Teorica" },
    { value: "practica", label: "Practica" },
    { value: "teorico-practica", label: "Teorica/Practica" },
+];
+
+export const activityTypeOptions: Array<{
+   value: ActivityType;
+   label: string;
+}> = [
+   { value: "practica", label: "Practica" },
+   { value: "examen", label: "Examen" },
+   { value: "proyecto", label: "Proyecto" },
+   { value: "tarea", label: "Tarea" },
 ];
 
 export const evaluativeFormatOptions: Array<{
@@ -22,7 +32,12 @@ export const evaluativeFormatOptions: Array<{
 export function normalizeClassType(
    value: ClassSession["type"] | "oral" | "",
 ): ClassSession["type"] | "" {
-   if (value === "oral" || value === "evaluacion" || value === "repaso" || value === "recuperatorio") {
+   if (
+      value === "oral" ||
+      value === "evaluacion" ||
+      value === "repaso" ||
+      value === "recuperatorio"
+   ) {
       return "teorico-practica";
    }
    return value as ClassSession["type"] | "";
@@ -50,6 +65,7 @@ export function createEmptyBlock(order: number): ClassBlock {
       subtopics: [],
       type: "teorica",
       evaluativeFormat: undefined,
+      practiceActivityType: undefined,
       practiceActivityName: undefined,
       practiceActivityDescription: undefined,
       evaluationName: undefined,
@@ -64,6 +80,7 @@ export function cloneBlockContent(source: ClassBlock, order: number): ClassBlock
       subtopics: [...source.subtopics],
       type: source.type,
       evaluativeFormat: source.evaluativeFormat,
+      practiceActivityType: source.practiceActivityType,
       practiceActivityName: source.practiceActivityName,
       practiceActivityDescription: source.practiceActivityDescription,
       evaluationName: source.evaluationName,
@@ -102,6 +119,10 @@ export function deriveBlocksFromClass(
                       subtopics: initialClass?.subtopics ?? [],
                       type: initialType,
                       evaluativeFormat: normalizeEvaluativeFormat(initialClass?.evaluativeFormat ?? "") || undefined,
+                      practiceActivityType:
+                         initialType === "practica" || initialType === "teorico-practica"
+                            ? initialClass?.practiceActivityType
+                            : undefined,
                       practiceActivityName:
                          initialType === "practica" || initialType === "teorico-practica"
                             ? initialClass?.practiceActivityName
@@ -149,6 +170,10 @@ export function resolveClassDataFromBlocks(normalizedBlocks: ClassBlock[]) {
    );
 
    const resolvedType = normalizeClassType(primaryBlock?.type ?? "teorica") || "teorica";
+   const resolvedPracticeActivityType =
+      resolvedType === "practica" || resolvedType === "teorico-practica"
+         ? primaryBlock?.practiceActivityType ?? "practica"
+         : undefined;
    const resolvedPracticeActivityName =
       resolvedType === "practica" || resolvedType === "teorico-practica"
          ? primaryBlock?.practiceActivityName?.trim() || undefined
@@ -164,6 +189,7 @@ export function resolveClassDataFromBlocks(normalizedBlocks: ClassBlock[]) {
       resolvedSubtopics,
       resolvedType,
       resolvedEvaluativeFormat: undefined as EvaluativeFormat | undefined,
+      resolvedPracticeActivityType,
       resolvedPracticeActivityName,
       resolvedPracticeActivityDescription,
       resolvedEvaluationName: undefined as string | undefined,
