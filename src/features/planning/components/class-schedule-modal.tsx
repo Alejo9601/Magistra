@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
    Dialog,
@@ -10,8 +10,19 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+   Select,
+   SelectContent,
+   SelectItem,
+   SelectTrigger,
+   SelectValue,
+} from "@/components/ui/select";
 import { ClassScheduleSlotsSection } from "@/features/planning/components/class-schedule-slots-section";
-import { getAssignmentsByInstitution, getAssignmentById, getSubjectById } from "@/lib/edu-repository";
+import {
+   getAssignmentsByInstitution,
+   getAssignmentById,
+   getSubjectById,
+} from "@/lib/edu-repository";
 import {
    resolveAssignmentIdForInstitution,
    resolveInstitutionId,
@@ -56,7 +67,7 @@ export function ClassScheduleModal({
    const institutionId = resolveInstitutionId(
       activeInstitution,
       initialInstitutionId,
-      fallbackInstitutionId,
+      fallbackInstitutionId ?? "all",
    );
    const availableAssignments = getAssignmentsByInstitution(institutionId);
 
@@ -127,7 +138,7 @@ export function ClassScheduleModal({
    };
 
    const submit = () => {
-      if (!assignmentId || !startDate || !endDate) {
+      if (!assignmentId || !selectedAssignment || !startDate || !endDate) {
          toast.error("No se encontro la materia para programar.");
          return;
       }
@@ -151,7 +162,7 @@ export function ClassScheduleModal({
       }
 
       const created = onSchedule({
-         institutionId,
+         institutionId: selectedAssignment.institutionId,
          assignmentId,
          startDate,
          endDate,
@@ -182,12 +193,26 @@ export function ClassScheduleModal({
             </DialogHeader>
 
             <div className="space-y-4 py-1">
-               <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2">
-                  <p className="text-xs text-muted-foreground">Contexto</p>
-                  <p className="text-sm font-medium">
-                     {selectedSubject?.name ?? "Materia"}{" "}
-                     {selectedAssignment?.section ? `- ${selectedAssignment.section}` : ""}
-                  </p>
+               <div className="space-y-1.5 w-full">
+                  <Label className="text-xs">Materia</Label>
+                  <Select value={assignmentId} onValueChange={setAssignmentId}>
+                     <SelectTrigger className="h-9 text-xs w-full">
+                        <SelectValue placeholder="Seleccionar materia" />
+                     </SelectTrigger>
+                     <SelectContent>
+                        {availableAssignments.map((assignment) => {
+                           const subject = getSubjectById(assignment.subjectId);
+                           if (!subject) {
+                              return null;
+                           }
+                           return (
+                              <SelectItem key={assignment.id} value={assignment.id}>
+                                 {subject.name} ({assignment.section})
+                              </SelectItem>
+                           );
+                        })}
+                     </SelectContent>
+                  </Select>
                </div>
 
                <div className="space-y-2">
@@ -197,7 +222,7 @@ export function ClassScheduleModal({
                         <Label className="text-[11px] text-muted-foreground">Desde</Label>
                         <Input
                            type="date"
-                           className="h-9 text-xs"
+                           className="h-9 text-xs w-full"
                            value={startDate}
                            min={todayDate()}
                            onChange={(event) => setStartDate(event.target.value)}
@@ -207,7 +232,7 @@ export function ClassScheduleModal({
                         <Label className="text-[11px] text-muted-foreground">Hasta</Label>
                         <Input
                            type="date"
-                           className="h-9 text-xs"
+                           className="h-9 text-xs w-full"
                            value={endDate}
                            min={startDate || todayDate()}
                            onChange={(event) => setEndDate(event.target.value)}
@@ -237,7 +262,7 @@ export function ClassScheduleModal({
                   Cancelar
                </Button>
                <Button size="sm" className="text-xs" onClick={submit}>
-                  Generar clases
+                  Generar clases automaticamente
                </Button>
             </DialogFooter>
          </DialogContent>
