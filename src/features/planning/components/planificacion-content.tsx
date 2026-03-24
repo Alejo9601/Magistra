@@ -33,7 +33,7 @@ export function PlanificacionContent() {
    } = usePlanningContext();
    const { getAssessmentsByAssignment, addAssessment, updateAssessment } =
       useAssessmentsContext();
-   const { getActivitiesByAssignment, addActivity, updateActivity } =
+   const { activities, getActivitiesByAssignment, addActivity, updateActivity } =
       useActivitiesContext();
    const isMobile = useIsMobile();
    const [searchParams] = useSearchParams();
@@ -250,7 +250,11 @@ export function PlanificacionContent() {
       requestDuplicate(id);
    };
 
-   const onSave = (payload: ClassFormInput, mode: "draft" | "publish") => {
+   const onSave = (
+      payload: ClassFormInput,
+      mode: "draft" | "publish",
+      options?: { linkedActivityId?: string },
+   ) => {
       const savedClass = editingClass
          ? ({ ...editingClass, ...payload } as ClassSession)
          : createClass(payload);
@@ -276,6 +280,27 @@ export function PlanificacionContent() {
          addActivity,
          updateActivity,
       });
+
+      if (options?.linkedActivityId && effectiveAssignmentId) {
+         const linkedActivity = getActivitiesByAssignment(effectiveAssignmentId).find(
+            (activity) => activity.id === options.linkedActivityId,
+         );
+         if (linkedActivity) {
+            updateActivity(linkedActivity.id, {
+               assignmentId: effectiveAssignmentId,
+               fechaInicio: payload.date,
+               status:
+                  payload.status === "finalizada"
+                     ? "completed"
+                     : payload.status === "planificada"
+                       ? "assigned"
+                       : "planned",
+               linkedClassIds: Array.from(
+                  new Set([...linkedActivity.linkedClassIds, effectiveClassId]),
+               ),
+            });
+         }
+      }
 
       toast.success(
          mode === "publish"
@@ -390,6 +415,8 @@ export function PlanificacionContent() {
             activeInstitution={activeInstitution}
             editingClass={editingClass}
             prefillDate={prefillDate}
+            allClasses={classes}
+            allActivities={activities}
             onSave={onSave}
             scheduleModalOpen={scheduleModalOpen}
             setScheduleModalOpen={setScheduleModalOpen}
@@ -415,3 +442,5 @@ export function PlanificacionContent() {
       </div>
    );
 }
+
+

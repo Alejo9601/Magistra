@@ -4,7 +4,7 @@ import { DayClassesDialog } from "@/features/planning/components/day-classes-dia
 import { ClassDetailDialog } from "@/features/planning/components/class-detail-dialog";
 import { DuplicateClassDialog } from "@/features/planning/components/duplicate-class-dialog";
 import type { ClassFormInput } from "@/features/planning/types";
-import type { ClassSession } from "@/types";
+import type { ClassSession, SubjectActivity } from "@/types";
 
 export function PlanningModals({
    modalOpen,
@@ -12,6 +12,8 @@ export function PlanningModals({
    activeInstitution,
    editingClass,
    prefillDate,
+   allClasses,
+   allActivities,
    onSave,
    scheduleModalOpen,
    setScheduleModalOpen,
@@ -39,7 +41,13 @@ export function PlanningModals({
    activeInstitution: string;
    editingClass: ClassSession | null;
    prefillDate?: string;
-   onSave: (payload: ClassFormInput, mode: "draft" | "publish") => void;
+   allClasses: ClassSession[];
+   allActivities: SubjectActivity[];
+   onSave: (
+      payload: ClassFormInput,
+      mode: "draft" | "publish",
+      options?: { linkedActivityId?: string },
+   ) => void;
    scheduleModalOpen: boolean;
    setScheduleModalOpen: (open: boolean) => void;
    onSchedule: (payload: {
@@ -79,6 +87,8 @@ export function PlanningModals({
             activeInstitution={activeInstitution}
             initialClass={editingClass}
             initialDate={prefillDate}
+            allClasses={allClasses}
+            allActivities={allActivities}
             onSubmit={onSave}
          />
 
