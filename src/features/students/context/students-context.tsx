@@ -1,4 +1,5 @@
-﻿import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import { isAllInstitutionsScope } from "@/features/institution";
 import {
    getAssignmentById,
    students as seedStudents,
@@ -46,6 +47,9 @@ export function StudentsProvider({ children }: { children: React.ReactNode }) {
    const value: StudentsContextValue = {
       students,
       getStudentsByInstitution: (institutionId) => {
+         if (isAllInstitutionsScope(institutionId)) {
+            return students;
+         }
          const subjectIdSet = new Set(
             subjects
                .filter((subject) => subject.institutionId === institutionId)
