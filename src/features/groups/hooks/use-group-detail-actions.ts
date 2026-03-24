@@ -85,12 +85,10 @@ export function useGroupDetailActions({
    const [newAssessmentDescription, setNewAssessmentDescription] = useState("");
    const [newActivityTitle, setNewActivityTitle] = useState("");
    const [newActivityType, setNewActivityType] = useState<ActivityType>("practica");
-   const [newActivityStatus, setNewActivityStatus] =
-      useState<ActivityStatus>("planned");
    const [newActivityDescription, setNewActivityDescription] = useState("");
    const [newActivityEvaluable, setNewActivityEvaluable] = useState(false);
    const [newActivityRubricaId, setNewActivityRubricaId] = useState("");
-   const [newActivityFechaInicio, setNewActivityFechaInicio] = useState("");
+   const [newActivityFechaInicio, setNewActivityFechaInicio] = useState(() => new Date().toISOString().slice(0, 10));
    const [newActivityFechaFin, setNewActivityFechaFin] = useState("");
    const [pendingDelete, setPendingDelete] = useState<GroupPendingDelete | null>(null);
 
@@ -115,11 +113,10 @@ export function useGroupDetailActions({
    const resetActivityForm = () => {
       setNewActivityTitle("");
       setNewActivityType("practica");
-      setNewActivityStatus("planned");
       setNewActivityDescription("");
       setNewActivityEvaluable(false);
       setNewActivityRubricaId("");
-      setNewActivityFechaInicio("");
+      setNewActivityFechaInicio(new Date().toISOString().slice(0, 10));
       setNewActivityFechaFin("");
    };
 
@@ -203,7 +200,7 @@ export function useGroupDetailActions({
          assignmentId,
          title: newActivityTitle,
          type: newActivityType,
-         status: newActivityStatus,
+         status: newActivityEvaluable ? "assigned" : "planned",
          description: newActivityDescription,
          esEvaluable: newActivityEvaluable,
          rubricaId: newActivityEvaluable ? newActivityRubricaId : undefined,
@@ -264,8 +261,6 @@ export function useGroupDetailActions({
       setNewActivityTitle,
       newActivityType,
       setNewActivityType,
-      newActivityStatus,
-      setNewActivityStatus,
       newActivityDescription,
       setNewActivityDescription,
       newActivityEvaluable,
@@ -287,3 +282,11 @@ export function useGroupDetailActions({
       confirmDelete,
    };
 }
+
+
+
+
+
+
+
+

@@ -54,8 +54,6 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
       setNewActivityTitle,
       newActivityType,
       setNewActivityType,
-      newActivityStatus,
-      setNewActivityStatus,
       newActivityDescription,
       setNewActivityDescription,
       newActivityEvaluable,
@@ -259,7 +257,6 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
             section={assignment.section}
             title={newActivityTitle}
             type={newActivityType}
-            status={newActivityStatus}
             esEvaluable={newActivityEvaluable}
             rubricaId={newActivityRubricaId}
             rubricOptions={rubricOptions}
@@ -268,7 +265,6 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
             description={newActivityDescription}
             onTitleChange={setNewActivityTitle}
             onTypeChange={setNewActivityType}
-            onStatusChange={setNewActivityStatus}
             onEsEvaluableChange={setNewActivityEvaluable}
             onRubricaIdChange={setNewActivityRubricaId}
             onCreateRubric={handleCreateRubricForActivity}
@@ -280,4 +276,9 @@ export function GroupDetail({ assignmentId, onBack }: GroupDetailProps) {
       </div>
    );
 }
+
+
+
+
+
 
