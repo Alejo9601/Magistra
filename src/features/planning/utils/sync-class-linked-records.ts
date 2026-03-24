@@ -22,7 +22,7 @@ const evaluativeFormatLabelMap: Record<EvaluativeFormat, string> = {
 };
 
 function mapClassStatusToAssessmentStatus(status: ClassStatus): AssessmentStatus {
-   if (status === "finalizada") {
+   if (status === "dictada") {
       return "graded";
    }
    if (status === "planificada") {
@@ -32,7 +32,7 @@ function mapClassStatusToAssessmentStatus(status: ClassStatus): AssessmentStatus
 }
 
 function mapClassStatusToActivityStatus(status: ClassStatus): ActivityStatus {
-   if (status === "finalizada") {
+   if (status === "dictada") {
       return "completed";
    }
    if (status === "planificada") {
@@ -263,3 +263,4 @@ export function syncClassLinkedRecords({
       linkedClassIds: [effectiveClassId],
    });
 }
+

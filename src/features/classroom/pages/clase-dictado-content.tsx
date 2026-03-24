@@ -153,7 +153,7 @@ export function ClaseDictadoContent() {
          record.attendance[student.id] ?? ("P" as AttendanceStatus),
       ]),
    );
-   const isFinalized = cls.status === "finalizada";
+   const isFinalized = cls.status === "dictada";
    const showGradesSection =
       cls.type === "evaluacion" || cls.type === "practica" || cls.type === "teorico-practica";
    const classDateLabel = new Date(`${cls.date}T12:00:00`).toLocaleDateString("es-AR", {
@@ -333,15 +333,15 @@ export function ClaseDictadoContent() {
 
       setAttendance(cls.id, attendanceWithDefaults);
       updateClass(cls.id, {
-         status: "finalizada",
+         status: "dictada",
          closureType: closeAnalysis.hasChanges ? "modificada" : "planificada",
       });
       setCloseDialogOpen(false);
 
       toast.success(
          closeAnalysis.hasChanges
-            ? "Clase finalizada con modificaciones registradas."
-            : "Clase finalizada segun lo planificado.",
+            ? "Clase dictada con modificaciones registradas."
+            : "Clase dictada segun lo planificado.",
       );
    };
 
@@ -356,7 +356,7 @@ export function ClaseDictadoContent() {
             onBack={handleBack}
             onReopenClass={() => {
                updateClass(cls.id, {
-                  status: cls.topic.trim().length > 0 ? "planificada" : "sin-planificar",
+                  status: cls.topic.trim().length > 0 ? "planificada" : "sin_planificar",
                   closureType: undefined,
                });
                toast.success("Clase reabierta. Ya puedes editar y volver a cerrarla.");
@@ -444,7 +444,7 @@ export function ClaseDictadoContent() {
                {attendanceLockedByFinalized ? (
                   <div className="rounded-md border border-dashed border-border/70 bg-muted/25 p-3 text-center">
                      <p className="text-xs text-muted-foreground">
-                        Asistencia no editable: la clase ya esta finalizada.
+                        Asistencia no editable: la clase ya esta dictada.
                      </p>
                      <Button
                         type="button"
@@ -453,7 +453,7 @@ export function ClaseDictadoContent() {
                         className="mt-2 text-xs"
                         onClick={() => {
                            setAttendanceLockedByFinalized(false);
-                           toast.warning("Edicion manual de asistencia habilitada para clase finalizada.");
+                           toast.warning("Edicion manual de asistencia habilitada para clase dictada.");
                         }}
                      >
                         Editar asistencia igualmente
@@ -787,6 +787,7 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
+
 
 
 

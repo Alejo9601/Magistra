@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getAssignmentIdBySubjectId } from "@/lib/edu-repository";
 import { useAssessmentsContext } from "@/features/assessments";
 import { useActivitiesContext } from "@/features/activities";
@@ -20,14 +20,15 @@ import type {
    TypeFilter,
    ViewMode,
 } from "@/features/planning/types";
-import type { ClassSession } from "@/types";
 
 export function PlanificacionContent() {
    const { activeInstitution } = useInstitutionContext();
    const {
       classes,
-      createClass,
+      createQuickClass,
       createRecurringClasses,
+      getScheduleSlotsForDate,
+      hasScheduleForPattern,
       updateClass,
       duplicateClass,
    } = usePlanningContext();
@@ -50,13 +51,14 @@ export function PlanificacionContent() {
    } = usePlanningCalendarNavigation(today);
    const initialStatusFilter =
       searchParams.get("status") === "planificada" ||
-      searchParams.get("status") === "sin-planificar" ||
-      searchParams.get("status") === "finalizada"
+      searchParams.get("status") === "sin_planificar" ||
+      searchParams.get("status") === "dictada"
          ? (searchParams.get("status") as StatusFilter)
          : "all";
    const [statusFilter, setStatusFilter] =
       useState<StatusFilter>(initialStatusFilter);
    const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
    const [modalOpen, setModalOpen] = useState(false);
    const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
    const [editingClassId, setEditingClassId] = useState<string | null>(null);
@@ -80,7 +82,7 @@ export function PlanificacionContent() {
 
    const scopedClasses = classes.filter(
       (classSession) =>
-      matchesInstitutionScope(classSession.institutionId, activeInstitution),
+         matchesInstitutionScope(classSession.institutionId, activeInstitution),
    );
 
    const filteredClasses = scopedClasses.filter((classSession) => {
@@ -93,7 +95,7 @@ export function PlanificacionContent() {
 
    const editingClass = editingClassId
       ? (classes.find((classSession) => classSession.id === editingClassId) ??
-        null)
+         null)
       : null;
 
    const duplicateSourceClass = duplicateCandidateId
@@ -144,7 +146,7 @@ export function PlanificacionContent() {
    const openCreateModal = (date?: string) => {
       setEditingClassId(null);
       setPrefillDate(date);
-      setModalOpen(true);
+      setQuickCreateOpen(true);
    };
 
    const openClassDetail = (id: string) => {
@@ -157,14 +159,10 @@ export function PlanificacionContent() {
       setDetailClassId(null);
    };
 
-   const openEditModal = (id: string, options?: { allowPlanned?: boolean }) => {
+   const openEditModal = (id: string) => {
       const targetClass = classes.find((classSession) => classSession.id === id);
       if (!targetClass) {
          toast.error("No se encontro la clase seleccionada.");
-         return;
-      }
-      if (targetClass.status === "planificada" && !options?.allowPlanned) {
-         toast.info("Clase planificada bloqueada. Usa Replanificar para editar.");
          return;
       }
       setEditingClassId(id);
@@ -197,16 +195,12 @@ export function PlanificacionContent() {
          toast.error("No se encontro la clase seleccionada.");
          return;
       }
-      if (targetClass.status !== "planificada") {
-         openEditModal(id, { allowPlanned: true });
-         return;
-      }
-      updateClass(id, { status: "sin-planificar" });
+      updateClass(id, { status: "sin_planificar" });
       if (options?.fromDayDetails) {
          setSelectedDayDate(null);
       }
-      toast.success("Clase replanificada. Ya puedes editarla y volver a publicarla.");
-      openEditModal(id, { allowPlanned: true });
+      toast.success("Clase enviada a sin_planificar. Puedes planificarla ahora.");
+      openEditModal(id);
    };
 
    const requestDuplicate = (id: string) => {
@@ -238,7 +232,7 @@ export function PlanificacionContent() {
 
    const handleEditFromClassDetail = (id: string) => {
       closeClassDetail();
-      openEditModal(id, { allowPlanned: true });
+      openEditModal(id);
    };
 
    const handleReplanFromClassDetail = (id: string) => {
@@ -250,24 +244,66 @@ export function PlanificacionContent() {
       requestDuplicate(id);
    };
 
+   const onQuickCreate = (payload: {
+      assignmentId: string;
+      date: string;
+      time: string;
+      blockCount: number;
+      scheduleTemplateId?: string;
+   }) => {
+      const createdClass = createQuickClass({
+         assignmentId: payload.assignmentId,
+         date: payload.date,
+         time: payload.time,
+         blockCount: payload.blockCount,
+         scheduleTemplateId: payload.scheduleTemplateId,
+         source: "manual",
+      });
+
+      const dayOfWeek = new Date(`${payload.date}T12:00:00`).getDay();
+      const hasTemplatePattern = hasScheduleForPattern(
+         payload.assignmentId,
+         dayOfWeek,
+         payload.time,
+      );
+
+      if (!hasTemplatePattern) {
+         const similarManual = classes.filter((classSession) => {
+            const classAssignmentId =
+               classSession.assignmentId ?? getAssignmentIdBySubjectId(classSession.subjectId);
+            if (classAssignmentId !== payload.assignmentId || classSession.source === "generated") {
+               return false;
+            }
+            const classDay = new Date(`${classSession.date}T12:00:00`).getDay();
+            return classDay === dayOfWeek && classSession.time === payload.time;
+         }).length;
+
+         if (similarManual >= 2) {
+            toast.info("Detectamos un patron repetido. Te conviene configurar una cursada.");
+         }
+      }
+
+      toast.success("Clase creada en estado sin_planificar.");
+      openClassDetail(createdClass.id);
+   };
+
    const onSave = (
       payload: ClassFormInput,
       mode: "draft" | "publish",
       options?: { linkedActivityId?: string },
    ) => {
-      const savedClass = editingClass
-         ? ({ ...editingClass, ...payload } as ClassSession)
-         : createClass(payload);
-
-      if (editingClass) {
-         updateClass(editingClass.id, payload);
+      if (!editingClass) {
+         toast.error("No se encontro la clase para planificar.");
+         return;
       }
 
-      const effectiveClassId = editingClass?.id ?? savedClass.id;
+      updateClass(editingClass.id, payload);
+
+      const effectiveClassId = editingClass.id;
       const effectiveAssignmentId =
          payload.assignmentId ??
-         savedClass.assignmentId ??
-         getAssignmentIdBySubjectId(savedClass.subjectId);
+         editingClass.assignmentId ??
+         getAssignmentIdBySubjectId(editingClass.subjectId);
 
       syncClassLinkedRecords({
          payload,
@@ -290,7 +326,7 @@ export function PlanificacionContent() {
                assignmentId: effectiveAssignmentId,
                fechaInicio: payload.date,
                status:
-                  payload.status === "finalizada"
+                  payload.status === "dictada"
                      ? "completed"
                      : payload.status === "planificada"
                        ? "assigned"
@@ -304,12 +340,8 @@ export function PlanificacionContent() {
 
       toast.success(
          mode === "publish"
-            ? editingClass
-               ? "Clase actualizada y publicada."
-               : "Clase creada y publicada."
-            : editingClass
-               ? "Clase actualizada como borrador."
-               : "Clase guardada como borrador.",
+            ? "Planificacion guardada. Estado actualizado a planificada."
+            : "Cambios guardados.",
       );
    };
 
@@ -410,6 +442,8 @@ export function PlanificacionContent() {
          </div>
 
          <PlanningModals
+            quickCreateOpen={quickCreateOpen}
+            setQuickCreateOpen={setQuickCreateOpen}
             modalOpen={modalOpen}
             setModalOpen={setModalOpen}
             activeInstitution={activeInstitution}
@@ -417,6 +451,8 @@ export function PlanificacionContent() {
             prefillDate={prefillDate}
             allClasses={classes}
             allActivities={activities}
+            getScheduleSlotsForDate={getScheduleSlotsForDate}
+            onQuickCreate={onQuickCreate}
             onSave={onSave}
             scheduleModalOpen={scheduleModalOpen}
             setScheduleModalOpen={setScheduleModalOpen}
@@ -442,5 +478,3 @@ export function PlanificacionContent() {
       </div>
    );
 }
-
-

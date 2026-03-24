@@ -1,4 +1,4 @@
-﻿export function classDateTimeMs(date: string, time: string) {
+export function classDateTimeMs(date: string, time: string) {
    return new Date(`${date}T${time}:00`).getTime();
 }
 
@@ -19,8 +19,8 @@ export function formatCountdown(targetMs: number, nowMs: number) {
 }
 
 export function formatAgendaState(classDateMs: number, nowMs: number, status: string) {
-   if (status === "finalizada") {
-      return "Finalizada";
+   if (status === "dictada") {
+      return "Dictada";
    }
    if (classDateMs <= nowMs) {
       return "Pendiente de cierre";
@@ -39,4 +39,5 @@ export function computeAttendancePct(statuses: Array<"P" | "A" | "T" | "J">) {
    }, 0);
    return Math.round((attendedWeight / statuses.length) * 100);
 }
+
 

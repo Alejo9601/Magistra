@@ -1,4 +1,4 @@
-﻿import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -30,7 +30,7 @@ export function ClaseDictadoHeader({
             <div className="space-y-1">
                {isFinalized ? (
                   <Badge variant="secondary" className="w-fit border-0 bg-success/10 text-success">
-                     Finalizada
+                     Dictada
                   </Badge>
                ) : null}
                <p className="text-base sm:text-lg font-semibold text-foreground tracking-tight">

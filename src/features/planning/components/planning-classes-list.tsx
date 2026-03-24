@@ -1,4 +1,4 @@
-﻿import { Edit3, RotateCcw, Eye, Copy, ClipboardCheck } from "lucide-react";
+import { Edit3, RotateCcw, Eye, Copy, ClipboardCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TableCell } from "@/components/ui/table";
@@ -74,10 +74,10 @@ export function PlanningClassesList({
             renderMonthMeta={(monthClasses) => {
                const total = monthClasses.length;
                const pending = monthClasses.filter(
-                  (item) => item.status === "sin-planificar",
+                  (item) => item.status === "sin_planificar",
                ).length;
                const completed = monthClasses.filter(
-                  (item) => item.status === "finalizada",
+                  (item) => item.status === "dictada",
                ).length;
                const pendingPct = total > 0 ? Math.round((pending / total) * 100) : 0;
                const completedPct =
@@ -92,7 +92,7 @@ export function PlanningClassesList({
                         Sin plan {pendingPct}%
                      </Badge>
                      <Badge variant="outline" className="text-[10px] border-0 status-ok">
-                        Finalizadas {completedPct}%
+                        Dictadas {completedPct}%
                      </Badge>
                   </>
                );
@@ -310,3 +310,4 @@ export function PlanningClassesList({
       </div>
    );
 }
+

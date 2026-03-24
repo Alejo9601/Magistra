@@ -83,7 +83,7 @@ export function TodayClassesAgendaCard({
                               </div>
                               <div className="flex flex-col items-end gap-1">
                                  <ClassStatusBadge status={cls.status} />
-                                 {cls.status !== "finalizada" && (
+                                 {cls.status !== "dictada" && (
                                     <Badge variant="secondary" className="text-[10px]">
                                        {classState}
                                     </Badge>
@@ -134,4 +134,5 @@ export function TodayClassesAgendaCard({
       </Card>
    );
 }
+
 

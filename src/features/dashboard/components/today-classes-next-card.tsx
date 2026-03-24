@@ -23,7 +23,7 @@ export function TodayClassesNextCard({
       : null;
 
    const title =
-      isNextToday && classCardTarget && classCardTarget.status !== "finalizada" && classCardTargetMs !== null && classCardTargetMs <= nowMs
+      isNextToday && classCardTarget && classCardTarget.status !== "dictada" && classCardTargetMs !== null && classCardTargetMs <= nowMs
          ? "Clase de hoy pendiente de cierre"
          : isNextToday
             ? "Proxima clase de hoy"
@@ -120,3 +120,4 @@ export function TodayClassesNextCard({
       </Card>
    );
 }
+

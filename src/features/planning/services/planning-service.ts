@@ -1,13 +1,13 @@
-﻿import type { ActivityType, ClassBlock, ClassSession } from "@/types";
+import type { ActivityType, ClassBlock, ClassSession } from "@/types";
 import { readJsonFromStorage, writeJsonToStorage } from "@/services/local-storage";
 
 const PLANNING_STORAGE_KEY = "aula.planning.classes";
 
 function isClassStatus(value: unknown): value is ClassSession["status"] {
    return (
+      value === "sin_planificar" ||
       value === "planificada" ||
-      value === "sin-planificar" ||
-      value === "finalizada"
+      value === "dictada"
    );
 }
 
@@ -120,7 +120,7 @@ function sanitizeClassSession(raw: unknown): ClassSession | null {
       return null;
    }
 
-   const input = raw as Partial<ClassSession> & { type?: string };
+   const input = raw as Partial<ClassSession> & { type?: string; status?: unknown };
    const normalizedType = normalizeLegacyClassType(input.type);
 
    if (
@@ -156,6 +156,10 @@ function sanitizeClassSession(raw: unknown): ClassSession | null {
       scheduleTemplateId:
          typeof input.scheduleTemplateId === "string"
             ? input.scheduleTemplateId
+            : undefined,
+      source:
+         input.source === "generated" || input.source === "manual"
+            ? input.source
             : undefined,
       topic: input.topic,
       subtopics: input.subtopics.filter(

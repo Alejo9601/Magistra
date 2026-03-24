@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
    getAssignmentIdBySubjectId,
    getInstitutionById,
@@ -35,7 +35,8 @@ export function ClaseDetailContent({
    const params = useParams();
    const resolvedClassId = classId ?? (params.id as string);
    const { getStudentsByAssignment } = useStudentsContext();
-   const { classes, markClassAsTaught, updateClassNotes, updateClass, duplicateClass } = usePlanningContext();
+   const { classes, markClassAsTaught, updateClassNotes, updateClass, duplicateClass } =
+      usePlanningContext();
    const { getRecord, setAttendance: saveAttendance } = useClassroomContext();
 
    const cls = classes.find((classSession) => classSession.id === resolvedClassId);
@@ -49,28 +50,27 @@ export function ClaseDetailContent({
 
    const attendanceFromRecord = useMemo<Record<string, AttendanceStatus>>(() => {
       const record = getRecord(resolvedClassId);
-      const nextAttendance = Object.fromEntries(
+      return Object.fromEntries(
          classStudents.map((student) => [
             student.id,
             record.attendance[student.id] ?? ("P" as AttendanceStatus),
          ]),
       );
-      return nextAttendance;
    }, [resolvedClassId, classStudents, getRecord]);
 
    const [attendance, setAttendance] =
       useState<Record<string, AttendanceStatus>>(attendanceFromRecord);
-   const [notesDraftByClassId, setNotesDraftByClassId] = useState<
-      Record<string, string>
-   >({});
-   const [allowFinalizedAttendanceEdit, setAllowFinalizedAttendanceEdit] = useState(false);
+   const [notesDraftByClassId, setNotesDraftByClassId] = useState<Record<string, string>>(
+      {},
+   );
+   const [allowDictadaAttendanceEdit, setAllowDictadaAttendanceEdit] = useState(false);
 
    useEffect(() => {
       setAttendance(attendanceFromRecord);
    }, [attendanceFromRecord]);
 
    useEffect(() => {
-      setAllowFinalizedAttendanceEdit(false);
+      setAllowDictadaAttendanceEdit(false);
    }, [resolvedClassId]);
 
    if (!cls || !subject || !inst) {
@@ -82,8 +82,8 @@ export function ClaseDetailContent({
    }
 
    const notes = notesDraftByClassId[cls.id] ?? cls.notes ?? "";
-   const isFinalized = cls.status === "finalizada";
-   const attendanceReadonly = !isFinalized || (isFinalized && !allowFinalizedAttendanceEdit);
+   const isDictada = cls.status === "dictada";
+   const attendanceReadonly = !isDictada || (isDictada && !allowDictadaAttendanceEdit);
 
    const handleReplan = () => {
       if (onReplanClass) {
@@ -91,8 +91,8 @@ export function ClaseDetailContent({
          return;
       }
       if (cls.status === "planificada") {
-         updateClass(cls.id, { status: "sin-planificar" });
-         toast.success("Clase replanificada.");
+         updateClass(cls.id, { status: "sin_planificar" });
+         toast.success("Clase enviada a sin_planificar.");
       }
    };
 
@@ -115,9 +115,25 @@ export function ClaseDetailContent({
             course={subject.course}
             showBack={!embedded}
          />
+
+         {cls.status === "sin_planificar" ? (
+            <div className="mb-4 rounded-md border border-warning/40 bg-warning/10 p-3">
+               <p className="text-sm font-medium text-foreground">Esta clase no esta planificada</p>
+               <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2 text-xs"
+                  onClick={() => (onEditClass ? onEditClass(cls.id) : undefined)}
+                  disabled={!onEditClass}
+               >
+                  Planificar ahora
+               </Button>
+            </div>
+         ) : null}
+
          <div className="mb-4 flex flex-wrap gap-2">
             <Button asChild variant="outline" size="sm" className="text-xs">
-               <Link to={`/clase/${cls.id}/dictado`}>Abrir vista de dictado</Link>
+               <Link to={`/clase/${cls.id}/dictado`}>Iniciar clase</Link>
             </Button>
             <Button
                variant="outline"
@@ -127,7 +143,7 @@ export function ClaseDetailContent({
                disabled={!onEditClass}
             >
                <Edit3 className="mr-1.5 size-3.5" />
-               Editar
+               Editar planificacion
             </Button>
             <Button variant="outline" size="sm" className="text-xs" onClick={handleReplan}>
                <RotateCcw className="mr-1.5 size-3.5" />
@@ -159,7 +175,7 @@ export function ClaseDetailContent({
                      updateClassNotes(cls.id, notes);
                      toast.success("Notas guardadas");
                   }}
-                  lockedMessage={isFinalized ? undefined : "No hay notas para esta clase aun."}
+                  lockedMessage={isDictada ? undefined : "No hay notas para esta clase aun."}
                />
             </div>
 
@@ -177,20 +193,20 @@ export function ClaseDetailContent({
                {attendanceReadonly ? (
                   <div className="mt-3 rounded-md border border-dashed border-border/70 bg-muted/25 p-3 text-center">
                      <p className="text-xs text-muted-foreground">
-                        {isFinalized
-                           ? "Clase finalizada. Asistencia en modo solo lectura."
+                        {isDictada
+                           ? "Clase dictada. Asistencia en modo solo lectura."
                            : "Asistencia no computada."}
                      </p>
-                     {isFinalized ? (
+                     {isDictada ? (
                         <Button
                            type="button"
                            size="sm"
                            variant="outline"
                            className="mt-2 text-xs"
                            onClick={() => {
-                              setAllowFinalizedAttendanceEdit(true);
+                              setAllowDictadaAttendanceEdit(true);
                               toast.warning(
-                                 "Estas editando asistencia de una clase finalizada bajo tu responsabilidad.",
+                                 "Estas editando asistencia de una clase dictada bajo tu responsabilidad.",
                               );
                            }}
                         >
@@ -204,5 +220,3 @@ export function ClaseDetailContent({
       </div>
    );
 }
-
-

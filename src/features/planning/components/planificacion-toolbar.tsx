@@ -1,4 +1,4 @@
-﻿import { CalendarDays, ChevronLeft, ChevronRight, List, Plus } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, List, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
    Select,
@@ -113,8 +113,8 @@ export function PlanificacionToolbar({
                <SelectContent>
                   <SelectItem value="all">Todos los estados</SelectItem>
                   <SelectItem value="planificada">Planificada</SelectItem>
-                  <SelectItem value="sin-planificar">Sin planificar</SelectItem>
-                  <SelectItem value="finalizada">Finalizada</SelectItem>
+                  <SelectItem value="sin_planificar">Sin planificar</SelectItem>
+                  <SelectItem value="dictada">Dictada</SelectItem>
                </SelectContent>
             </Select>
 
@@ -139,3 +139,4 @@ export function PlanificacionToolbar({
       </div>
    );
 }
+

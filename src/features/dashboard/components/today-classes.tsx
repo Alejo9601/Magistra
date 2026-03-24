@@ -51,12 +51,12 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
 
    const overdueTodayClass = todayClasses.find(
       (classSession) =>
-         classSession.status !== "finalizada" &&
+         classSession.status !== "dictada" &&
          classDateTimeMs(classSession.date, classSession.time) < nowMs,
    );
    const upcomingTodayClass = todayClasses.find(
       (classSession) =>
-         classSession.status !== "finalizada" &&
+         classSession.status !== "dictada" &&
          classDateTimeMs(classSession.date, classSession.time) >= nowMs,
    );
 
@@ -72,7 +72,7 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
 
    const nextUpcomingClass = scopedClasses.find(
       (classSession) =>
-         classSession.status !== "finalizada" &&
+         classSession.status !== "dictada" &&
          classDateTimeMs(classSession.date, classSession.time) >= nowMs,
    );
    const classCardTarget = nextTodayClass ?? nextUpcomingClass;
@@ -115,6 +115,7 @@ export function TodayClasses({ activeInstitution }: { activeInstitution: string 
       </div>
    );
 }
+
 
 
 

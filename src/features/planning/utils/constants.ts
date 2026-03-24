@@ -1,4 +1,4 @@
-﻿import type { ClassSession } from "@/types";
+import type { ClassSession } from "@/types";
 
 export const classTypeLabels: Record<ClassSession["type"], string> = {
    teorica: "Teorica",
@@ -48,13 +48,13 @@ export const monthNames = [
 ];
 
 export function getStatusLabel(status: ClassSession["status"]) {
+   if (status === "sin_planificar") return "Sin planificar";
    if (status === "planificada") return "Planificada";
-   if (status === "sin-planificar") return "Sin planificar";
-   return "Finalizada";
+   return "Dictada";
 }
 
 export function getStatusColor(status: ClassSession["status"]) {
-   if (status === "planificada") return "status-ok";
-   if (status === "sin-planificar") return "status-warning";
-   return "status-ok";
+   if (status === "sin_planificar") return "bg-warning/15 text-warning-foreground";
+   if (status === "planificada") return "bg-primary/12 text-primary";
+   return "bg-success/12 text-success";
 }

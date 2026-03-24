@@ -12,7 +12,7 @@ type ClassSessionLike = {
    institutionId: string;
    date: string;
    time: string;
-   status: "planificada" | "sin-planificar" | "finalizada";
+   status: "planificada" | "sin_planificar" | "dictada";
 };
 
 type ThresholdsLike = {
@@ -76,7 +76,7 @@ export function buildTodayDisplayedAlerts({
          .filter((status): status is AttendanceStatus => Boolean(status));
       const hasAttendance = attendanceValues.length > 0;
 
-      if (classSession.status === "sin-planificar") {
+      if (classSession.status === "sin_planificar") {
          const hoursToClass = Math.max(
             0,
             Math.floor((classDateMs - nowMs) / (1000 * 60 * 60)),
@@ -90,12 +90,12 @@ export function buildTodayDisplayedAlerts({
             text: `${classSession.time} - ${subjectName} sin planificar (${hoursToClass}h para iniciar)`,
             severity,
             priority: hoursToClass,
-            actionTo: "/planificacion?status=sin-planificar",
+            actionTo: "/planificacion?status=sin_planificar",
             actionLabel: "Planificar",
          });
       }
 
-      if (classDateMs <= nowMs && classSession.status !== "finalizada") {
+      if (classDateMs <= nowMs && classSession.status !== "dictada") {
          const minutesSinceStart = Math.floor((nowMs - classDateMs) / (1000 * 60));
          const severity: TodayAlert["severity"] =
             minutesSinceStart >= 60 ? "high" : "medium";
@@ -109,10 +109,10 @@ export function buildTodayDisplayedAlerts({
          });
       }
 
-      if (classSession.status === "finalizada" && !hasAttendance && students.length > 0) {
+      if (classSession.status === "dictada" && !hasAttendance && students.length > 0) {
          alerts.push({
             id: `att-${classSession.id}`,
-            text: `${classSession.time} - ${subjectName} finalizada sin asistencia registrada`,
+            text: `${classSession.time} - ${subjectName} dictada sin asistencia registrada`,
             severity: "high",
             priority: 10,
             actionTo: `/clase/${classSession.id}/dictado`,
@@ -120,7 +120,7 @@ export function buildTodayDisplayedAlerts({
          });
       }
 
-      if (classSession.status === "finalizada" && hasAttendance) {
+      if (classSession.status === "dictada" && hasAttendance) {
          const attendancePct = computeAttendancePct(attendanceValues);
          if (attendancePct !== null && attendancePct < 65) {
             alerts.push({
@@ -138,7 +138,7 @@ export function buildTodayDisplayedAlerts({
    scopedClasses
       .filter(
          (classSession) =>
-            classSession.status === "sin-planificar" &&
+            classSession.status === "sin_planificar" &&
             classSession.date > todayStr &&
             classSession.date <= tomorrowStr,
       )
@@ -158,7 +158,7 @@ export function buildTodayDisplayedAlerts({
             text: `${classSession.date} ${classSession.time} - ${subjectName} sin planificar`,
             severity,
             priority: hoursToClass,
-            actionTo: "/planificacion?status=sin-planificar",
+            actionTo: "/planificacion?status=sin_planificar",
             actionLabel: "Planificar",
          });
       });
@@ -217,6 +217,7 @@ export function buildTodayDisplayedAlerts({
       ? criticalAlerts.slice(0, 4)
       : sortedAlerts.slice(0, 2);
 }
+
 
 
 

@@ -1,4 +1,4 @@
-﻿import { Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TabsContent } from "@/components/ui/tabs";
@@ -48,23 +48,23 @@ export function GroupDetailPlanningTab({ groupClasses }: GroupDetailPlanningTabP
                            className={`border-0 text-[10px] ${
                               cls.status === "planificada"
                                  ? "bg-primary/10 text-primary"
-                                 : cls.status === "finalizada"
+                                 : cls.status === "dictada"
                                    ? "bg-success/10 text-success"
                                    : "bg-warning/10 text-warning-foreground"
                            }`}
                         >
                            {cls.status === "planificada"
                               ? "Planificada"
-                              : cls.status === "finalizada"
-                                ? "Finalizada"
+                              : cls.status === "dictada"
+                                ? "Dictada"
                                 : "Sin planificar"}
                         </Badge>
                      </TableCell>
                      <TableCell>
                         <div className="flex justify-end">
-                           {cls.status === "sin-planificar" ? (
+                           {cls.status === "sin_planificar" ? (
                               <Button asChild size="sm" variant="outline" className="h-7 text-[11px]">
-                                 <Link to={`/planificacion?classId=${cls.id}&status=sin-planificar`}>
+                                 <Link to={`/planificacion?classId=${cls.id}&status=sin_planificar`}>
                                     <Sparkles className="mr-1 size-3.5" />
                                     Planificar
                                  </Link>
@@ -79,3 +79,4 @@ export function GroupDetailPlanningTab({ groupClasses }: GroupDetailPlanningTabP
       </TabsContent>
    );
 }
+

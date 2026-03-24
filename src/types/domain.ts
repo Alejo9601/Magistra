@@ -1,4 +1,4 @@
-﻿export type Institution = {
+export type Institution = {
    id: string;
    name: string;
    address: string;
@@ -102,7 +102,7 @@ export type ClassType =
    | "repaso"
    | "recuperatorio";
 
-export type ClassStatus = "planificada" | "sin-planificar" | "finalizada";
+export type ClassStatus = "sin_planificar" | "planificada" | "dictada";
 
 export type ClassClosureType = "planificada" | "modificada";
 
@@ -140,6 +140,7 @@ export type ClassSession = {
    blockDurationMinutes?: number;
    blocks?: ClassBlock[];
    scheduleTemplateId?: string;
+   source?: "manual" | "generated";
    topic: string;
    subtopics: string[];
    type: ClassType;
@@ -275,4 +276,5 @@ export type ClassroomRecord = {
    notes?: string;
    performanceEntries: ClassroomPerformanceEntry[];
 };
+
 

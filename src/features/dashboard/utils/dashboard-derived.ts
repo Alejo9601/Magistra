@@ -1,4 +1,4 @@
-import { getSubjectById } from "@/lib/edu-repository";
+﻿import { getSubjectById } from "@/lib/edu-repository";
 import type { SubjectActivity, Assessment, ClassSession, Student } from "@/types";
 
 export type SuggestedDashboardTask = {
@@ -93,7 +93,7 @@ export function getSuggestedDashboardTasks(params: {
    classes
       .filter(
          (classSession) =>
-            classSession.status === "sin-planificar" &&
+            classSession.status === "sin_planificar" &&
             classSession.date >= todayStr &&
             classSession.date <= upcomingWindowEnd,
       )
@@ -137,3 +137,4 @@ export function getSuggestedDashboardTasks(params: {
 
    return tasks;
 }
+

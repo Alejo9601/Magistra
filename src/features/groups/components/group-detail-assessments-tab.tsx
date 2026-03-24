@@ -73,7 +73,7 @@ export function GroupDetailAssessmentsTab({
                              assessmentTypeLabel[assessment.type]
                            : inferredAssessmentType ?? assessmentTypeLabel[assessment.type];
                         const derivedStatus = linkedClass
-                           ? linkedClass.status === "finalizada"
+                           ? linkedClass.status === "dictada"
                               ? "Finalizado"
                               : "Pendiente"
                            : assessment.status === "graded"
@@ -154,3 +154,4 @@ export function GroupDetailAssessmentsTab({
       </TabsContent>
    );
 }
+

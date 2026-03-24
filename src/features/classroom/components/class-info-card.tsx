@@ -14,13 +14,13 @@ import type { ClassSession, Institution } from "@/types";
 
 function classStatusLabel(status: ClassSession["status"]) {
    if (status === "planificada") return "Planificada";
-   if (status === "finalizada") return "Dictada";
+   if (status === "dictada") return "Dictada";
    return "Creada";
 }
 
 function classStatusBadgeClass(status: ClassSession["status"]) {
    if (status === "planificada") return "bg-primary/10 text-primary";
-   if (status === "finalizada") return "bg-success/10 text-success";
+   if (status === "dictada") return "bg-success/10 text-success";
    return "bg-warning/10 text-warning-foreground";
 }
 
@@ -127,7 +127,7 @@ export function ClassInfoCard({
                </div>
             )}
 
-            {cls.status !== "finalizada" && (
+            {cls.status !== "dictada" && (
                <Button size="sm" className="mt-4 text-xs" onClick={onMarkAsTaught}>
                   <CheckCircle2 className="size-3.5 mr-1.5" />
                   Registrar como dictada
@@ -167,3 +167,4 @@ export function ClassDetailHeader({
       </div>
    );
 }
+

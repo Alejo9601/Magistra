@@ -7,6 +7,7 @@ export const storageKeys = {
    contentItems: "aula.catalog.content-items",
    students: "aula.students",
    planningClasses: "aula.planning.classes",
+   scheduleTemplates: "aula.planning.schedule-templates",
    evaluations: "aula.evaluations",
    attendanceRecords: "aula.attendanceRecords",
    teacherProfile: "aula.teacherProfile",
@@ -31,6 +32,10 @@ export function initializeAppDataStorage() {
    ensureStorageSeed(storageKeys.contentItems, defaultEduData.contentItems);
    ensureStorageSeed(storageKeys.students, defaultEduData.students);
    ensureStorageSeed(storageKeys.planningClasses, defaultEduData.classSessions);
+   ensureStorageSeed(
+      storageKeys.scheduleTemplates,
+      defaultEduData.scheduleTemplates ?? [],
+   );
    ensureStorageSeed(storageKeys.evaluations, defaultEduData.evaluations);
    ensureStorageSeed(storageKeys.attendanceRecords, defaultEduData.attendanceRecords);
    ensureStorageSeed(storageKeys.teacherProfile, defaultEduData.teacherProfile);

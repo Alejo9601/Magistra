@@ -94,7 +94,7 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
    const pendingCount =
       scopedTasks.filter((task) => !task.done).length + suggestedTasks.length;
    const unplannedCount = scopedClasses.filter(
-      (cls) => cls.status === "sin-planificar",
+      (cls) => cls.status === "sin_planificar",
    ).length;
 
    const totalStudents = scopedStudents.length;
@@ -108,7 +108,7 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
    );
 
    const upcomingUnplanned = upcomingWindowClasses.filter(
-      (cls) => cls.status === "sin-planificar",
+      (cls) => cls.status === "sin_planificar",
    ).length;
 
    const unplannedPct =
@@ -168,7 +168,7 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
          level: unplannedLevel,
          detail: `${unplannedPct}% en los proximos 7 dias`,
          summary: "Reduce clases sin planificar en la semana activa.",
-         actionTo: "/planificacion?status=sin-planificar",
+         actionTo: "/planificacion?status=sin_planificar",
          actionLabel: "Planificar",
       },
    ] as const;
@@ -268,6 +268,7 @@ export function QuickStats({ activeInstitution }: { activeInstitution: string })
       </div>
    );
 }
+
 
 
 

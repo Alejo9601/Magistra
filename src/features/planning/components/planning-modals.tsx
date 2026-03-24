@@ -1,4 +1,5 @@
-﻿import { ClassEditorModal } from "@/features/planning/components/class-editor-modal";
+import { ClassEditorModal } from "@/features/planning/components/class-editor-modal";
+import { ClassQuickCreateModal } from "@/features/planning/components/class-quick-create-modal";
 import { ClassScheduleModal } from "@/features/planning/components/class-schedule-modal";
 import { DayClassesDialog } from "@/features/planning/components/day-classes-dialog";
 import { ClassDetailDialog } from "@/features/planning/components/class-detail-dialog";
@@ -7,6 +8,8 @@ import type { ClassFormInput } from "@/features/planning/types";
 import type { ClassSession, SubjectActivity } from "@/types";
 
 export function PlanningModals({
+   quickCreateOpen,
+   setQuickCreateOpen,
    modalOpen,
    setModalOpen,
    activeInstitution,
@@ -14,6 +17,8 @@ export function PlanningModals({
    prefillDate,
    allClasses,
    allActivities,
+   getScheduleSlotsForDate,
+   onQuickCreate,
    onSave,
    scheduleModalOpen,
    setScheduleModalOpen,
@@ -36,6 +41,8 @@ export function PlanningModals({
    onCloseDuplicateDialog,
    onConfirmDuplicate,
 }: {
+   quickCreateOpen: boolean;
+   setQuickCreateOpen: (open: boolean) => void;
    modalOpen: boolean;
    setModalOpen: (open: boolean) => void;
    activeInstitution: string;
@@ -43,6 +50,17 @@ export function PlanningModals({
    prefillDate?: string;
    allClasses: ClassSession[];
    allActivities: SubjectActivity[];
+   getScheduleSlotsForDate: (
+      assignmentId: string,
+      date: string,
+   ) => Array<{ scheduleTemplateId: string; time: string; blockCount: number }>;
+   onQuickCreate: (payload: {
+      assignmentId: string;
+      date: string;
+      time: string;
+      blockCount: number;
+      scheduleTemplateId?: string;
+   }) => void;
    onSave: (
       payload: ClassFormInput,
       mode: "draft" | "publish",
@@ -81,6 +99,15 @@ export function PlanningModals({
 }) {
    return (
       <>
+         <ClassQuickCreateModal
+            open={quickCreateOpen}
+            onOpenChange={setQuickCreateOpen}
+            activeInstitution={activeInstitution}
+            initialDate={prefillDate}
+            getScheduleSlotsForDate={getScheduleSlotsForDate}
+            onSubmit={onQuickCreate}
+         />
+
          <ClassEditorModal
             open={modalOpen}
             onOpenChange={setModalOpen}
