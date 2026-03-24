@@ -1,15 +1,5 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-   AlertDialog,
-   AlertDialogAction,
-   AlertDialogCancel,
-   AlertDialogContent,
-   AlertDialogDescription,
-   AlertDialogFooter,
-   AlertDialogHeader,
-   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
    Dialog,
    DialogContent,
@@ -21,19 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ClassScheduleSlotsSection } from "@/features/planning/components/class-schedule-slots-section";
-import {
-   Select,
-   SelectContent,
-   SelectItem,
-   SelectTrigger,
-   SelectValue,
-} from "@/components/ui/select";
-import {
-   getAssignmentsByInstitution,
-   getAssignmentById,
-   getSubjectById,
-   institutions,
-} from "@/lib/edu-repository";
+import { getAssignmentsByInstitution, getAssignmentById, getSubjectById } from "@/lib/edu-repository";
 import {
    resolveAssignmentIdForInstitution,
    resolveInstitutionId,
@@ -41,7 +19,6 @@ import {
 import { toast } from "sonner";
 import {
    addDays,
-   adjustSlotBlockCount,
    createSlot,
    normalizeSlotsForSchedule,
    todayDate,
@@ -73,11 +50,9 @@ export function ClassScheduleModal({
       }>;
    }) => number;
 }) {
-   const isInstitutionLocked = true;
    const fallbackInstitutionId =
       (initialAssignmentId ? getAssignmentById(initialAssignmentId)?.institutionId : undefined) ??
-      initialInstitutionId ??
-      institutions[0]?.id;
+      initialInstitutionId;
    const institutionId = resolveInstitutionId(
       activeInstitution,
       initialInstitutionId,
@@ -98,17 +73,13 @@ export function ClassScheduleModal({
 
    const firstAvailableAssignmentId = availableAssignments[0]?.id ?? "";
 
-   const isLockedToInitialSelection = Boolean(resolvedInitialAssignmentId);
-
    const [assignmentId, setAssignmentId] = useState("");
    const selectedAssignment = assignmentId ? getAssignmentById(assignmentId) : null;
    const selectedSubject = selectedAssignment ? getSubjectById(selectedAssignment.subjectId) : null;
    const selectedBlockDuration = selectedSubject?.blockDurationMinutes ?? 40;
    const [startDate, setStartDate] = useState(todayDate());
    const [endDate, setEndDate] = useState(addDays(todayDate(), 60));
-   const [pendingDeleteSlotId, setPendingDeleteSlotId] = useState<string | null>(
-      null,
-   );
+   const [focusSlotId, setFocusSlotId] = useState<string | null>(null);
    const [slots, setSlots] = useState<SlotInput[]>([
       createSlot(1, "08:00", 1),
       createSlot(3, "08:00", 1),
@@ -119,12 +90,12 @@ export function ClassScheduleModal({
          return;
       }
 
-      const nextAssignmentId =
-         resolvedInitialAssignmentId || firstAvailableAssignmentId;
+      const nextAssignmentId = resolvedInitialAssignmentId || firstAvailableAssignmentId;
       setAssignmentId(nextAssignmentId);
       setStartDate(todayDate());
       setEndDate(addDays(todayDate(), 60));
       setSlots([createSlot(1, "08:00", 1), createSlot(3, "08:00", 1)]);
+      setFocusSlotId(null);
    }, [firstAvailableAssignmentId, open, resolvedInitialAssignmentId]);
 
    const updateSlot = (slotId: string, updates: Partial<SlotInput>) => {
@@ -137,24 +108,27 @@ export function ClassScheduleModal({
       setSlots((prev) => prev.filter((slot) => slot.id !== slotId));
    };
 
-   const addSlot = () => {
-      setSlots((prev) => [...prev, createSlot()]);
+   const inferNextDay = (dayOfWeek: number) => {
+      if (dayOfWeek === 1) {
+         return 3;
+      }
+      return dayOfWeek === 5 ? 1 : dayOfWeek + 1;
    };
 
-   const adjustBlockCount = (slotId: string, delta: number) => {
-      setSlots((prev) =>
-         prev.map((slot) => {
-            if (slot.id !== slotId) {
-               return slot;
-            }
-            return { ...slot, blockCount: adjustSlotBlockCount(slot.blockCount, delta) };
-         }),
-      );
+   const addSlot = () => {
+      setSlots((prev) => {
+         const last = prev[prev.length - 1];
+         const nextSlot = last
+            ? createSlot(inferNextDay(last.dayOfWeek), last.time, 1)
+            : createSlot();
+         setFocusSlotId(nextSlot.id);
+         return [...prev, nextSlot];
+      });
    };
 
    const submit = () => {
       if (!assignmentId || !startDate || !endDate) {
-         toast.error("Completa institucion, materia y rango de fechas.");
+         toast.error("No se encontro la materia para programar.");
          return;
       }
       if (startDate > endDate) {
@@ -171,6 +145,10 @@ export function ClassScheduleModal({
       }
 
       const normalizedSlots = normalizeSlotsForSchedule(slots);
+      if (normalizedSlots.length !== slots.length) {
+         toast.error("Hay horarios repetidos. Revisa los dias, horas y bloques.");
+         return;
+      }
 
       const created = onSchedule({
          institutionId,
@@ -189,148 +167,84 @@ export function ClassScheduleModal({
    };
 
    return (
-      <>
-         <Dialog
-            open={open}
-            onOpenChange={(isOpen) => {
-               onOpenChange(isOpen);
-            }}
-         >
-            <DialogContent className="sm:max-w-[620px]">
-               <DialogHeader>
-                  <DialogTitle>Configurar dias y horario de cursada</DialogTitle>
-                  <DialogDescription>
-                     Un mismo curso puede tener varios bloques semanales con horarios distintos.
-                  </DialogDescription>
-               </DialogHeader>
+      <Dialog
+         open={open}
+         onOpenChange={(isOpen) => {
+            onOpenChange(isOpen);
+         }}
+      >
+         <DialogContent className="sm:max-w-[720px]">
+            <DialogHeader>
+               <DialogTitle>Configurar cursada</DialogTitle>
+               <DialogDescription>
+                  Elegi los dias y horarios en los que das esta materia.
+               </DialogDescription>
+            </DialogHeader>
 
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
-                  <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Institucion</Label>
-                     <Select
-                        value={institutionId}
-                        disabled={isLockedToInitialSelection || isInstitutionLocked}
-                     >
-                        <SelectTrigger className="h-9 text-xs">
-                           <SelectValue placeholder="Seleccionar..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                           {institutions.map((institution) => (
-                              <SelectItem key={institution.id} value={institution.id}>
-                                 {institution.name}
-                              </SelectItem>
-                           ))}
-                        </SelectContent>
-                     </Select>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Materia</Label>
-                     <Select
-                        value={assignmentId}
-                        onValueChange={setAssignmentId}
-                        disabled={isLockedToInitialSelection}
-                     >
-                        <SelectTrigger className="h-9 text-xs">
-                           <SelectValue placeholder="Seleccionar..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                           {availableAssignments.map((assignment) => {
-                              const subject = getSubjectById(assignment.subjectId);
-                              if (!subject) return null;
-                              return (
-                                 <SelectItem key={assignment.id} value={assignment.id}>
-                                    {subject.name} ({assignment.section})
-                                 </SelectItem>
-                              );
-                           })}
-                        </SelectContent>
-                     </Select>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Desde</Label>
-                     <Input
-                        type="date"
-                        className="h-9 text-xs"
-                        value={startDate}
-                        min={todayDate()}
-                        onChange={(event) => setStartDate(event.target.value)}
-                     />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                     <Label className="text-xs">Hasta</Label>
-                     <Input
-                        type="date"
-                        className="h-9 text-xs"
-                        value={endDate}
-                        min={startDate || todayDate()}
-                        onChange={(event) => setEndDate(event.target.value)}
-                     />
-                  </div>
-               </div>
-
-               <ClassScheduleSlotsSection
-                  selectedBlockDuration={selectedBlockDuration}
-                  slots={slots}
-                  onAddSlot={addSlot}
-                  onUpdateSlot={updateSlot}
-                  onAdjustBlockCount={adjustBlockCount}
-                  onRequestDeleteSlot={setPendingDeleteSlotId}
-               />
-
-               <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-2">
-                  <p className="text-[11px] text-muted-foreground">
-                     La cantidad de bloques por clase define la duracion total automaticamente
-                     segun la duracion de bloque configurada en la materia.
+            <div className="space-y-4 py-1">
+               <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Contexto</p>
+                  <p className="text-sm font-medium">
+                     {selectedSubject?.name ?? "Materia"}{" "}
+                     {selectedAssignment?.section ? `- ${selectedAssignment.section}` : ""}
                   </p>
                </div>
 
-               <DialogFooter>
-                  <Button
-                     variant="outline"
-                     size="sm"
-                     className="text-xs"
-                     onClick={() => onOpenChange(false)}
-                  >
-                     Cancelar
-                  </Button>
-                  <Button size="sm" className="text-xs" onClick={submit}>
-                     Generar horario
-                  </Button>
-               </DialogFooter>
-            </DialogContent>
-         </Dialog>
+               <div className="space-y-2">
+                  <Label className="text-xs">Periodo</Label>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                     <div className="flex flex-col gap-1">
+                        <Label className="text-[11px] text-muted-foreground">Desde</Label>
+                        <Input
+                           type="date"
+                           className="h-9 text-xs"
+                           value={startDate}
+                           min={todayDate()}
+                           onChange={(event) => setStartDate(event.target.value)}
+                        />
+                     </div>
+                     <div className="flex flex-col gap-1">
+                        <Label className="text-[11px] text-muted-foreground">Hasta</Label>
+                        <Input
+                           type="date"
+                           className="h-9 text-xs"
+                           value={endDate}
+                           min={startDate || todayDate()}
+                           onChange={(event) => setEndDate(event.target.value)}
+                        />
+                     </div>
+                  </div>
+               </div>
+            </div>
 
-         <AlertDialog
-            open={Boolean(pendingDeleteSlotId)}
-            onOpenChange={(open) => {
-               if (!open) setPendingDeleteSlotId(null);
-            }}
-         >
-            <AlertDialogContent>
-               <AlertDialogHeader>
-                  <AlertDialogTitle>Eliminar bloque</AlertDialogTitle>
-                  <AlertDialogDescription>
-                     Se eliminara este bloque semanal de dia y horario.
-                  </AlertDialogDescription>
-               </AlertDialogHeader>
-               <AlertDialogFooter>
-                  <AlertDialogCancel className="text-xs">Cancelar</AlertDialogCancel>
-                  <AlertDialogAction
-                     className="text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                     onClick={() => {
-                        if (!pendingDeleteSlotId) return;
-                        removeSlot(pendingDeleteSlotId);
-                        setPendingDeleteSlotId(null);
-                     }}
-                  >
-                     Eliminar
-                  </AlertDialogAction>
-               </AlertDialogFooter>
-            </AlertDialogContent>
-         </AlertDialog>
-      </>
+            <ClassScheduleSlotsSection
+               selectedBlockDuration={selectedBlockDuration}
+               slots={slots}
+               onAddSlot={addSlot}
+               onUpdateSlot={updateSlot}
+               onRemoveSlot={removeSlot}
+               focusSlotId={focusSlotId}
+               onFocusSlotHandled={() => setFocusSlotId(null)}
+            />
+
+            <DialogFooter>
+               <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => onOpenChange(false)}
+               >
+                  Cancelar
+               </Button>
+               <Button size="sm" className="text-xs" onClick={submit}>
+                  Generar clases
+               </Button>
+            </DialogFooter>
+         </DialogContent>
+      </Dialog>
    );
 }
+
+
+
+
