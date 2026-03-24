@@ -83,7 +83,7 @@ export function ClaseDetailContent({
 
    const notes = notesDraftByClassId[cls.id] ?? cls.notes ?? "";
    const isFinalized = cls.status === "finalizada";
-   const attendanceLockedByFinalized = isFinalized && !allowFinalizedAttendanceEdit;
+   const attendanceReadonly = !isFinalized || (isFinalized && !allowFinalizedAttendanceEdit);
 
    const handleReplan = () => {
       if (onReplanClass) {
@@ -172,32 +172,37 @@ export function ClaseDetailContent({
                      saveAttendance(cls.id, attendance);
                      toast.success("Asistencia guardada correctamente");
                   }}
-                  disabled={attendanceLockedByFinalized}
-                  lockedMessage={
-                     isFinalized
-                        ? attendanceLockedByFinalized
-                           ? "Clase finalizada. Asistencia cerrada."
-                           : undefined
-                        : "Asistencia no computada."
-                  }
-                  lockedActionLabel={
-                     isFinalized && attendanceLockedByFinalized
-                        ? "Editar asistencia de todos modos"
-                        : undefined
-                  }
-                  onLockedAction={
-                     isFinalized && attendanceLockedByFinalized
-                        ? () => {
-                             setAllowFinalizedAttendanceEdit(true);
-                             toast.warning(
-                                "Estas editando asistencia de una clase finalizada bajo tu responsabilidad.",
-                             );
-                          }
-                        : undefined
-                  }
+                  disabled={attendanceReadonly}
                />
+               {attendanceReadonly ? (
+                  <div className="mt-3 rounded-md border border-dashed border-border/70 bg-muted/25 p-3 text-center">
+                     <p className="text-xs text-muted-foreground">
+                        {isFinalized
+                           ? "Clase finalizada. Asistencia en modo solo lectura."
+                           : "Asistencia no computada."}
+                     </p>
+                     {isFinalized ? (
+                        <Button
+                           type="button"
+                           size="sm"
+                           variant="outline"
+                           className="mt-2 text-xs"
+                           onClick={() => {
+                              setAllowFinalizedAttendanceEdit(true);
+                              toast.warning(
+                                 "Estas editando asistencia de una clase finalizada bajo tu responsabilidad.",
+                              );
+                           }}
+                        >
+                           Editar asistencia de todos modos
+                        </Button>
+                     ) : null}
+                  </div>
+               ) : null}
             </div>
          </div>
       </div>
    );
 }
+
+
