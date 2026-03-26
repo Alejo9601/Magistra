@@ -19,6 +19,7 @@ import { TeacherProvider } from "@/features/teacher";
 import "@/pages/globals.css";
 import ClaseDictadoPage from "@/pages/clase/[id]/dictado/page";
 import ActivityGradingPage from "@/pages/actividad/[id]/calificar/page";
+import { DictadoRouteGuard } from "@/features/classroom/components/dictado-route-guard";
 
 function App() {
    return (
@@ -60,7 +61,11 @@ function App() {
                                     />
                                     <Route
                                        path="/clase/:id/dictado"
-                                       element={<ClaseDictadoPage />}
+                                       element={
+                                          <DictadoRouteGuard>
+                                             <ClaseDictadoPage />
+                                          </DictadoRouteGuard>
+                                       }
                                     />
                                     <Route
                                        path="/actividad/:id/calificar"
