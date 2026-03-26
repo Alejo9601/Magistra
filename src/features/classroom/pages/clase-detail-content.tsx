@@ -83,6 +83,8 @@ export function ClaseDetailContent({
 
    const notes = notesDraftByClassId[cls.id] ?? cls.notes ?? "";
    const isDictada = cls.status === "dictada";
+   const hasPlanning = cls.status !== "sin_planificar";
+   const isPlanned = cls.status === "planificada";
    const attendanceReadonly = !isDictada || (isDictada && !allowDictadaAttendanceEdit);
 
    const handleReplan = () => {
@@ -132,20 +134,32 @@ export function ClaseDetailContent({
          ) : null}
 
          <div className="mb-4 flex flex-wrap gap-2">
-            <Button asChild variant="outline" size="sm" className="text-xs">
-               <Link to={`/clase/${cls.id}/dictado`}>Iniciar clase</Link>
-            </Button>
+            {hasPlanning ? (
+               <Button asChild variant="outline" size="sm" className="text-xs">
+                  <Link to={`/clase/${cls.id}/dictado`}>Iniciar clase</Link>
+               </Button>
+            ) : (
+               <Button variant="outline" size="sm" className="text-xs" disabled>
+                  Iniciar clase
+               </Button>
+            )}
             <Button
                variant="outline"
                size="sm"
                className="text-xs"
                onClick={() => (onEditClass ? onEditClass(cls.id) : undefined)}
-               disabled={!onEditClass}
+               disabled={!onEditClass || !isPlanned}
             >
                <Edit3 className="mr-1.5 size-3.5" />
                Editar planificacion
             </Button>
-            <Button variant="outline" size="sm" className="text-xs" onClick={handleReplan}>
+            <Button
+               variant="outline"
+               size="sm"
+               className="text-xs"
+               onClick={handleReplan}
+               disabled={!isPlanned}
+            >
                <RotateCcw className="mr-1.5 size-3.5" />
                Replanificar
             </Button>
@@ -220,3 +234,4 @@ export function ClaseDetailContent({
       </div>
    );
 }
+
