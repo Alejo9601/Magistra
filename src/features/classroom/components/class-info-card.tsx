@@ -1,9 +1,12 @@
-﻿import {
+import {
    ArrowLeft,
    Clock,
    MapPin,
    BookOpen,
    CheckCircle2,
+   CircleDot,
+   PlayCircle,
+   Info,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,18 +14,40 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { classTypeLabels } from "@/features/classroom/utils/classroom-constants";
 import type { ClassSession, Institution } from "@/types";
+import {
+   Tooltip,
+   TooltipContent,
+   TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-function classStatusLabel(status: ClassSession["status"]) {
-   if (status === "planificada") return "Planificada";
-   if (status === "dictada") return "Dictada";
-   return "Creada";
-}
-
-function classStatusBadgeClass(status: ClassSession["status"]) {
-   if (status === "planificada") return "bg-primary/10 text-primary";
-   if (status === "dictada") return "bg-success/10 text-success";
-   return "bg-warning/10 text-warning-foreground";
-}
+const classStatusMeta: Record<
+   ClassSession["status"],
+   {
+      label: string;
+      description: string;
+      badgeClassName: string;
+      Icon: typeof CircleDot;
+   }
+> = {
+   sin_planificar: {
+      label: "Sin planificar",
+      description: "La clase existe, pero todavia faltan contenidos y estructura.",
+      badgeClassName: "bg-destructive/15 text-destructive border-destructive/40",
+      Icon: CircleDot,
+   },
+   planificada: {
+      label: "Planificada",
+      description: "La clase ya tiene plan y esta lista para iniciar.",
+      badgeClassName: "bg-warning/20 text-warning-foreground border-warning/40",
+      Icon: PlayCircle,
+   },
+   dictada: {
+      label: "Finalizada",
+      description: "La clase fue dictada y registrada con seguimiento.",
+      badgeClassName: "bg-success/15 text-success border-success/40",
+      Icon: CheckCircle2,
+   },
+};
 
 export function ClassInfoCard({
    cls,
@@ -34,6 +59,8 @@ export function ClassInfoCard({
    onMarkAsTaught: () => void;
 }) {
    const dateObj = new Date(cls.date + "T12:00:00");
+   const statusMeta = classStatusMeta[cls.status];
+   const StatusIcon = statusMeta.Icon;
 
    return (
       <Card>
@@ -43,7 +70,7 @@ export function ClassInfoCard({
             </CardTitle>
          </CardHeader>
          <CardContent className="pt-0">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                <div className="flex items-center gap-2.5">
                   <div className="flex size-8 items-center justify-center rounded-lg bg-muted">
                      <Clock className="size-4 text-muted-foreground" />
@@ -94,9 +121,19 @@ export function ClassInfoCard({
                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
                         Estado
                      </p>
-                     <Badge className={`border-0 text-[10px] ${classStatusBadgeClass(cls.status)}`}>
-                        {classStatusLabel(cls.status)}
-                     </Badge>
+                     <Tooltip>
+                        <TooltipTrigger asChild>
+                           <Badge
+                              className={`border text-[10px] inline-flex items-center gap-1 ${statusMeta.badgeClassName}`}
+                           >
+                              <StatusIcon className="size-3" />
+                              {statusMeta.label}
+                           </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" sideOffset={6} className="max-w-64">
+                           {statusMeta.description}
+                        </TooltipContent>
+                     </Tooltip>
                   </div>
                </div>
             </div>
@@ -121,17 +158,36 @@ export function ClassInfoCard({
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">
                      Actividades planificadas
                   </p>
-                  <p className="text-xs text-foreground leading-relaxed">
-                     {cls.activities}
-                  </p>
+                  <p className="text-xs text-foreground leading-relaxed">{cls.activities}</p>
                </div>
             )}
 
             {cls.status !== "dictada" && (
-               <Button size="sm" className="mt-4 text-xs" onClick={onMarkAsTaught}>
-                  <CheckCircle2 className="size-3.5 mr-1.5" />
-                  Registrar como dictada
-               </Button>
+               <div className="mt-4 flex items-center gap-2">
+                  <Button
+                     size="sm"
+                     className="text-xs min-h-9 font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
+                     onClick={onMarkAsTaught}
+                  >
+                     <CheckCircle2 className="size-3.5 mr-1.5" />
+                     Registrar como dictada
+                  </Button>
+                  <Tooltip>
+                     <TooltipTrigger asChild>
+                        <button
+                           type="button"
+                           className="inline-flex size-7 items-center justify-center rounded-full border border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                           aria-label="Ayuda sobre registrar como dictada"
+                        >
+                           <Info className="size-3.5" />
+                        </button>
+                     </TooltipTrigger>
+                     <TooltipContent side="top" sideOffset={6} className="max-w-64">
+                        Marca la clase como ejecutada y habilita la carga de asistencia y
+                        notas finales.
+                     </TooltipContent>
+                  </Tooltip>
+               </div>
             )}
          </CardContent>
       </Card>
@@ -167,4 +223,3 @@ export function ClassDetailHeader({
       </div>
    );
 }
-

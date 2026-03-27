@@ -17,7 +17,12 @@ import { Link, useParams } from "react-router-dom";
 import { useStudentsContext } from "@/features/students";
 import { Button } from "@/components/ui/button";
 import { useClassroomContext } from "@/features/classroom";
-import { Copy, Edit3 } from "lucide-react";
+import { Copy, Edit3, Info } from "lucide-react";
+import {
+   Tooltip,
+   TooltipContent,
+   TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function ClaseDetailContent({
    classId,
@@ -64,9 +69,17 @@ export function ClaseDetailContent({
       {},
    );
    const [allowDictadaAttendanceEdit, setAllowDictadaAttendanceEdit] = useState(false);
+   const [savedAttendanceSnapshot, setSavedAttendanceSnapshot] =
+      useState<Record<string, AttendanceStatus>>(attendanceFromRecord);
+   const [attendanceSavedFlash, setAttendanceSavedFlash] = useState(false);
+   const [attendanceSavedAtLeastOnce, setAttendanceSavedAtLeastOnce] =
+      useState(false);
 
    useEffect(() => {
       setAttendance(attendanceFromRecord);
+      setSavedAttendanceSnapshot(attendanceFromRecord);
+      setAttendanceSavedFlash(false);
+      setAttendanceSavedAtLeastOnce(false);
    }, [attendanceFromRecord]);
 
    useEffect(() => {
@@ -86,6 +99,9 @@ export function ClaseDetailContent({
    const hasPlanning = cls.status !== "sin_planificar";
    const isPlanned = cls.status === "planificada";
    const attendanceReadonly = !isDictada || (isDictada && !allowDictadaAttendanceEdit);
+   const hasAttendanceChanges = classStudents.some(
+      (student) => attendance[student.id] !== savedAttendanceSnapshot[student.id],
+   );
 
    const handleDuplicate = () => {
       if (onDuplicateClass) {
@@ -113,39 +129,81 @@ export function ClaseDetailContent({
                <Button
                   variant="outline"
                   size="sm"
-                  className="mt-2 text-xs"
-                  onClick={() => (onEditClass ? onEditClass(cls.id) : undefined)}
+                  className="mt-2 text-xs min-h-9"
+                  onClick={() => {
+                     if (!onEditClass) {
+                        return;
+                     }
+                     onEditClass(cls.id);
+                     toast.message("Abriendo planificacion", {
+                        description: "Define contenidos, recursos y estructura de la clase.",
+                     });
+                  }}
                   disabled={!onEditClass}
                >
-                  Planificar ahora
+                  <Tooltip>
+                     <TooltipTrigger asChild>
+                        <span className="inline-flex items-center gap-1.5">
+                           Planificar ahora
+                           <Info className="size-3.5 text-muted-foreground" />
+                        </span>
+                     </TooltipTrigger>
+                     <TooltipContent side="top" sideOffset={6} className="max-w-56">
+                        Establecer detalles de la clase y dejarla lista para dictado.
+                     </TooltipContent>
+                  </Tooltip>
                </Button>
             </div>
          ) : null}
 
-         <div className="mb-4 flex flex-wrap gap-2">
-            {hasPlanning ? (
-               <Button asChild variant="outline" size="sm" className="text-xs">
-                  <Link to={`/clase/${cls.id}/dictado`}>Iniciar clase</Link>
-               </Button>
-            ) : (
-               <Button variant="outline" size="sm" className="text-xs" disabled>
-                  Iniciar clase
-               </Button>
-            )}
-            <Button
-               variant="outline"
-               size="sm"
-               className="text-xs"
-               onClick={() => (onEditClass ? onEditClass(cls.id) : undefined)}
-               disabled={!onEditClass || !isPlanned}
-            >
-               <Edit3 className="mr-1.5 size-3.5" />
-               Editar planificacion
-            </Button>
-            <Button variant="outline" size="sm" className="text-xs" onClick={handleDuplicate}>
-               <Copy className="mr-1.5 size-3.5" />
-               Duplicar
-            </Button>
+         <div className="mb-4 grid gap-3 md:grid-cols-2">
+            <div className="rounded-md border border-border/70 bg-muted/20 p-3">
+               <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+                  Planificacion
+               </p>
+               <div className="flex flex-wrap gap-2">
+                  <Button
+                     variant="outline"
+                     size="sm"
+                     className="text-xs min-h-9"
+                     onClick={() => (onEditClass ? onEditClass(cls.id) : undefined)}
+                     disabled={!onEditClass || !isPlanned}
+                  >
+                     <Edit3 className="mr-1.5 size-3.5" />
+                     Editar planificacion
+                  </Button>
+                  <Button
+                     variant="outline"
+                     size="sm"
+                     className="text-xs min-h-9"
+                     onClick={handleDuplicate}
+                  >
+                     <Copy className="mr-1.5 size-3.5" />
+                     Duplicar
+                  </Button>
+               </div>
+            </div>
+            <div className="rounded-md border border-border/70 bg-muted/20 p-3">
+               <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+                  Ejecucion
+               </p>
+               <div className="flex flex-wrap gap-2">
+                  {hasPlanning ? (
+                     <Button asChild variant="outline" size="sm" className="text-xs min-h-9">
+                        <Link to={`/clase/${cls.id}/dictado`}>Iniciar clase</Link>
+                     </Button>
+                  ) : (
+                     <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs min-h-9"
+                        disabled
+                     >
+                        Iniciar clase
+                     </Button>
+                  )}
+               </div>
+            </div>
          </div>
 
          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -179,9 +237,17 @@ export function ClaseDetailContent({
                   setAttendance={setAttendance}
                   onSave={() => {
                      saveAttendance(cls.id, attendance);
+                     setSavedAttendanceSnapshot(attendance);
+                     setAttendanceSavedAtLeastOnce(true);
+                     setAttendanceSavedFlash(true);
                      toast.success("Asistencia guardada correctamente");
+                     window.setTimeout(() => setAttendanceSavedFlash(false), 1800);
                   }}
                   disabled={attendanceReadonly}
+                  hasPendingChanges={hasAttendanceChanges}
+                  savedFeedbackVisible={attendanceSavedFlash}
+                  savedSnapshot={savedAttendanceSnapshot}
+                  showSavedIndicators={attendanceSavedAtLeastOnce}
                />
                {attendanceReadonly ? (
                   <div className="mt-3 rounded-md border border-dashed border-border/70 bg-muted/25 p-3 text-center">
