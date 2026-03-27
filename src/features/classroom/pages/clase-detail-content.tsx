@@ -17,13 +17,13 @@ import { Link, useParams } from "react-router-dom";
 import { useStudentsContext } from "@/features/students";
 import { Button } from "@/components/ui/button";
 import { useClassroomContext } from "@/features/classroom";
-import { Copy, Edit3, RotateCcw } from "lucide-react";
+import { Copy, Edit3 } from "lucide-react";
 
 export function ClaseDetailContent({
    classId,
    embedded = false,
    onEditClass,
-   onReplanClass,
+   onReplanClass: _onReplanClass,
    onDuplicateClass,
 }: {
    classId?: string;
@@ -35,7 +35,7 @@ export function ClaseDetailContent({
    const params = useParams();
    const resolvedClassId = classId ?? (params.id as string);
    const { getStudentsByAssignment } = useStudentsContext();
-   const { classes, markClassAsTaught, updateClassNotes, updateClass, duplicateClass } =
+   const { classes, markClassAsTaught, updateClassNotes, duplicateClass } =
       usePlanningContext();
    const { getRecord, setAttendance: saveAttendance } = useClassroomContext();
 
@@ -86,17 +86,6 @@ export function ClaseDetailContent({
    const hasPlanning = cls.status !== "sin_planificar";
    const isPlanned = cls.status === "planificada";
    const attendanceReadonly = !isDictada || (isDictada && !allowDictadaAttendanceEdit);
-
-   const handleReplan = () => {
-      if (onReplanClass) {
-         onReplanClass(cls.id);
-         return;
-      }
-      if (cls.status === "planificada") {
-         updateClass(cls.id, { status: "sin_planificar" });
-         toast.success("Clase enviada a sin_planificar.");
-      }
-   };
 
    const handleDuplicate = () => {
       if (onDuplicateClass) {
@@ -152,16 +141,6 @@ export function ClaseDetailContent({
             >
                <Edit3 className="mr-1.5 size-3.5" />
                Editar planificacion
-            </Button>
-            <Button
-               variant="outline"
-               size="sm"
-               className="text-xs"
-               onClick={handleReplan}
-               disabled={!isPlanned}
-            >
-               <RotateCcw className="mr-1.5 size-3.5" />
-               Replanificar
             </Button>
             <Button variant="outline" size="sm" className="text-xs" onClick={handleDuplicate}>
                <Copy className="mr-1.5 size-3.5" />
@@ -234,4 +213,3 @@ export function ClaseDetailContent({
       </div>
    );
 }
-
