@@ -113,6 +113,7 @@ export function PlanificacionToolbar({
                <SelectContent>
                   <SelectItem value="all">Todos los estados</SelectItem>
                   <SelectItem value="planificada">Planificada</SelectItem>
+                  <SelectItem value="en_curso">En curso</SelectItem>
                   <SelectItem value="sin_planificar">Sin planificar</SelectItem>
                   <SelectItem value="dictada">Dictada</SelectItem>
                </SelectContent>
@@ -139,4 +140,3 @@ export function PlanificacionToolbar({
       </div>
    );
 }
-

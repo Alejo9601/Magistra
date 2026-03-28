@@ -102,7 +102,7 @@ export type ClassType =
    | "repaso"
    | "recuperatorio";
 
-export type ClassStatus = "sin_planificar" | "planificada" | "dictada";
+export type ClassStatus = "sin_planificar" | "planificada" | "en_curso" | "dictada";
 
 export type ClassClosureType = "planificada" | "modificada";
 
@@ -276,5 +276,4 @@ export type ClassroomRecord = {
    notes?: string;
    performanceEntries: ClassroomPerformanceEntry[];
 };
-
 

@@ -12,7 +12,7 @@ type ClassSessionLike = {
    institutionId: string;
    date: string;
    time: string;
-   status: "planificada" | "sin_planificar" | "dictada";
+   status: "planificada" | "sin_planificar" | "en_curso" | "dictada";
 };
 
 type ThresholdsLike = {
@@ -217,7 +217,6 @@ export function buildTodayDisplayedAlerts({
       ? criticalAlerts.slice(0, 4)
       : sortedAlerts.slice(0, 2);
 }
-
 
 
 

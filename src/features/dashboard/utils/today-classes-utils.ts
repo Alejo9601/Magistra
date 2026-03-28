@@ -22,6 +22,9 @@ export function formatAgendaState(classDateMs: number, nowMs: number, status: st
    if (status === "dictada") {
       return "Dictada";
    }
+   if (status === "en_curso") {
+      return "En curso";
+   }
    if (classDateMs <= nowMs) {
       return "Pendiente de cierre";
    }
@@ -39,5 +42,3 @@ export function computeAttendancePct(statuses: Array<"P" | "A" | "T" | "J">) {
    }, 0);
    return Math.round((attendedWeight / statuses.length) * 100);
 }
-
-

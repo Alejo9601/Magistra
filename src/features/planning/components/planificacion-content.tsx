@@ -51,6 +51,7 @@ export function PlanificacionContent() {
    } = usePlanningCalendarNavigation(today);
    const initialStatusFilter =
       searchParams.get("status") === "planificada" ||
+      searchParams.get("status") === "en_curso" ||
       searchParams.get("status") === "sin_planificar" ||
       searchParams.get("status") === "dictada"
          ? (searchParams.get("status") as StatusFilter)

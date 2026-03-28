@@ -41,6 +41,12 @@ const classStatusMeta: Record<
       badgeClassName: "bg-warning/20 text-warning-foreground border-warning/40",
       Icon: PlayCircle,
    },
+   en_curso: {
+      label: "En curso",
+      description: "La clase esta iniciada y seguira abierta hasta finalizarla.",
+      badgeClassName: "bg-warning/25 text-warning-foreground border-warning/50",
+      Icon: PlayCircle,
+   },
    dictada: {
       label: "Finalizada",
       description: "La clase fue dictada y registrada con seguimiento.",

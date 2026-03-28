@@ -176,6 +176,12 @@ export function ClaseDictadoContent() {
       setAttendanceLockedByFinalized(isFinalized);
    }, [cls.id, isFinalized]);
 
+   useEffect(() => {
+      if (cls.status === "planificada") {
+         updateClass(cls.id, { status: "en_curso" });
+      }
+   }, [cls.id, cls.status, updateClass]);
+
    const closeAnalysis = useMemo(() => {
       const plannedSubtopics = cls.subtopics.map((item) => item.trim()).filter(Boolean);
       const plannedSubtopicsSet = new Set(plannedSubtopics);
@@ -787,7 +793,6 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
-
 
 
 

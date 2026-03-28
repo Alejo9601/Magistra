@@ -25,7 +25,7 @@ function mapClassStatusToAssessmentStatus(status: ClassStatus): AssessmentStatus
    if (status === "dictada") {
       return "graded";
    }
-   if (status === "planificada") {
+   if (status === "planificada" || status === "en_curso") {
       return "scheduled";
    }
    return "draft";
@@ -35,7 +35,7 @@ function mapClassStatusToActivityStatus(status: ClassStatus): ActivityStatus {
    if (status === "dictada") {
       return "completed";
    }
-   if (status === "planificada") {
+   if (status === "planificada" || status === "en_curso") {
       return "assigned";
    }
    return "planned";
@@ -263,4 +263,3 @@ export function syncClassLinkedRecords({
       linkedClassIds: [effectiveClassId],
    });
 }
-

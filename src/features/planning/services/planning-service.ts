@@ -7,6 +7,7 @@ function isClassStatus(value: unknown): value is ClassSession["status"] {
    return (
       value === "sin_planificar" ||
       value === "planificada" ||
+      value === "en_curso" ||
       value === "dictada"
    );
 }

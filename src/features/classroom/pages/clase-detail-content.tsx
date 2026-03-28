@@ -97,6 +97,8 @@ export function ClaseDetailContent({
    const notes = notesDraftByClassId[cls.id] ?? cls.notes ?? "";
    const isDictada = cls.status === "dictada";
    const hasPlanning = cls.status !== "sin_planificar";
+   const hasStudents = classStudents.length > 0;
+   const canStartClass = hasPlanning && hasStudents;
    const isPlanned = cls.status === "planificada";
    const attendanceReadonly = !isDictada || (isDictada && !allowDictadaAttendanceEdit);
    const hasAttendanceChanges = classStudents.some(
@@ -188,19 +190,30 @@ export function ClaseDetailContent({
                   Ejecucion
                </p>
                <div className="flex flex-wrap gap-2">
-                  {hasPlanning ? (
+                  {canStartClass ? (
                      <Button asChild variant="outline" size="sm" className="text-xs min-h-9">
                         <Link to={`/clase/${cls.id}/dictado`}>Iniciar clase</Link>
                      </Button>
                   ) : (
-                     <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs min-h-9"
-                        disabled
-                     >
-                        Iniciar clase
-                     </Button>
+                     <Tooltip>
+                        <TooltipTrigger asChild>
+                           <span>
+                              <Button
+                                 variant="outline"
+                                 size="sm"
+                                 className="text-xs min-h-9"
+                                 disabled
+                              >
+                                 Iniciar clase
+                              </Button>
+                           </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" sideOffset={6} className="max-w-64">
+                           {!hasPlanning
+                              ? "Primero planifica la clase para poder iniciarla."
+                              : "Necesitas al menos 1 alumno en el grupo para iniciar la clase."}
+                        </TooltipContent>
+                     </Tooltip>
                   )}
                </div>
             </div>

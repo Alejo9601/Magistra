@@ -48,6 +48,8 @@ export function GroupDetailPlanningTab({ groupClasses }: GroupDetailPlanningTabP
                            className={`border-0 text-[10px] ${
                               cls.status === "planificada"
                                  ? "bg-primary/10 text-primary"
+                                 : cls.status === "en_curso"
+                                   ? "bg-warning/10 text-warning-foreground"
                                  : cls.status === "dictada"
                                    ? "bg-success/10 text-success"
                                    : "bg-warning/10 text-warning-foreground"
@@ -55,6 +57,8 @@ export function GroupDetailPlanningTab({ groupClasses }: GroupDetailPlanningTabP
                         >
                            {cls.status === "planificada"
                               ? "Planificada"
+                              : cls.status === "en_curso"
+                                ? "En curso"
                               : cls.status === "dictada"
                                 ? "Dictada"
                                 : "Sin planificar"}
@@ -79,4 +83,3 @@ export function GroupDetailPlanningTab({ groupClasses }: GroupDetailPlanningTabP
       </TabsContent>
    );
 }
-

@@ -50,11 +50,13 @@ export const monthNames = [
 export function getStatusLabel(status: ClassSession["status"]) {
    if (status === "sin_planificar") return "Sin planificar";
    if (status === "planificada") return "Planificada";
+   if (status === "en_curso") return "En curso";
    return "Dictada";
 }
 
 export function getStatusColor(status: ClassSession["status"]) {
    if (status === "sin_planificar") return "bg-warning/15 text-warning-foreground";
    if (status === "planificada") return "bg-primary/12 text-primary";
+   if (status === "en_curso") return "bg-warning/15 text-warning-foreground";
    return "bg-success/12 text-success";
 }
