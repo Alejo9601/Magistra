@@ -68,7 +68,6 @@ export function ClaseDetailContent({
    const [notesDraftByClassId, setNotesDraftByClassId] = useState<Record<string, string>>(
       {},
    );
-   const [allowDictadaAttendanceEdit, setAllowDictadaAttendanceEdit] = useState(false);
    const [savedAttendanceSnapshot, setSavedAttendanceSnapshot] =
       useState<Record<string, AttendanceStatus>>(attendanceFromRecord);
    const [attendanceSavedFlash, setAttendanceSavedFlash] = useState(false);
@@ -82,10 +81,6 @@ export function ClaseDetailContent({
       setAttendanceSavedAtLeastOnce(false);
    }, [attendanceFromRecord]);
 
-   useEffect(() => {
-      setAllowDictadaAttendanceEdit(false);
-   }, [resolvedClassId]);
-
    if (!cls || !subject || !inst) {
       return (
          <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:p-6">
@@ -98,9 +93,9 @@ export function ClaseDetailContent({
    const isDictada = cls.status === "dictada";
    const hasPlanning = cls.status !== "sin_planificar";
    const hasStudents = classStudents.length > 0;
-   const canStartClass = hasPlanning && hasStudents;
+   const canStartClass = hasPlanning && hasStudents && !isDictada;
    const isPlanned = cls.status === "planificada";
-   const attendanceReadonly = !isDictada || (isDictada && !allowDictadaAttendanceEdit);
+   const attendanceReadonly = true;
    const hasAttendanceChanges = classStudents.some(
       (student) => attendance[student.id] !== savedAttendanceSnapshot[student.id],
    );
@@ -179,6 +174,7 @@ export function ClaseDetailContent({
                      size="sm"
                      className="text-xs min-h-9"
                      onClick={handleDuplicate}
+                     disabled={isDictada}
                   >
                      <Copy className="mr-1.5 size-3.5" />
                      Duplicar
@@ -239,7 +235,11 @@ export function ClaseDetailContent({
                      updateClassNotes(cls.id, notes);
                      toast.success("Notas guardadas");
                   }}
-                  lockedMessage={isDictada ? undefined : "No hay notas para esta clase aun."}
+                  lockedMessage={
+                     isDictada
+                        ? "Clase finalizada. Comentarios en modo solo lectura."
+                        : "No hay notas para esta clase aun."
+                  }
                />
             </div>
 
@@ -269,22 +269,6 @@ export function ClaseDetailContent({
                            ? "Clase dictada. Asistencia en modo solo lectura."
                            : "Asistencia no computada."}
                      </p>
-                     {isDictada ? (
-                        <Button
-                           type="button"
-                           size="sm"
-                           variant="outline"
-                           className="mt-2 text-xs"
-                           onClick={() => {
-                              setAllowDictadaAttendanceEdit(true);
-                              toast.warning(
-                                 "Estas editando asistencia de una clase dictada bajo tu responsabilidad.",
-                              );
-                           }}
-                        >
-                           Editar asistencia de todos modos
-                        </Button>
-                     ) : null}
                   </div>
                ) : null}
             </div>
