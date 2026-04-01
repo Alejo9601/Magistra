@@ -13,16 +13,11 @@ import {
 } from "@/features/classroom/components/class-info-card";
 import { ClassNotesCard } from "@/features/classroom/components/class-notes-card";
 import { AttendanceCard } from "@/features/classroom/components/attendance-card";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useStudentsContext } from "@/features/students";
-import { Button } from "@/components/ui/button";
 import { useClassroomContext } from "@/features/classroom";
-import { Copy, Edit3, Info } from "lucide-react";
-import {
-   Tooltip,
-   TooltipContent,
-   TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { ClaseDetailActionsPanel } from "@/features/classroom/components/clase-detail-actions-panel";
+import { ClaseDetailUnplannedAlert } from "@/features/classroom/components/clase-detail-unplanned-alert";
 
 export function ClaseDetailContent({
    classId,
@@ -121,99 +116,18 @@ export function ClaseDetailContent({
          />
 
          {cls.status === "sin_planificar" ? (
-            <div className="mb-4 rounded-md border border-warning/40 bg-warning/10 p-3">
-               <p className="text-sm font-medium text-foreground">Esta clase no esta planificada</p>
-               <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-2 text-xs min-h-9"
-                  onClick={() => {
-                     if (!onEditClass) {
-                        return;
-                     }
-                     onEditClass(cls.id);
-                     toast.message("Abriendo planificacion", {
-                        description: "Define contenidos, recursos y estructura de la clase.",
-                     });
-                  }}
-                  disabled={!onEditClass}
-               >
-                  <Tooltip>
-                     <TooltipTrigger asChild>
-                        <span className="inline-flex items-center gap-1.5">
-                           Planificar ahora
-                           <Info className="size-3.5 text-muted-foreground" />
-                        </span>
-                     </TooltipTrigger>
-                     <TooltipContent side="top" sideOffset={6} className="max-w-56">
-                        Establecer detalles de la clase y dejarla lista para dictado.
-                     </TooltipContent>
-                  </Tooltip>
-               </Button>
-            </div>
+            <ClaseDetailUnplannedAlert classId={cls.id} onEditClass={onEditClass} />
          ) : null}
 
-         <div className="mb-4 grid gap-3 md:grid-cols-2">
-            <div className="rounded-md border border-border/70 bg-muted/20 p-3">
-               <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
-                  Planificacion
-               </p>
-               <div className="flex flex-wrap gap-2">
-                  <Button
-                     variant="outline"
-                     size="sm"
-                     className="text-xs min-h-9"
-                     onClick={() => (onEditClass ? onEditClass(cls.id) : undefined)}
-                     disabled={!onEditClass || !isPlanned}
-                  >
-                     <Edit3 className="mr-1.5 size-3.5" />
-                     Editar planificacion
-                  </Button>
-                  <Button
-                     variant="outline"
-                     size="sm"
-                     className="text-xs min-h-9"
-                     onClick={handleDuplicate}
-                     disabled={isDictada}
-                  >
-                     <Copy className="mr-1.5 size-3.5" />
-                     Duplicar
-                  </Button>
-               </div>
-            </div>
-            <div className="rounded-md border border-border/70 bg-muted/20 p-3">
-               <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
-                  Ejecucion
-               </p>
-               <div className="flex flex-wrap gap-2">
-                  {canStartClass ? (
-                     <Button asChild variant="outline" size="sm" className="text-xs min-h-9">
-                        <Link to={`/clase/${cls.id}/dictado`}>Iniciar clase</Link>
-                     </Button>
-                  ) : (
-                     <Tooltip>
-                        <TooltipTrigger asChild>
-                           <span>
-                              <Button
-                                 variant="outline"
-                                 size="sm"
-                                 className="text-xs min-h-9"
-                                 disabled
-                              >
-                                 Iniciar clase
-                              </Button>
-                           </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" sideOffset={6} className="max-w-64">
-                           {!hasPlanning
-                              ? "Primero planifica la clase para poder iniciarla."
-                              : "Necesitas al menos 1 alumno en el grupo para iniciar la clase."}
-                        </TooltipContent>
-                     </Tooltip>
-                  )}
-               </div>
-            </div>
-         </div>
+         <ClaseDetailActionsPanel
+            classId={cls.id}
+            canStartClass={canStartClass}
+            hasPlanning={hasPlanning}
+            isPlanned={isPlanned}
+            isDictada={isDictada}
+            onEditClass={onEditClass}
+            onDuplicate={handleDuplicate}
+         />
 
          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             <div className="lg:col-span-3 flex flex-col gap-4">

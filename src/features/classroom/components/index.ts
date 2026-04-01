@@ -5,3 +5,5 @@ export * from "./clase-dictado-header";
 export * from "./clase-dictado-summary-card";
 export * from "./clase-dictado-subtopics-card";
 export * from "./clase-dictado-grades-card";
+export * from "./clase-detail-actions-panel";
+export * from "./clase-detail-unplanned-alert";
