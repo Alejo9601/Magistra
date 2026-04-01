@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -23,14 +23,12 @@ import { ClaseDictadoLinkActivitiesDialog } from "@/features/classroom/component
 import { ClaseDictadoCloseDialog } from "@/features/classroom/components/clase-dictado-close-dialog";
 import { ClaseDictadoNotesCard } from "@/features/classroom/components/clase-dictado-notes-card";
 import { ClaseDictadoAttendanceLockCard } from "@/features/classroom/components/clase-dictado-attendance-lock-card";
-import { useClaseDictadoActivityState, useClasePerformance } from "@/features/classroom/hooks";
-import { evaluativeFormatLabelMap } from "@/features/classroom/utils";
 import {
-   analyzeClassClosure,
-   buildAttendanceWithDefaults,
-   buildLinkedActivitiesSummary,
-   filterUnlinkedActivitiesByTitle,
-} from "@/features/classroom/utils/clase-dictado-utils";
+   useClaseDictadoActivityState,
+   useClaseDictadoDerived,
+   useClasePerformance,
+} from "@/features/classroom/hooks";
+import { evaluativeFormatLabelMap } from "@/features/classroom/utils";
 
 export function ClaseDictadoContent() {
    const params = useParams();
@@ -100,22 +98,6 @@ export function ClaseDictadoContent() {
       );
    }
 
-   const linkedActivities = useMemo(
-      () =>
-         [...subjectActivities]
-            .filter((activity) => activity.linkedClassIds.includes(cls.id))
-            .sort((a, b) => a.title.localeCompare(b.title)),
-      [cls.id, subjectActivities],
-   );
-
-   const linkedActivitiesSummary = useMemo(() => {
-      return buildLinkedActivitiesSummary(linkedActivities);
-   }, [linkedActivities]);
-
-   const filteredUnlinkedActivities = useMemo(() => {
-      return filterUnlinkedActivitiesByTitle(subjectActivities, cls.id, linkSearch);
-   }, [cls.id, linkSearch, subjectActivities]);
-
    const record = getRecord(cls.id);
    const performanceEntries = record.performanceEntries;
 
@@ -130,17 +112,23 @@ export function ClaseDictadoContent() {
       updateAssessment,
    });
 
-   const attendanceWithDefaults = buildAttendanceWithDefaults(
+   const {
+      linkedActivities,
+      linkedActivitiesSummary,
+      filteredUnlinkedActivities,
+      attendanceWithDefaults,
+      isFinalized,
+      showGradesSection,
+      classDateLabel,
+      closeAnalysis,
+   } = useClaseDictadoDerived({
+      cls,
       classStudents,
-      record.attendance,
-   );
-   const isFinalized = cls.status === "dictada";
-   const showGradesSection =
-      cls.type === "evaluacion" || cls.type === "practica" || cls.type === "teorico-practica";
-   const classDateLabel = new Date(`${cls.date}T12:00:00`).toLocaleDateString("es-AR", {
-      weekday: "short",
-      day: "2-digit",
-      month: "short",
+      subjectActivities,
+      record,
+      linkSearch,
+      baselineLinkedActivityIds: activityBaseline.linkedActivityIds,
+      performanceEntriesLength: performanceEntries.length,
    });
    useEffect(() => {
       if (activityBaseline.classId === cls.id) {
@@ -161,28 +149,6 @@ export function ClaseDictadoContent() {
          updateClass(cls.id, { status: "en_curso" });
       }
    }, [cls.id, cls.status, updateClass]);
-
-   const closeAnalysis = useMemo(() => {
-      return analyzeClassClosure({
-         subtopics: cls.subtopics,
-         completedSubtopics: record.completedSubtopics,
-         linkedActivities,
-         subjectActivities,
-         baselineLinkedActivityIds: activityBaseline.linkedActivityIds,
-         notes: record.notes,
-         completedActivitiesCount: record.completedActivities.length,
-         performanceEntriesCount: performanceEntries.length,
-      });
-   }, [
-      cls.subtopics,
-      activityBaseline.linkedActivityIds,
-      linkedActivities,
-      performanceEntries.length,
-      record.completedActivities.length,
-      record.completedSubtopics,
-      record.notes,
-      subjectActivities,
-   ]);
 
    const handleAddSubtopic = () => {
       const value = newSubtopic.trim();
