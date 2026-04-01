@@ -4,28 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-   AlertDialog,
-   AlertDialogAction,
-   AlertDialogCancel,
-   AlertDialogContent,
-   AlertDialogDescription,
-   AlertDialogFooter,
-   AlertDialogHeader,
-   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-   Dialog,
-   DialogContent,
-   DialogDescription,
-   DialogFooter,
-   DialogHeader,
-   DialogTitle,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
    getAssignmentIdBySubjectId,
@@ -43,6 +21,10 @@ import { ClaseDictadoHeader } from "@/features/classroom/components/clase-dictad
 import { ClaseDictadoSummaryCard } from "@/features/classroom/components/clase-dictado-summary-card";
 import { ClaseDictadoSubtopicsCard } from "@/features/classroom/components/clase-dictado-subtopics-card";
 import { ClaseDictadoGradesCard } from "@/features/classroom/components/clase-dictado-grades-card";
+import { ClaseDictadoActivitiesCard } from "@/features/classroom/components/clase-dictado-activities-card";
+import { ClaseDictadoCreateActivityDialog } from "@/features/classroom/components/clase-dictado-create-activity-dialog";
+import { ClaseDictadoLinkActivitiesDialog } from "@/features/classroom/components/clase-dictado-link-activities-dialog";
+import { ClaseDictadoCloseDialog } from "@/features/classroom/components/clase-dictado-close-dialog";
 import { useClasePerformance } from "@/features/classroom/hooks";
 import { evaluativeFormatLabelMap } from "@/features/classroom/utils";
 import type { AttendanceStatus } from "@/features/classroom/types";
@@ -467,99 +449,18 @@ export function ClaseDictadoContent() {
                   </div>
                ) : null}
 
-               <Card>
-                  <CardHeader className="pb-3">
-                     <CardTitle className="text-sm font-semibold">Actividades</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3 pt-0">
-                     {isFinalized ? (
-                        <div className="rounded-md border border-border/60 bg-muted/30 p-3 space-y-1.5">
-                           <p className="text-xs font-medium text-foreground">
-                              Resumen de actividades
-                           </p>
-                           <p className="text-[11px] text-muted-foreground">
-                              Total: {linkedActivitiesSummary.total}
-                           </p>
-                           <p className="text-[11px] text-muted-foreground">
-                              Evaluables: {linkedActivitiesSummary.evaluables}
-                           </p>
-                           <p className="text-[11px] text-muted-foreground">
-                              Completadas: {linkedActivitiesSummary.completed}
-                           </p>
-                           <p className="text-[11px] text-muted-foreground">
-                              Pendientes: {linkedActivitiesSummary.pending}
-                           </p>
-                        </div>
-                     ) : null}
-                     <Button
-                        size="sm"
-                        className="w-full text-xs"
-                        onClick={() => setCreateDialogOpen(true)}
-                        disabled={isFinalized}
-                     >
-                        Crear nueva actividad
-                     </Button>
-                     <Button
-                        size="sm"
-                        variant="outline"
-                        className="w-full text-xs"
-                        onClick={() => setLinkDialogOpen(true)}
-                        disabled={isFinalized}
-                     >
-                        Vincular actividad existente
-                     </Button>
-
-                     {linkedActivities.length === 0 ? (
-                        <p className="text-xs text-muted-foreground">
-                           {isFinalized
-                              ? "No hubo actividades vinculadas en esta clase."
-                              : "No hay actividades vinculadas a esta clase."}
-                        </p>
-                     ) : (
-                        <div className="space-y-2">
-                           {linkedActivities.map((activity) => (
-                              <div key={activity.id} className="rounded-md border border-border/60 p-2">
-                                 <div className="flex items-start justify-between gap-2">
-                                    <div className="min-w-0">
-                                       <div className="flex flex-wrap items-center gap-1.5">
-                                          <span className="text-xs font-medium text-foreground">
-                                             {activity.title}
-                                          </span>
-                                          <Badge variant="secondary" className="text-[10px] capitalize">
-                                             {activity.type}
-                                          </Badge>
-                                          {activity.esEvaluable ? (
-                                             <Badge className="text-[10px] border-0 bg-primary/10 text-primary">
-                                                Evaluable
-                                             </Badge>
-                                          ) : null}
-                                       </div>
-                                       <p className="mt-0.5 text-[11px] text-muted-foreground">
-                                          Estado: {activity.status}
-                                       </p>
-                                    </div>
-                                    {!isFinalized ? (
-                                       <Button
-                                          type="button"
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-7 px-2 text-xs text-destructive hover:text-destructive"
-                                          onClick={() => handleUnlinkActivity(activity.id)}
-                                       >
-                                          Desvincular
-                                       </Button>
-                                    ) : null}
-                                 </div>
-                              </div>
-                           ))}
-                        </div>
-                     )}
-                  </CardContent>
-               </Card>
+               <ClaseDictadoActivitiesCard
+                  isFinalized={isFinalized}
+                  linkedActivitiesSummary={linkedActivitiesSummary}
+                  linkedActivities={linkedActivities}
+                  onCreateActivity={() => setCreateDialogOpen(true)}
+                  onOpenLinkDialog={() => setLinkDialogOpen(true)}
+                  onUnlinkActivity={handleUnlinkActivity}
+               />
             </div>
          </div>
 
-         <Dialog
+         <ClaseDictadoCreateActivityDialog
             open={createDialogOpen}
             onOpenChange={(open) => {
                setCreateDialogOpen(open);
@@ -567,79 +468,18 @@ export function ClaseDictadoContent() {
                   resetNewActivityForm();
                }
             }}
-         >
-            <DialogContent className="sm:max-w-[520px]">
-               <DialogHeader>
-                  <DialogTitle>Nueva actividad</DialogTitle>
-                  <DialogDescription>
-                     Crea y vincula una actividad para esta clase.
-                  </DialogDescription>
-               </DialogHeader>
-
-               <div className="space-y-3">
-                  <div className="space-y-1.5">
-                     <Label className="text-xs">Nombre de la actividad</Label>
-                     <Input
-                        className="h-9 text-xs"
-                        placeholder="Ej: Trabajo practico de funciones"
-                        value={newActivityTitle}
-                        onChange={(event) => setNewActivityTitle(event.target.value)}
-                     />
-                  </div>
-
-                  <div className="space-y-1.5">
-                     <Label className="text-xs">Tipo</Label>
-                     <Select
-                        value={newActivityType}
-                        onValueChange={(value) => setNewActivityType(value as ActivityType)}
-                     >
-                        <SelectTrigger className="h-9 text-xs">
-                           <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                           <SelectItem value="practica">Practica</SelectItem>
-                           <SelectItem value="examen">Examen</SelectItem>
-                           <SelectItem value="proyecto">Proyecto</SelectItem>
-                           <SelectItem value="tarea">Tarea</SelectItem>
-                        </SelectContent>
-                     </Select>
-                  </div>
-
-                  <label className="flex items-center gap-2 text-xs text-foreground">
-                     <Checkbox
-                        checked={newActivityEvaluable}
-                        onCheckedChange={(checked) => setNewActivityEvaluable(Boolean(checked))}
-                     />
-                     Es evaluable
-                  </label>
-
-                  <div className="space-y-1.5">
-                     <Label className="text-xs">Descripcion (opcional)</Label>
-                     <Textarea
-                        className="text-xs min-h-[80px] resize-none"
-                        placeholder="Consigna, objetivo o notas para la actividad..."
-                        value={newActivityDescription}
-                        onChange={(event) => setNewActivityDescription(event.target.value)}
-                     />
-                  </div>
-               </div>
-
-               <DialogFooter>
-                  <Button
-                     variant="outline"
-                     size="sm"
-                     className="text-xs"
-                     onClick={() => setCreateDialogOpen(false)}
-                  >
-                     Cancelar
-                  </Button>
-                  <Button size="sm" className="text-xs" onClick={handleCreateActivity}>
-                     Crear y vincular
-                  </Button>
-               </DialogFooter>
-            </DialogContent>
-         </Dialog>
-         <Dialog
+            title={newActivityTitle}
+            activityType={newActivityType}
+            description={newActivityDescription}
+            evaluable={newActivityEvaluable}
+            onTitleChange={setNewActivityTitle}
+            onActivityTypeChange={setNewActivityType}
+            onDescriptionChange={setNewActivityDescription}
+            onEvaluableChange={setNewActivityEvaluable}
+            onCancel={() => setCreateDialogOpen(false)}
+            onCreate={handleCreateActivity}
+         />
+         <ClaseDictadoLinkActivitiesDialog
             open={linkDialogOpen}
             onOpenChange={(open) => {
                setLinkDialogOpen(open);
@@ -648,153 +488,22 @@ export function ClaseDictadoContent() {
                   setLinkSearch("");
                }
             }}
-         >
-            <DialogContent className="sm:max-w-[560px]">
-               <DialogHeader>
-                  <DialogTitle>Vincular actividad existente</DialogTitle>
-                  <DialogDescription>
-                     Selecciona una o mas actividades para asociarlas a esta clase.
-                  </DialogDescription>
-               </DialogHeader>
-
-               <div className="space-y-3">
-                  <div className="space-y-1.5">
-                     <Label className="text-xs">Buscar actividad</Label>
-                     <Input
-                        className="h-9 text-xs"
-                        placeholder="Buscar por nombre"
-                        value={linkSearch}
-                        onChange={(event) => setLinkSearch(event.target.value)}
-                     />
-                  </div>
-
-                  <div className="max-h-[280px] overflow-y-auto rounded-md border border-border/60 p-2">
-                     {filteredUnlinkedActivities.length === 0 ? (
-                        <p className="text-xs text-muted-foreground p-2">
-                           No hay actividades disponibles para vincular.
-                        </p>
-                     ) : (
-                        <div className="space-y-2">
-                           {filteredUnlinkedActivities.map((activity) => (
-                              <label
-                                 key={activity.id}
-                                 className="flex items-start gap-2 rounded-md border border-border/50 p-2 cursor-pointer"
-                              >
-                                 <Checkbox
-                                    checked={selectedExistingActivityIds.includes(activity.id)}
-                                    onCheckedChange={() => handleToggleExistingSelection(activity.id)}
-                                 />
-                                 <div className="min-w-0">
-                                    <div className="flex flex-wrap items-center gap-1.5">
-                                       <span className="text-xs font-medium text-foreground">
-                                          {activity.title}
-                                       </span>
-                                       <Badge variant="secondary" className="text-[10px] capitalize">
-                                          {activity.type}
-                                       </Badge>
-                                       {activity.esEvaluable ? (
-                                          <Badge className="text-[10px] border-0 bg-primary/10 text-primary">
-                                             Evaluable
-                                          </Badge>
-                                       ) : null}
-                                    </div>
-                                 </div>
-                              </label>
-                           ))}
-                        </div>
-                     )}
-                  </div>
-               </div>
-
-               <DialogFooter>
-                  <Button variant="outline" size="sm" className="text-xs" onClick={() => setLinkDialogOpen(false)}>
-                     Cancelar
-                  </Button>
-                  <Button size="sm" className="text-xs" onClick={handleLinkSelectedActivities}>
-                     Vincular
-                  </Button>
-               </DialogFooter>
-            </DialogContent>
-         </Dialog>
-
-         <AlertDialog open={closeDialogOpen} onOpenChange={setCloseDialogOpen}>
-            <AlertDialogContent>
-               <AlertDialogHeader>
-                  {closeAnalysis.hasChanges ? (
-                     <>
-                        <AlertDialogTitle>Se detectaron cambios respecto a la planificacion</AlertDialogTitle>
-                        <AlertDialogDescription>
-                           Revisa el resumen y confirma si deseas finalizar con estos cambios.
-                        </AlertDialogDescription>
-                     </>
-                  ) : (
-                     <>
-                        <AlertDialogTitle>La clase coincide con lo planificado</AlertDialogTitle>
-                        <AlertDialogDescription>
-                           Al confirmar, se cerrara la clase y se completaran los subtemas automaticamente.
-                        </AlertDialogDescription>
-                     </>
-                  )}
-               </AlertDialogHeader>
-
-               {closeAnalysis.hasChanges ? (
-                  <div className="space-y-3 text-xs">
-                     <div>
-                        <p className="font-semibold text-foreground">Subtemas</p>
-                        {closeAnalysis.coveredSubtopics.length > 0 ? (
-                           <p className="text-muted-foreground mt-1">
-                              Dictados: {closeAnalysis.coveredSubtopics.join(", ")}
-                           </p>
-                        ) : null}
-                        {closeAnalysis.missingSubtopics.length > 0 ? (
-                           <p className="text-muted-foreground mt-1">
-                              Pendientes: {closeAnalysis.missingSubtopics.join(", ")}
-                           </p>
-                        ) : null}
-                     </div>
-
-                     {(closeAnalysis.addedActivities.length > 0 || closeAnalysis.removedActivities.length > 0) && (
-                        <div>
-                           <p className="font-semibold text-foreground">Actividades</p>
-                           {closeAnalysis.addedActivities.length > 0 ? (
-                              <p className="text-muted-foreground mt-1">
-                                 Agregadas: {closeAnalysis.addedActivities.join(", ")}
-                              </p>
-                           ) : null}
-                           {closeAnalysis.removedActivities.length > 0 ? (
-                              <p className="text-muted-foreground mt-1">
-                                 Quitadas: {closeAnalysis.removedActivities.join(", ")}
-                              </p>
-                           ) : null}
-                        </div>
-                     )}
-                  </div>
-               ) : null}
-
-               <AlertDialogFooter>
-                  {closeAnalysis.hasChanges ? (
-                     <>
-                        <AlertDialogCancel className="text-xs">Revisar</AlertDialogCancel>
-                        <AlertDialogAction className="text-xs" onClick={handleFinalizeClass}>
-                           Confirmar
-                        </AlertDialogAction>
-                     </>
-                  ) : (
-                     <>
-                        <AlertDialogCancel className="text-xs">Cancelar</AlertDialogCancel>
-                        <AlertDialogAction className="text-xs" onClick={handleFinalizeClass}>
-                           Confirmar cierre
-                        </AlertDialogAction>
-                     </>
-                  )}
-               </AlertDialogFooter>
-            </AlertDialogContent>
-         </AlertDialog>
+            search={linkSearch}
+            onSearchChange={setLinkSearch}
+            activities={filteredUnlinkedActivities}
+            selectedActivityIds={selectedExistingActivityIds}
+            onToggleSelection={handleToggleExistingSelection}
+            onCancel={() => setLinkDialogOpen(false)}
+            onLink={handleLinkSelectedActivities}
+         />
+         <ClaseDictadoCloseDialog
+            open={closeDialogOpen}
+            onOpenChange={setCloseDialogOpen}
+            closeAnalysis={closeAnalysis}
+            onConfirm={handleFinalizeClass}
+         />
       </div>
    );
 }
-
-
-
 
 
