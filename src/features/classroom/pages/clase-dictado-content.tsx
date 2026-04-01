@@ -25,7 +25,12 @@ import { ClaseDictadoNotesCard } from "@/features/classroom/components/clase-dic
 import { ClaseDictadoAttendanceLockCard } from "@/features/classroom/components/clase-dictado-attendance-lock-card";
 import { useClasePerformance } from "@/features/classroom/hooks";
 import { evaluativeFormatLabelMap } from "@/features/classroom/utils";
-import type { AttendanceStatus } from "@/features/classroom/types";
+import {
+   analyzeClassClosure,
+   buildAttendanceWithDefaults,
+   buildLinkedActivitiesSummary,
+   filterUnlinkedActivitiesByTitle,
+} from "@/features/classroom/utils/clase-dictado-utils";
 import type { ActivityType } from "@/types";
 
 export function ClaseDictadoContent() {
@@ -89,28 +94,11 @@ export function ClaseDictadoContent() {
    );
 
    const linkedActivitiesSummary = useMemo(() => {
-      const total = linkedActivities.length;
-      const evaluables = linkedActivities.filter((activity) => activity.esEvaluable).length;
-      const completed = linkedActivities.filter((activity) => activity.status === "completed").length;
-      return {
-         total,
-         evaluables,
-         completed,
-         pending: total - completed,
-      };
+      return buildLinkedActivitiesSummary(linkedActivities);
    }, [linkedActivities]);
 
    const filteredUnlinkedActivities = useMemo(() => {
-      const unlinked = subjectActivities.filter(
-         (activity) => !activity.linkedClassIds.includes(cls.id),
-      );
-      const query = linkSearch.trim().toLowerCase();
-      if (!query) {
-         return unlinked.sort((a, b) => a.title.localeCompare(b.title));
-      }
-      return unlinked
-         .filter((activity) => activity.title.toLowerCase().includes(query))
-         .sort((a, b) => a.title.localeCompare(b.title));
+      return filterUnlinkedActivitiesByTitle(subjectActivities, cls.id, linkSearch);
    }, [cls.id, linkSearch, subjectActivities]);
 
    const record = getRecord(cls.id);
@@ -127,11 +115,9 @@ export function ClaseDictadoContent() {
       updateAssessment,
    });
 
-   const attendanceWithDefaults: Record<string, AttendanceStatus> = Object.fromEntries(
-      classStudents.map((student) => [
-         student.id,
-         record.attendance[student.id] ?? ("P" as AttendanceStatus),
-      ]),
+   const attendanceWithDefaults = buildAttendanceWithDefaults(
+      classStudents,
+      record.attendance,
    );
    const isFinalized = cls.status === "dictada";
    const showGradesSection =
@@ -163,51 +149,16 @@ export function ClaseDictadoContent() {
    }, [cls.id, cls.status, updateClass]);
 
    const closeAnalysis = useMemo(() => {
-      const plannedSubtopics = cls.subtopics.map((item) => item.trim()).filter(Boolean);
-      const plannedSubtopicsSet = new Set(plannedSubtopics);
-      const completedSubtopics = record.completedSubtopics;
-
-      const missingSubtopics = plannedSubtopics.filter(
-         (subtopic) => !completedSubtopics.includes(subtopic),
-      );
-      const hasUnplannedCompletedSubtopics = completedSubtopics.some(
-         (subtopic) => !plannedSubtopicsSet.has(subtopic),
-      );
-      const hasInitialSubtopicState =
-         completedSubtopics.length === 0 && !hasUnplannedCompletedSubtopics;
-      const subtopicsModified =
-         hasUnplannedCompletedSubtopics ||
-         (completedSubtopics.length > 0 && missingSubtopics.length > 0);
-
-      const currentLinkedIds = linkedActivities.map((activity) => activity.id);
-      const baselineSet = new Set(activityBaseline.linkedActivityIds);
-      const currentSet = new Set(currentLinkedIds);
-
-      const addedActivities = linkedActivities
-         .filter((activity) => !baselineSet.has(activity.id))
-         .map((activity) => activity.title);
-      const removedActivities = subjectActivities
-         .filter(
-            (activity) => baselineSet.has(activity.id) && !currentSet.has(activity.id),
-         )
-         .map((activity) => activity.title);
-      const activitiesModified = addedActivities.length > 0 || removedActivities.length > 0;
-
-      const hasManualChanges =
-         (record.notes?.trim().length ?? 0) > 0 ||
-         record.completedActivities.length > 0 ||
-         performanceEntries.length > 0;
-
-      const hasChanges = subtopicsModified || activitiesModified || hasManualChanges;
-
-      return {
-         hasChanges,
-         hasInitialSubtopicState,
-         missingSubtopics,
-         coveredSubtopics: plannedSubtopics.filter((subtopic) => !missingSubtopics.includes(subtopic)),
-         addedActivities,
-         removedActivities,
-      };
+      return analyzeClassClosure({
+         subtopics: cls.subtopics,
+         completedSubtopics: record.completedSubtopics,
+         linkedActivities,
+         subjectActivities,
+         baselineLinkedActivityIds: activityBaseline.linkedActivityIds,
+         notes: record.notes,
+         completedActivitiesCount: record.completedActivities.length,
+         performanceEntriesCount: performanceEntries.length,
+      });
    }, [
       cls.subtopics,
       activityBaseline.linkedActivityIds,

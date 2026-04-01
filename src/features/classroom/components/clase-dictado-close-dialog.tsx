@@ -8,14 +8,7 @@ import {
    AlertDialogHeader,
    AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-type CloseAnalysis = {
-   hasChanges: boolean;
-   coveredSubtopics: string[];
-   missingSubtopics: string[];
-   addedActivities: string[];
-   removedActivities: string[];
-};
+import type { CloseAnalysis } from "@/features/classroom/utils/clase-dictado-utils";
 
 export function ClaseDictadoCloseDialog({
    open,
