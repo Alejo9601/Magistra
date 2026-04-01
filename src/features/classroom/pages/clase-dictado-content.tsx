@@ -1,9 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
    getAssignmentIdBySubjectId,
@@ -25,6 +21,8 @@ import { ClaseDictadoActivitiesCard } from "@/features/classroom/components/clas
 import { ClaseDictadoCreateActivityDialog } from "@/features/classroom/components/clase-dictado-create-activity-dialog";
 import { ClaseDictadoLinkActivitiesDialog } from "@/features/classroom/components/clase-dictado-link-activities-dialog";
 import { ClaseDictadoCloseDialog } from "@/features/classroom/components/clase-dictado-close-dialog";
+import { ClaseDictadoNotesCard } from "@/features/classroom/components/clase-dictado-notes-card";
+import { ClaseDictadoAttendanceLockCard } from "@/features/classroom/components/clase-dictado-attendance-lock-card";
 import { useClasePerformance } from "@/features/classroom/hooks";
 import { evaluativeFormatLabelMap } from "@/features/classroom/utils";
 import type { AttendanceStatus } from "@/features/classroom/types";
@@ -404,21 +402,11 @@ export function ClaseDictadoContent() {
                   />
                )}
 
-               <Card>
-                  <CardHeader className="pb-3">
-                     <CardTitle className="text-sm font-semibold">Observaciones de dictado</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                     <Label className="sr-only">Observaciones</Label>
-                     <Textarea
-                        className="text-xs min-h-[100px] resize-none"
-                        placeholder="Que salio bien, que ajustar para la proxima clase, incidencias..."
-                        value={record.notes ?? ""}
-                        onChange={(event) => setNotes(cls.id, event.target.value)}
-                        disabled={isFinalized}
-                     />
-                  </CardContent>
-               </Card>
+               <ClaseDictadoNotesCard
+                  notes={record.notes ?? ""}
+                  isFinalized={isFinalized}
+                  onNotesChange={(value) => setNotes(cls.id, value)}
+               />
             </div>
 
             <div className="xl:col-span-2 space-y-4">
@@ -430,23 +418,12 @@ export function ClaseDictadoContent() {
                   disabled={attendanceLockedByFinalized}
                />
                {attendanceLockedByFinalized ? (
-                  <div className="rounded-md border border-dashed border-border/70 bg-muted/25 p-3 text-center">
-                     <p className="text-xs text-muted-foreground">
-                        Asistencia no editable: la clase ya esta dictada.
-                     </p>
-                     <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="mt-2 text-xs"
-                        onClick={() => {
-                           setAttendanceLockedByFinalized(false);
-                           toast.warning("Edicion manual de asistencia habilitada para clase dictada.");
-                        }}
-                     >
-                        Editar asistencia igualmente
-                     </Button>
-                  </div>
+                  <ClaseDictadoAttendanceLockCard
+                     onEnableManualEdit={() => {
+                        setAttendanceLockedByFinalized(false);
+                        toast.warning("Edicion manual de asistencia habilitada para clase dictada.");
+                     }}
+                  />
                ) : null}
 
                <ClaseDictadoActivitiesCard
@@ -505,5 +482,3 @@ export function ClaseDictadoContent() {
       </div>
    );
 }
-
-

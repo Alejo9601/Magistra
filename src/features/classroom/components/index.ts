@@ -9,5 +9,7 @@ export * from "./clase-dictado-activities-card";
 export * from "./clase-dictado-create-activity-dialog";
 export * from "./clase-dictado-link-activities-dialog";
 export * from "./clase-dictado-close-dialog";
+export * from "./clase-dictado-notes-card";
+export * from "./clase-dictado-attendance-lock-card";
 export * from "./clase-detail-actions-panel";
 export * from "./clase-detail-unplanned-alert";
