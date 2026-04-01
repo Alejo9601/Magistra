@@ -23,7 +23,7 @@ import { ClaseDictadoLinkActivitiesDialog } from "@/features/classroom/component
 import { ClaseDictadoCloseDialog } from "@/features/classroom/components/clase-dictado-close-dialog";
 import { ClaseDictadoNotesCard } from "@/features/classroom/components/clase-dictado-notes-card";
 import { ClaseDictadoAttendanceLockCard } from "@/features/classroom/components/clase-dictado-attendance-lock-card";
-import { useClasePerformance } from "@/features/classroom/hooks";
+import { useClaseDictadoActivityState, useClasePerformance } from "@/features/classroom/hooks";
 import { evaluativeFormatLabelMap } from "@/features/classroom/utils";
 import {
    analyzeClassClosure,
@@ -31,7 +31,6 @@ import {
    buildLinkedActivitiesSummary,
    filterUnlinkedActivitiesByTitle,
 } from "@/features/classroom/utils/clase-dictado-utils";
-import type { ActivityType } from "@/types";
 
 export function ClaseDictadoContent() {
    const params = useParams();
@@ -52,20 +51,36 @@ export function ClaseDictadoContent() {
 
    const [addingSubtopic, setAddingSubtopic] = useState(false);
    const [newSubtopic, setNewSubtopic] = useState("");
-   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
-   const [linkSearch, setLinkSearch] = useState("");
-   const [selectedExistingActivityIds, setSelectedExistingActivityIds] = useState<string[]>([]);
-   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-   const [newActivityTitle, setNewActivityTitle] = useState("");
-   const [newActivityType, setNewActivityType] = useState<ActivityType>("practica");
-   const [newActivityDescription, setNewActivityDescription] = useState("");
-   const [newActivityEvaluable, setNewActivityEvaluable] = useState(false);
    const [closeDialogOpen, setCloseDialogOpen] = useState(false);
    const [attendanceLockedByFinalized, setAttendanceLockedByFinalized] = useState(false);
    const [activityBaseline, setActivityBaseline] = useState<{
       classId: string;
       linkedActivityIds: string[];
    }>({ classId: "", linkedActivityIds: [] });
+   const {
+      linkDialogOpen,
+      linkSearch,
+      selectedExistingActivityIds,
+      createDialogOpen,
+      newActivityTitle,
+      newActivityType,
+      newActivityDescription,
+      newActivityEvaluable,
+      setLinkSearch,
+      setNewActivityTitle,
+      setNewActivityType,
+      setNewActivityDescription,
+      setNewActivityEvaluable,
+      resetNewActivityForm,
+      clearLinkSelection,
+      handleToggleExistingSelection,
+      handleCreateDialogOpenChange,
+      handleLinkDialogOpenChange,
+      openCreateDialog,
+      closeCreateDialog,
+      openLinkDialog,
+      closeLinkDialog,
+   } = useClaseDictadoActivityState();
 
    const cls = classes.find((classSession) => classSession.id === classId);
    const assignmentId = cls
@@ -127,7 +142,6 @@ export function ClaseDictadoContent() {
       day: "2-digit",
       month: "short",
    });
-
    useEffect(() => {
       if (activityBaseline.classId === cls.id) {
          return;
@@ -196,14 +210,6 @@ export function ClaseDictadoContent() {
       navigate("/planificacion");
    };
 
-   const handleToggleExistingSelection = (activityId: string) => {
-      setSelectedExistingActivityIds((prev) =>
-         prev.includes(activityId)
-            ? prev.filter((id) => id !== activityId)
-            : [...prev, activityId],
-      );
-   };
-
    const handleLinkSelectedActivities = () => {
       if (selectedExistingActivityIds.length === 0) {
          toast.error("Selecciona al menos una actividad para vincular.");
@@ -215,9 +221,8 @@ export function ClaseDictadoContent() {
       });
 
       const linkedCount = selectedExistingActivityIds.length;
-      setSelectedExistingActivityIds([]);
-      setLinkSearch("");
-      setLinkDialogOpen(false);
+      clearLinkSelection();
+      closeLinkDialog();
       toast.success(
          linkedCount === 1
             ? "1 actividad vinculada correctamente."
@@ -228,12 +233,6 @@ export function ClaseDictadoContent() {
    const handleUnlinkActivity = (activityId: string) => {
       toggleActivityLink(activityId, cls.id);
       toast.success("Actividad desvinculada de la clase.");
-   };
-   const resetNewActivityForm = () => {
-      setNewActivityTitle("");
-      setNewActivityType("practica");
-      setNewActivityDescription("");
-      setNewActivityEvaluable(false);
    };
 
    const handleCreateActivity = () => {
@@ -258,7 +257,7 @@ export function ClaseDictadoContent() {
          linkedClassIds: [cls.id],
       });
 
-      setCreateDialogOpen(false);
+      closeCreateDialog();
       resetNewActivityForm();
       toast.success("Actividad creada y vinculada a la clase.");
    };
@@ -381,8 +380,8 @@ export function ClaseDictadoContent() {
                   isFinalized={isFinalized}
                   linkedActivitiesSummary={linkedActivitiesSummary}
                   linkedActivities={linkedActivities}
-                  onCreateActivity={() => setCreateDialogOpen(true)}
-                  onOpenLinkDialog={() => setLinkDialogOpen(true)}
+                  onCreateActivity={openCreateDialog}
+                  onOpenLinkDialog={openLinkDialog}
                   onUnlinkActivity={handleUnlinkActivity}
                />
             </div>
@@ -390,12 +389,7 @@ export function ClaseDictadoContent() {
 
          <ClaseDictadoCreateActivityDialog
             open={createDialogOpen}
-            onOpenChange={(open) => {
-               setCreateDialogOpen(open);
-               if (!open) {
-                  resetNewActivityForm();
-               }
-            }}
+            onOpenChange={handleCreateDialogOpenChange}
             title={newActivityTitle}
             activityType={newActivityType}
             description={newActivityDescription}
@@ -404,24 +398,18 @@ export function ClaseDictadoContent() {
             onActivityTypeChange={setNewActivityType}
             onDescriptionChange={setNewActivityDescription}
             onEvaluableChange={setNewActivityEvaluable}
-            onCancel={() => setCreateDialogOpen(false)}
+            onCancel={closeCreateDialog}
             onCreate={handleCreateActivity}
          />
          <ClaseDictadoLinkActivitiesDialog
             open={linkDialogOpen}
-            onOpenChange={(open) => {
-               setLinkDialogOpen(open);
-               if (!open) {
-                  setSelectedExistingActivityIds([]);
-                  setLinkSearch("");
-               }
-            }}
+            onOpenChange={handleLinkDialogOpenChange}
             search={linkSearch}
             onSearchChange={setLinkSearch}
             activities={filteredUnlinkedActivities}
             selectedActivityIds={selectedExistingActivityIds}
             onToggleSelection={handleToggleExistingSelection}
-            onCancel={() => setLinkDialogOpen(false)}
+            onCancel={closeLinkDialog}
             onLink={handleLinkSelectedActivities}
          />
          <ClaseDictadoCloseDialog
