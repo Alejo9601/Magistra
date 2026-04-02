@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import type { ActivityType } from "@/types";
 
-export function useClaseDictadoActivityState() {
+export function useClassTeachingActivityState() {
    const [linkDialogOpen, setLinkDialogOpen] = useState(false);
    const [linkSearch, setLinkSearch] = useState("");
    const [selectedExistingActivityIds, setSelectedExistingActivityIds] = useState<string[]>([]);

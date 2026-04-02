@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-export function ClaseDetailActionsPanel({
+export function ClassDetailActionsPanel({
    classId,
    canStartClass,
    hasPlanning,

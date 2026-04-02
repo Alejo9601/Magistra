@@ -1,13 +1,12 @@
 ﻿import { AppShell } from "@/components/app-shell";
-import { ClaseDictadoContent } from "@/features/classroom";
+import { ClassTeachingContent } from "@/features/classroom";
 
-export default function ClaseDictadoPage() {
+export default function ClassTeachingPage() {
    return (
-      <AppShell title="Dictado en Clase">
-         <ClaseDictadoContent />
+      <AppShell title="Class Teaching">
+         <ClassTeachingContent />
       </AppShell>
    );
 }
-
 
 

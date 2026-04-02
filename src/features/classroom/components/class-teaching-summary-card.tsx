@@ -1,7 +1,7 @@
 ﻿import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ClassSession } from "@/types";
 
-export function ClaseDictadoSummaryCard({
+export function ClassTeachingSummaryCard({
    cls,
    classTypeLabels,
    evaluativeFormatLabelMap,

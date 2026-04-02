@@ -1,3 +1,3 @@
-﻿export * from "./use-clase-performance";
-export * from "./use-clase-dictado-activity-state";
-export * from "./use-clase-dictado-derived";
+﻿export * from "./use-class-performance";
+export * from "./use-class-teaching-activity-state";
+export * from "./use-class-teaching-derived";

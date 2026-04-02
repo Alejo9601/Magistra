@@ -8,9 +8,9 @@ import {
    AlertDialogHeader,
    AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { CloseAnalysis } from "@/features/classroom/utils/clase-dictado-utils";
+import type { CloseAnalysis } from "@/features/classroom/utils/class-teaching-utils";
 
-export function ClaseDictadoCloseDialog({
+export function ClassTeachingCloseDialog({
    open,
    onOpenChange,
    closeAnalysis,

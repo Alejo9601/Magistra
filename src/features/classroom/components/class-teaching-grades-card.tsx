@@ -7,7 +7,7 @@ import { performanceEntryKey, performanceKindLabel } from "@/features/classroom/
 import { rubricLevelPresets } from "@/lib/grading-schemes";
 import type { ClassroomPerformanceEntry, Student, SubjectRubric } from "@/types";
 
-type ClaseDictadoGradesCardProps = {
+type ClassTeachingGradesCardProps = {
    classStudents: Student[];
    isFinalized: boolean;
    performanceStudentId: string;
@@ -37,7 +37,7 @@ type ClaseDictadoGradesCardProps = {
    studentNameById: (studentId: string) => string;
 };
 
-export function ClaseDictadoGradesCard({
+export function ClassTeachingGradesCard({
    classStudents,
    isFinalized,
    performanceStudentId,
@@ -65,7 +65,7 @@ export function ClaseDictadoGradesCard({
    onEditPerformance,
    onDeletePerformance,
    studentNameById,
-}: ClaseDictadoGradesCardProps) {
+}: ClassTeachingGradesCardProps) {
    const selectedRubric =
       availableRubrics.find((rubric) => rubric.id === selectedRubricId) ?? null;
    const canUseRubrics = availableRubrics.length > 0;

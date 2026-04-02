@@ -21,7 +21,7 @@ import type {
    SubjectActivity,
 } from "@/types";
 
-type UseClasePerformanceParams = {
+type UseClassPerformanceParams = {
    cls: ClassSession;
    subject: Subject;
    classStudents: Student[];
@@ -32,7 +32,7 @@ type UseClasePerformanceParams = {
    updateAssessment: (id: string, patch: { gradesLoaded?: number }) => void;
 };
 
-export function useClasePerformance({
+export function useClassPerformance({
    cls,
    subject,
    classStudents,
@@ -41,7 +41,7 @@ export function useClasePerformance({
    performanceEntries,
    setPerformanceEntries,
    updateAssessment,
-}: UseClasePerformanceParams) {
+}: UseClassPerformanceParams) {
    const [performanceStudentId, setPerformanceStudentId] = useState("");
    const [performanceKind, setPerformanceKind] =
       useState<ClassroomPerformanceKind>("activity");

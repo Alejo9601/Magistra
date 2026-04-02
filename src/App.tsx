@@ -7,7 +7,7 @@ import SeguimientoPage from "@/pages/seguimiento/page";
 import StudentProfilePage from "@/pages/seguimiento/[id]/page";
 import RecursosPage from "@/pages/recursos/page";
 import ConfiguracionPage from "@/pages/configuracion/page";
-import ClaseDetailPage from "@/pages/clase/[id]/page";
+import ClassDetailPage from "@/pages/clase/[id]/page";
 import { InstitutionProvider } from "@/features/institution";
 import { PlanningProvider } from "@/features/planning";
 import { DashboardProvider } from "@/features/dashboard";
@@ -17,9 +17,9 @@ import { AssessmentsProvider } from "@/features/assessments";
 import { ActivitiesProvider } from "@/features/activities";
 import { TeacherProvider } from "@/features/teacher";
 import "@/pages/globals.css";
-import ClaseDictadoPage from "@/pages/clase/[id]/dictado/page";
+import ClassTeachingPage from "@/pages/clase/[id]/dictado/page";
 import ActivityGradingPage from "@/pages/actividad/[id]/calificar/page";
-import { DictadoRouteGuard } from "@/features/classroom/components/dictado-route-guard";
+import { TeachingRouteGuard } from "@/features/classroom/components/teaching-route-guard";
 
 function App() {
    return (
@@ -57,14 +57,14 @@ function App() {
                                     />
                                     <Route
                                        path="/clase/:id"
-                                       element={<ClaseDetailPage />}
+                                       element={<ClassDetailPage />}
                                     />
                                     <Route
                                        path="/clase/:id/dictado"
                                        element={
-                                          <DictadoRouteGuard>
-                                             <ClaseDictadoPage />
-                                          </DictadoRouteGuard>
+                                          <TeachingRouteGuard>
+                                             <ClassTeachingPage />
+                                          </TeachingRouteGuard>
                                        }
                                     />
                                     <Route
@@ -87,7 +87,6 @@ function App() {
 }
 
 export default App;
-
 
 
 

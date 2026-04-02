@@ -4,7 +4,7 @@ import { usePlanningContext } from "@/features/planning";
 import { useStudentsContext } from "@/features/students";
 import { getAssignmentIdBySubjectId } from "@/lib/edu-repository";
 
-export function DictadoRouteGuard({ children }: { children: ReactNode }) {
+export function TeachingRouteGuard({ children }: { children: ReactNode }) {
    const params = useParams();
    const classId = params.id;
    const { classes } = usePlanningContext();

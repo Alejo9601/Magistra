@@ -16,10 +16,10 @@ import { AttendanceCard } from "@/features/classroom/components/attendance-card"
 import { useParams } from "react-router-dom";
 import { useStudentsContext } from "@/features/students";
 import { useClassroomContext } from "@/features/classroom";
-import { ClaseDetailActionsPanel } from "@/features/classroom/components/clase-detail-actions-panel";
-import { ClaseDetailUnplannedAlert } from "@/features/classroom/components/clase-detail-unplanned-alert";
+import { ClassDetailActionsPanel } from "@/features/classroom/components/class-detail-actions-panel";
+import { ClassDetailUnplannedAlert } from "@/features/classroom/components/class-detail-unplanned-alert";
 
-export function ClaseDetailContent({
+export function ClassDetailContent({
    classId,
    embedded = false,
    onEditClass,
@@ -116,10 +116,10 @@ export function ClaseDetailContent({
          />
 
          {cls.status === "sin_planificar" ? (
-            <ClaseDetailUnplannedAlert classId={cls.id} onEditClass={onEditClass} />
+            <ClassDetailUnplannedAlert classId={cls.id} onEditClass={onEditClass} />
          ) : null}
 
-         <ClaseDetailActionsPanel
+         <ClassDetailActionsPanel
             classId={cls.id}
             canStartClass={canStartClass}
             hasPlanning={hasPlanning}

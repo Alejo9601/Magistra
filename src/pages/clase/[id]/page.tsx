@@ -1,11 +1,10 @@
 ﻿import { AppShell } from "@/components/app-shell";
-import { ClaseDetailContent } from "@/features/classroom";
+import { ClassDetailContent } from "@/features/classroom";
 
-export default function ClaseDetailPage() {
+export default function ClassDetailPage() {
    return (
-      <AppShell title="Detalle de Clase">
-         <ClaseDetailContent />
+      <AppShell title="Class Detail">
+         <ClassDetailContent />
       </AppShell>
    );
 }
-

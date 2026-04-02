@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { SubjectActivity } from "@/types";
 
-export function ClaseDictadoActivitiesCard({
+export function ClassTeachingActivitiesCard({
    isFinalized,
    linkedActivitiesSummary,
    linkedActivities,

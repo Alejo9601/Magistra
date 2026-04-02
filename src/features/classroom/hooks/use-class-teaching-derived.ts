@@ -5,9 +5,9 @@ import {
    buildAttendanceWithDefaults,
    buildLinkedActivitiesSummary,
    filterUnlinkedActivitiesByTitle,
-} from "@/features/classroom/utils/clase-dictado-utils";
+} from "@/features/classroom/utils/class-teaching-utils";
 
-export function useClaseDictadoDerived({
+export function useClassTeachingDerived({
    cls,
    classStudents,
    subjectActivities,

@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { SubjectActivity } from "@/types";
 
-export function ClaseDictadoLinkActivitiesDialog({
+export function ClassTeachingLinkActivitiesDialog({
    open,
    onOpenChange,
    search,

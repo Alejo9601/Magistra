@@ -1,2 +1,2 @@
-﻿export * from "./clase-detail-content";
-export * from "./clase-dictado-content";
+﻿export * from "./class-detail-content";
+export * from "./class-teaching-content";

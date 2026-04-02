@@ -13,24 +13,24 @@ import { useActivitiesContext } from "@/features/activities";
 import { useAssessmentsContext } from "@/features/assessments";
 import { AttendanceCard } from "@/features/classroom/components/attendance-card";
 import { classTypeLabels } from "@/features/classroom/utils/classroom-constants";
-import { ClaseDictadoHeader } from "@/features/classroom/components/clase-dictado-header";
-import { ClaseDictadoSummaryCard } from "@/features/classroom/components/clase-dictado-summary-card";
-import { ClaseDictadoSubtopicsCard } from "@/features/classroom/components/clase-dictado-subtopics-card";
-import { ClaseDictadoGradesCard } from "@/features/classroom/components/clase-dictado-grades-card";
-import { ClaseDictadoActivitiesCard } from "@/features/classroom/components/clase-dictado-activities-card";
-import { ClaseDictadoCreateActivityDialog } from "@/features/classroom/components/clase-dictado-create-activity-dialog";
-import { ClaseDictadoLinkActivitiesDialog } from "@/features/classroom/components/clase-dictado-link-activities-dialog";
-import { ClaseDictadoCloseDialog } from "@/features/classroom/components/clase-dictado-close-dialog";
-import { ClaseDictadoNotesCard } from "@/features/classroom/components/clase-dictado-notes-card";
-import { ClaseDictadoAttendanceLockCard } from "@/features/classroom/components/clase-dictado-attendance-lock-card";
+import { ClassTeachingHeader } from "@/features/classroom/components/class-teaching-header";
+import { ClassTeachingSummaryCard } from "@/features/classroom/components/class-teaching-summary-card";
+import { ClassTeachingSubtopicsCard } from "@/features/classroom/components/class-teaching-subtopics-card";
+import { ClassTeachingGradesCard } from "@/features/classroom/components/class-teaching-grades-card";
+import { ClassTeachingActivitiesCard } from "@/features/classroom/components/class-teaching-activities-card";
+import { ClassTeachingCreateActivityDialog } from "@/features/classroom/components/class-teaching-create-activity-dialog";
+import { ClassTeachingLinkActivitiesDialog } from "@/features/classroom/components/class-teaching-link-activities-dialog";
+import { ClassTeachingCloseDialog } from "@/features/classroom/components/class-teaching-close-dialog";
+import { ClassTeachingNotesCard } from "@/features/classroom/components/class-teaching-notes-card";
+import { ClassTeachingAttendanceLockCard } from "@/features/classroom/components/class-teaching-attendance-lock-card";
 import {
-   useClaseDictadoActivityState,
-   useClaseDictadoDerived,
-   useClasePerformance,
+   useClassTeachingActivityState,
+   useClassTeachingDerived,
+   useClassPerformance,
 } from "@/features/classroom/hooks";
 import { evaluativeFormatLabelMap } from "@/features/classroom/utils";
 
-export function ClaseDictadoContent() {
+export function ClassTeachingContent() {
    const params = useParams();
    const navigate = useNavigate();
    const classId = params.id as string;
@@ -78,7 +78,7 @@ export function ClaseDictadoContent() {
       closeCreateDialog,
       openLinkDialog,
       closeLinkDialog,
-   } = useClaseDictadoActivityState();
+   } = useClassTeachingActivityState();
 
    const cls = classes.find((classSession) => classSession.id === classId);
    const assignmentId = cls
@@ -101,7 +101,7 @@ export function ClaseDictadoContent() {
    const record = getRecord(cls.id);
    const performanceEntries = record.performanceEntries;
 
-   const performance = useClasePerformance({
+   const performance = useClassPerformance({
       cls,
       subject,
       classStudents,
@@ -121,7 +121,7 @@ export function ClaseDictadoContent() {
       showGradesSection,
       classDateLabel,
       closeAnalysis,
-   } = useClaseDictadoDerived({
+   } = useClassTeachingDerived({
       cls,
       classStudents,
       subjectActivities,
@@ -249,7 +249,7 @@ export function ClaseDictadoContent() {
 
    return (
       <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:p-6">
-         <ClaseDictadoHeader
+         <ClassTeachingHeader
             subjectName={subject.name}
             classDateLabel={classDateLabel}
             classTime={cls.time}
@@ -268,13 +268,13 @@ export function ClaseDictadoContent() {
 
          <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
             <div className="xl:col-span-3 space-y-6">
-               <ClaseDictadoSummaryCard
+               <ClassTeachingSummaryCard
                   cls={cls}
                   classTypeLabels={classTypeLabels}
                   evaluativeFormatLabelMap={evaluativeFormatLabelMap}
                />
 
-               <ClaseDictadoSubtopicsCard
+               <ClassTeachingSubtopicsCard
                   subtopics={cls.subtopics}
                   completedSubtopics={record.completedSubtopics}
                   addingSubtopic={addingSubtopic}
@@ -287,7 +287,7 @@ export function ClaseDictadoContent() {
                />
 
                {showGradesSection && (
-                  <ClaseDictadoGradesCard
+                  <ClassTeachingGradesCard
                      classStudents={classStudents}
                      isFinalized={isFinalized}
                      performanceStudentId={performance.performanceStudentId}
@@ -318,7 +318,7 @@ export function ClaseDictadoContent() {
                   />
                )}
 
-               <ClaseDictadoNotesCard
+               <ClassTeachingNotesCard
                   notes={record.notes ?? ""}
                   isFinalized={isFinalized}
                   onNotesChange={(value) => setNotes(cls.id, value)}
@@ -334,7 +334,7 @@ export function ClaseDictadoContent() {
                   disabled={attendanceLockedByFinalized}
                />
                {attendanceLockedByFinalized ? (
-                  <ClaseDictadoAttendanceLockCard
+                  <ClassTeachingAttendanceLockCard
                      onEnableManualEdit={() => {
                         setAttendanceLockedByFinalized(false);
                         toast.warning("Edicion manual de asistencia habilitada para clase dictada.");
@@ -342,7 +342,7 @@ export function ClaseDictadoContent() {
                   />
                ) : null}
 
-               <ClaseDictadoActivitiesCard
+               <ClassTeachingActivitiesCard
                   isFinalized={isFinalized}
                   linkedActivitiesSummary={linkedActivitiesSummary}
                   linkedActivities={linkedActivities}
@@ -353,7 +353,7 @@ export function ClaseDictadoContent() {
             </div>
          </div>
 
-         <ClaseDictadoCreateActivityDialog
+         <ClassTeachingCreateActivityDialog
             open={createDialogOpen}
             onOpenChange={handleCreateDialogOpenChange}
             title={newActivityTitle}
@@ -367,7 +367,7 @@ export function ClaseDictadoContent() {
             onCancel={closeCreateDialog}
             onCreate={handleCreateActivity}
          />
-         <ClaseDictadoLinkActivitiesDialog
+         <ClassTeachingLinkActivitiesDialog
             open={linkDialogOpen}
             onOpenChange={handleLinkDialogOpenChange}
             search={linkSearch}
@@ -378,7 +378,7 @@ export function ClaseDictadoContent() {
             onCancel={closeLinkDialog}
             onLink={handleLinkSelectedActivities}
          />
-         <ClaseDictadoCloseDialog
+         <ClassTeachingCloseDialog
             open={closeDialogOpen}
             onOpenChange={setCloseDialogOpen}
             closeAnalysis={closeAnalysis}

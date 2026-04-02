@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-export function ClaseDetailUnplannedAlert({
+export function ClassDetailUnplannedAlert({
    classId,
    onEditClass,
 }: {

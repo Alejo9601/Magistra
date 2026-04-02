@@ -5,7 +5,7 @@
    DialogHeader,
    DialogTitle,
 } from "@/components/ui/dialog";
-import { ClaseDetailContent } from "@/features/classroom/pages";
+import { ClassDetailContent } from "@/features/classroom/pages";
 
 export function ClassDetailDialog({
    open,
@@ -32,7 +32,7 @@ export function ClassDetailDialog({
                </DialogDescription>
             </DialogHeader>
             {classId ? (
-               <ClaseDetailContent
+               <ClassDetailContent
                   classId={classId}
                   embedded
                   onEditClass={onEditClass}

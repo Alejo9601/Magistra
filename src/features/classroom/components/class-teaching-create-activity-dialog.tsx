@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import type { ActivityType } from "@/types";
 
-export function ClaseDictadoCreateActivityDialog({
+export function ClassTeachingCreateActivityDialog({
    open,
    onOpenChange,
    title,
