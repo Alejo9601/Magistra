@@ -53,14 +53,20 @@ export function ClassQuickCreateModal({
    ) => Array<{ scheduleTemplateId: string; time: string; blockCount: number }>;
    onSubmit: (payload: QuickCreatePayload) => void;
 }) {
-   const institutionId = resolveInstitutionId(activeInstitution, undefined, institutions[0]?.id);
+   const institutionId = resolveInstitutionId(
+      activeInstitution,
+      undefined,
+      institutions[0]?.id,
+   );
    const availableAssignments = getAssignmentsByInstitution(institutionId);
 
    const [assignmentId, setAssignmentId] = useState("");
    const [date, setDate] = useState(todayDate());
    const [time, setTime] = useState("08:00");
    const [blockCount, setBlockCount] = useState(1);
-   const [matchedTemplateId, setMatchedTemplateId] = useState<string | undefined>(undefined);
+   const [matchedTemplateId, setMatchedTemplateId] = useState<
+      string | undefined
+   >(undefined);
    const [isAutoFilledBySchedule, setIsAutoFilledBySchedule] = useState(false);
 
    useEffect(() => {
@@ -101,7 +107,9 @@ export function ClassQuickCreateModal({
       setIsAutoFilledBySchedule(true);
    }, [assignmentId, date, matchingSlots, open]);
 
-   const selectedAssignment = assignmentId ? getAssignmentById(assignmentId) : null;
+   const selectedAssignment = assignmentId
+      ? getAssignmentById(assignmentId)
+      : null;
    const selectedSubject = selectedAssignment
       ? getSubjectById(selectedAssignment.subjectId)
       : null;
@@ -146,7 +154,10 @@ export function ClassQuickCreateModal({
                               return null;
                            }
                            return (
-                              <SelectItem key={assignment.id} value={assignment.id}>
+                              <SelectItem
+                                 key={assignment.id}
+                                 value={assignment.id}
+                              >
                                  {subject.name} ({assignment.section})
                               </SelectItem>
                            );
@@ -210,16 +221,27 @@ export function ClassQuickCreateModal({
                )}
 
                <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-2">
-                  <p className="text-[11px] text-muted-foreground">Estado inicial</p>
-                  <p className="text-xs font-medium text-foreground">sin_planificar</p>
+                  <p className="text-[11px] text-muted-foreground">
+                     Estado inicial
+                  </p>
+                  <p className="text-xs font-medium text-foreground">
+                     Sin planificar
+                  </p>
                   <p className="text-[11px] text-muted-foreground mt-1">
-                     {selectedSubject ? `${selectedSubject.name} · ${selectedAssignment?.section}` : ""}
+                     {selectedSubject
+                        ? `${selectedSubject.name} ï¿½ ${selectedAssignment?.section}`
+                        : ""}
                   </p>
                </div>
             </div>
 
             <DialogFooter>
-               <Button variant="outline" size="sm" className="text-xs" onClick={() => onOpenChange(false)}>
+               <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => onOpenChange(false)}
+               >
                   Cancelar
                </Button>
                <Button size="sm" className="text-xs" onClick={submit}>
