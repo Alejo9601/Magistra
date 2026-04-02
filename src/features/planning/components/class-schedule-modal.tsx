@@ -10,13 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-   Select,
-   SelectContent,
-   SelectItem,
-   SelectTrigger,
-   SelectValue,
-} from "@/components/ui/select";
+import { AssignmentSelectField } from "@/features/planning/components/assignment-select-field";
 import { ClassScheduleSlotsSection } from "@/features/planning/components/class-schedule-slots-section";
 import {
    getAssignmentsByInstitution,
@@ -193,27 +187,13 @@ export function ClassScheduleModal({
             </DialogHeader>
 
             <div className="space-y-4 py-1">
-               <div className="space-y-1.5 w-full">
-                  <Label className="text-xs">Materia</Label>
-                  <Select value={assignmentId} onValueChange={setAssignmentId}>
-                     <SelectTrigger className="h-9 text-xs w-full">
-                        <SelectValue placeholder="Seleccionar materia" />
-                     </SelectTrigger>
-                     <SelectContent>
-                        {availableAssignments.map((assignment) => {
-                           const subject = getSubjectById(assignment.subjectId);
-                           if (!subject) {
-                              return null;
-                           }
-                           return (
-                              <SelectItem key={assignment.id} value={assignment.id}>
-                                 {subject.name} ({assignment.section})
-                              </SelectItem>
-                           );
-                        })}
-                     </SelectContent>
-                  </Select>
-               </div>
+               <AssignmentSelectField
+                  value={assignmentId}
+                  assignments={availableAssignments}
+                  onValueChange={setAssignmentId}
+                  getSubjectById={getSubjectById}
+                  triggerClassName="h-9 text-xs w-full"
+               />
 
                <div className="space-y-2">
                   <Label className="text-xs">Periodo</Label>
@@ -269,7 +249,6 @@ export function ClassScheduleModal({
       </Dialog>
    );
 }
-
 
 
 

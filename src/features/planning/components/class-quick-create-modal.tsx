@@ -18,6 +18,7 @@ import {
    SelectTrigger,
    SelectValue,
 } from "@/components/ui/select";
+import { AssignmentSelectField } from "@/features/planning/components/assignment-select-field";
 import {
    getAssignmentById,
    getAssignmentsByInstitution,
@@ -142,28 +143,12 @@ export function ClassQuickCreateModal({
 
             <div className="space-y-3 py-1">
                <div className="space-y-1.5">
-                  <Label className="text-xs">Materia</Label>
-                  <Select value={assignmentId} onValueChange={setAssignmentId}>
-                     <SelectTrigger className="h-9 text-xs">
-                        <SelectValue placeholder="Seleccionar materia" />
-                     </SelectTrigger>
-                     <SelectContent>
-                        {availableAssignments.map((assignment) => {
-                           const subject = getSubjectById(assignment.subjectId);
-                           if (!subject) {
-                              return null;
-                           }
-                           return (
-                              <SelectItem
-                                 key={assignment.id}
-                                 value={assignment.id}
-                              >
-                                 {subject.name} ({assignment.section})
-                              </SelectItem>
-                           );
-                        })}
-                     </SelectContent>
-                  </Select>
+                  <AssignmentSelectField
+                     value={assignmentId}
+                     assignments={availableAssignments}
+                     onValueChange={setAssignmentId}
+                     getSubjectById={getSubjectById}
+                  />
                </div>
 
                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -229,7 +214,7 @@ export function ClassQuickCreateModal({
                   </p>
                   <p className="text-[11px] text-muted-foreground mt-1">
                      {selectedSubject
-                        ? `${selectedSubject.name} � ${selectedAssignment?.section}`
+                        ? `${selectedSubject.name} - ${selectedAssignment?.section}`
                         : ""}
                   </p>
                </div>
